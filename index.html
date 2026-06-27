@@ -4,102 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EcoPsy – Salute Mentale degli Adolescenti a Roma</title>
-  <meta name="description" content="Studio epidemiologico longitudinale sul benessere mentale degli adolescenti nell'area metropolitana di Roma. FIS – Fondo Italiano per la Scienza." />
+  <meta name="description" content="Primo studio epidemiologico longitudinale sul benessere mentale degli adolescenti nell'area metropolitana di Roma. FIS – MUR." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
   <style>
-    /* ── Reset & Variables ── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --green-dark:  #1a4a2e;
-      --green-mid:   #2d7a4f;
-      --green-light: #4aa56e;
-      --green-pale:  #f0f7f2;
-      --blue-accent: #1a3a5c;
-      --text:        #1e1e1e;
-      --text-muted:  #5a6672;
-      --border:      #dde6e0;
-      --white:       #ffffff;
-      --shadow:      0 4px 24px rgba(26,74,46,.08);
-      --radius:      12px;
-      --max-w:       1140px;
-    }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      font-size: 16px;
-      line-height: 1.7;
-      color: var(--text);
-      background: var(--white);
-    }
-
-    img { max-width: 100%; height: auto; display: block; }
-    a { color: var(--green-mid); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    /* ── Layout helpers ── */
-    .container { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
-    section { padding: 80px 0; }
-    section:nth-child(even) { background: var(--green-pale); }
-
-    /* ── Language toggle ── */
-    [data-lang="en"] { display: none; }
-    body.lang-en [data-lang="it"] { display: none; }
-    body.lang-en [data-lang="en"] { display: revert; }
-
-    /* ── Header / Nav ── */
-    header {
-      position: sticky; top: 0; z-index: 100;
-      background: var(--white);
-      border-bottom: 1px solid var(--border);
-      box-shadow: 0 2px 12px rgba(0,0,0,.05);
-    }
-    .header-inner {
-      display: flex; align-items: center; justify-content: space-between;
-      height: 68px;
-    }
-    .logo-text {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.5rem;
-      color: var(--green-dark);
-      letter-spacing: -.5px;
-    }
-    .logo-text span { color: var(--green-mid); }
-
-    nav { display: flex; align-items: center; gap: 6px; }
-    nav a {
-      font-size: .875rem; font-weight: 500;
-      color: var(--text-muted); padding: 6px 12px; border-radius: 6px;
-      transition: background .15s, color .15s;
-    }
-    nav a:hover { background: var(--green-pale); color: var(--green-dark); text-decoration: none; }
-
-    .lang-btn {
-      margin-left: 16px;
-      background: var(--green-dark); color: var(--white);
-      border: none; border-radius: 6px;
-      padding: 6px 14px; font-size: .8rem; font-weight: 600;
-      cursor: pointer; letter-spacing: .5px;
-      transition: background .15s;
-    }
-    .lang-btn:hover { background: var(--green-mid); }
-
     /* ── Hero ── */
     #home {
       background: linear-gradient(135deg, var(--green-dark) 0%, #0f2e1c 60%, #1a3a5c 100%);
-      color: var(--white);
-      padding: 100px 0 80px;
-      position: relative; overflow: hidden;
+      color: var(--white); padding: 100px 0 80px; position: relative; overflow: hidden;
     }
     #home::before {
-      content: '';
-      position: absolute; inset: 0;
-      background: url('assets/wallpaper.png') center/cover no-repeat;
-      opacity: .08;
+      content: ''; position: absolute; inset: 0;
+      background: url('assets/wallpaper.png') center/cover no-repeat; opacity: .08;
     }
     .hero-inner {
       position: relative; z-index: 1;
@@ -116,289 +34,97 @@
     h1 {
       font-family: 'Playfair Display', serif;
       font-size: clamp(2.4rem, 4vw, 3.4rem);
-      line-height: 1.15; margin-bottom: 20px;
-      color: var(--white);
+      line-height: 1.15; margin-bottom: 20px; color: var(--white);
     }
     .hero-sub {
       font-size: 1.1rem; line-height: 1.7;
       color: rgba(255,255,255,.78); margin-bottom: 36px;
     }
     .btn-group { display: flex; flex-wrap: wrap; gap: 12px; }
-    .btn {
-      display: inline-block;
-      padding: 12px 28px; border-radius: 8px;
-      font-size: .95rem; font-weight: 600;
-      transition: transform .15s, box-shadow .15s;
-      cursor: pointer;
+    .btn-hero-primary { background: var(--green-light); color: var(--white); }
+    .btn-hero-outline { background: transparent; border: 2px solid rgba(255,255,255,.5); color: var(--white); }
+    .hero-logos {
+      position: relative; z-index: 1;
+      display: flex; align-items: center; gap: 20px; margin-top: 40px; opacity: .75;
     }
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.25); text-decoration: none; }
-    .btn-primary { background: var(--green-light); color: var(--white); }
-    .btn-outline { background: transparent; border: 2px solid rgba(255,255,255,.5); color: var(--white); }
-
-    .hero-stats {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-    }
+    .hero-logos img { height: 36px; filter: brightness(0) invert(1); }
+    .hero-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .stat-card {
       background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
-      border-radius: var(--radius); padding: 20px;
-      backdrop-filter: blur(8px);
+      border-radius: var(--radius); padding: 20px; backdrop-filter: blur(8px);
     }
     .stat-number { font-size: 2rem; font-weight: 700; color: #6fe0a0; line-height: 1; }
     .stat-label { font-size: .8rem; color: rgba(255,255,255,.7); margin-top: 4px; }
 
-    .hero-logos {
-      position: relative; z-index: 1;
-      display: flex; align-items: center; gap: 20px; margin-top: 40px;
-      opacity: .75;
+    /* ── Overview cards ── */
+    .overview-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 48px;
     }
-    .hero-logos img { height: 36px; filter: brightness(0) invert(1); }
-
-    /* ── Section headings ── */
-    .section-label {
-      font-size: .75rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
-      color: var(--green-mid); margin-bottom: 10px;
-    }
-    h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(1.8rem, 3vw, 2.4rem);
-      color: var(--green-dark); line-height: 1.2; margin-bottom: 16px;
-    }
-    .section-intro {
-      font-size: 1.05rem; color: var(--text-muted); max-width: 680px; margin-bottom: 48px;
-    }
-
-    /* ── Il Progetto ── */
-    .objectives-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 56px;
-    }
-    .obj-card {
-      background: var(--white); border-radius: var(--radius);
+    .ov-card {
+      display: block; background: var(--white); border-radius: var(--radius);
       border: 1px solid var(--border); padding: 28px 24px;
-      box-shadow: var(--shadow);
+      box-shadow: var(--shadow); transition: transform .2s, box-shadow .2s;
+      text-decoration: none; color: inherit;
     }
-    .obj-icon {
+    .ov-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(26,74,46,.13); text-decoration: none; }
+    .ov-icon {
       width: 52px; height: 52px; border-radius: 12px;
       background: var(--green-pale); display: flex; align-items: center; justify-content: center;
       font-size: 1.6rem; margin-bottom: 16px;
     }
-    .obj-card h3 { font-size: 1rem; font-weight: 600; color: var(--green-dark); margin-bottom: 8px; }
-    .obj-card p { font-size: .9rem; color: var(--text-muted); }
+    .ov-card h3 { font-size: 1.05rem; font-weight: 600; color: var(--green-dark); margin-bottom: 8px; }
+    .ov-card p { font-size: .88rem; color: var(--text-muted); }
+    .ov-link { font-size: .85rem; font-weight: 600; color: var(--green-mid); margin-top: 14px; display: block; }
 
-    .design-strip {
-      background: var(--green-dark); border-radius: var(--radius);
-      padding: 32px 36px; color: var(--white);
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
-    }
-    .design-item { text-align: center; }
-    .design-number { font-size: 2.2rem; font-weight: 700; color: #6fe0a0; }
-    .design-desc { font-size: .82rem; color: rgba(255,255,255,.72); margin-top: 4px; line-height: 1.4; }
-
-    /* ── Metodo ── */
-    .method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
-    .phone-row {
-      display: flex; gap: 12px; justify-content: center;
-    }
-    .phone-wrap {
-      border-radius: 16px; overflow: hidden;
-      border: 3px solid var(--green-pale);
-      box-shadow: 0 8px 32px rgba(0,0,0,.12);
-      width: calc(25% - 9px);
-    }
-    .phone-wrap img { width: 100%; }
-
-    .method-steps { display: flex; flex-direction: column; gap: 20px; }
-    .step {
-      display: flex; gap: 16px; align-items: flex-start;
-    }
-    .step-dot {
-      width: 36px; height: 36px; border-radius: 50%;
-      background: var(--green-dark); color: var(--white);
-      display: flex; align-items: center; justify-content: center;
-      font-size: .8rem; font-weight: 700; flex-shrink: 0; margin-top: 2px;
-    }
-    .step h4 { font-size: .95rem; font-weight: 600; margin-bottom: 4px; }
-    .step p { font-size: .88rem; color: var(--text-muted); }
-
-    .sed-box {
-      margin-top: 36px; padding: 24px; border-radius: var(--radius);
-      background: var(--green-pale); border-left: 4px solid var(--green-mid);
-    }
-    .sed-box h4 { font-size: .95rem; font-weight: 600; margin-bottom: 6px; color: var(--green-dark); }
-    .sed-box p { font-size: .88rem; color: var(--text-muted); }
-
-    /* ── Team ── */
-    .team-pi {
-      display: flex; gap: 32px; align-items: center;
-      background: var(--white); border-radius: var(--radius);
-      border: 1px solid var(--border); padding: 32px;
-      box-shadow: var(--shadow); margin-bottom: 40px;
-    }
-    .pi-avatar {
-      width: 100px; height: 100px; border-radius: 50%;
-      background: var(--green-dark); display: flex; align-items: center; justify-content: center;
-      font-size: 2rem; color: var(--white); flex-shrink: 0;
-    }
-    .pi-name { font-size: 1.25rem; font-weight: 700; color: var(--green-dark); }
-    .pi-role { font-size: .88rem; color: var(--text-muted); margin-top: 4px; }
-    .pi-affil { font-size: .85rem; color: var(--green-mid); margin-top: 2px; font-weight: 500; }
-
-    .team-roles {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 36px;
-    }
-    .role-card {
-      background: var(--white); border-radius: var(--radius);
-      border: 1px solid var(--border); padding: 20px;
-      box-shadow: var(--shadow); text-align: center;
-    }
-    .role-icon { font-size: 1.6rem; margin-bottom: 8px; }
-    .role-title { font-size: .85rem; font-weight: 600; color: var(--green-dark); }
-    .role-count { font-size: .78rem; color: var(--text-muted); margin-top: 2px; }
-
-    .collab-logos {
-      display: flex; flex-wrap: wrap; gap: 20px; align-items: center;
-      padding: 24px; background: var(--white); border-radius: var(--radius);
-      border: 1px solid var(--border);
-    }
-    .collab-tag {
-      background: var(--green-pale); color: var(--green-dark);
-      padding: 8px 18px; border-radius: 20px; font-size: .85rem; font-weight: 500;
-    }
-
-    /* ── Scuole ── */
-    .schools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-    .school-card {
-      background: var(--white); border-radius: var(--radius);
-      border: 1px solid var(--border); padding: 28px;
-      box-shadow: var(--shadow);
-    }
-    .school-card h3 { font-size: 1rem; font-weight: 600; color: var(--green-dark); margin-bottom: 10px; }
-    .school-card p { font-size: .9rem; color: var(--text-muted); }
-    .school-card ul { font-size: .9rem; color: var(--text-muted); padding-left: 18px; margin-top: 8px; }
-    .school-card ul li { margin-bottom: 4px; }
-
-    .contact-box {
-      margin-top: 40px; background: var(--green-dark); border-radius: var(--radius);
-      padding: 36px 40px; color: var(--white);
-      display: flex; align-items: center; justify-content: space-between; gap: 24px;
-    }
-    .contact-box h3 { font-size: 1.2rem; font-weight: 600; margin-bottom: 4px; }
-    .contact-box p { font-size: .9rem; color: rgba(255,255,255,.75); }
-    .contact-box a.btn { background: #6fe0a0; color: var(--green-dark); }
-    .contact-box a.btn:hover { background: var(--white); }
-
-    /* ── News ── */
-    .news-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-    .news-card {
-      background: var(--white); border-radius: var(--radius);
-      border: 1px solid var(--border); overflow: hidden;
-      box-shadow: var(--shadow); transition: transform .2s;
-    }
-    .news-card:hover { transform: translateY(-4px); }
-    .news-tag {
-      display: inline-block; padding: 4px 12px; border-radius: 20px;
-      font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
-      background: var(--green-pale); color: var(--green-mid); margin-bottom: 10px;
-    }
-    .news-body { padding: 24px; }
-    .news-date { font-size: .78rem; color: var(--text-muted); margin-bottom: 6px; }
-    .news-card h3 { font-size: .97rem; font-weight: 600; color: var(--green-dark); margin-bottom: 8px; line-height: 1.4; }
-    .news-card p { font-size: .87rem; color: var(--text-muted); }
-
-    /* ── Footer ── */
-    footer {
-      background: #0d1f14; color: rgba(255,255,255,.7);
-      padding: 48px 0 28px;
-    }
-    .footer-grid {
-      display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 40px; margin-bottom: 40px;
-    }
-    .footer-brand .logo-text { font-size: 1.3rem; color: var(--white); margin-bottom: 10px; }
-    .footer-brand p { font-size: .85rem; line-height: 1.6; }
-    footer h4 { font-size: .85rem; font-weight: 600; color: var(--white); margin-bottom: 12px; text-transform: uppercase; letter-spacing: .8px; }
-    footer ul { list-style: none; }
-    footer ul li { font-size: .85rem; margin-bottom: 6px; }
-    footer ul li a { color: rgba(255,255,255,.65); }
-    footer ul li a:hover { color: #6fe0a0; text-decoration: none; }
-    .footer-logos { display: flex; gap: 16px; align-items: center; margin-top: 16px; }
-    .footer-logos img { height: 28px; filter: brightness(0) invert(1); opacity: .65; }
-    .footer-bottom {
-      border-top: 1px solid rgba(255,255,255,.1); padding-top: 20px;
-      font-size: .78rem; color: rgba(255,255,255,.4);
-      display: flex; justify-content: space-between; align-items: center;
-    }
-
-    /* ── Responsive ── */
     @media (max-width: 900px) {
-      .hero-inner, .method-grid, .schools-grid { grid-template-columns: 1fr; }
-      .objectives-grid { grid-template-columns: 1fr; }
-      .design-strip { grid-template-columns: 1fr 1fr; }
-      .team-roles { grid-template-columns: 1fr 1fr; }
-      .news-grid { grid-template-columns: 1fr; }
-      .footer-grid { grid-template-columns: 1fr; }
-      .contact-box { flex-direction: column; text-align: center; }
-      nav a { display: none; }
+      .hero-inner { grid-template-columns: 1fr; }
       .hero-stats { grid-template-columns: 1fr 1fr; }
+      .overview-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-<!-- ═══════════════════ HEADER ═══════════════════ -->
+<!-- HEADER -->
 <header>
   <div class="container header-inner">
-    <a href="#home" style="text-decoration:none">
-      <div class="logo-text">Eco<span>Psy</span></div>
-    </a>
+    <a href="index.html" style="text-decoration:none"><div class="logo-text">Eco<span>Psy</span></div></a>
     <nav>
-      <a href="#progetto" data-lang="it">Il Progetto</a>
-      <a href="#progetto" data-lang="en">The Project</a>
-
-      <a href="#metodo" data-lang="it">Metodo</a>
-      <a href="#metodo" data-lang="en">Methods</a>
-
-      <a href="#team">Team</a>
-
-      <a href="#scuole" data-lang="it">Scuole</a>
-      <a href="#scuole" data-lang="en">Schools</a>
-
-      <a href="#news">News</a>
-
+      <a href="progetto.html" data-lang="it">Il Progetto</a>
+      <a href="progetto.html" data-lang="en">The Project</a>
+      <a href="metodo.html" data-lang="it">Metodo</a>
+      <a href="metodo.html" data-lang="en">Methods</a>
+      <a href="team.html">Team</a>
+      <a href="scuole.html" data-lang="it">Scuole</a>
+      <a href="scuole.html" data-lang="en">Schools</a>
+      <a href="news.html">News</a>
       <button class="lang-btn" onclick="toggleLang(this)">EN</button>
     </nav>
   </div>
 </header>
 
-<!-- ═══════════════════ HERO ═══════════════════ -->
+<!-- HERO -->
 <section id="home">
   <div class="container">
     <div class="hero-inner">
       <div>
         <div class="hero-badge" data-lang="it">Studio in corso · Roma</div>
         <div class="hero-badge" data-lang="en">Active study · Rome</div>
-
         <h1 data-lang="it">Benessere mentale degli adolescenti a Roma</h1>
         <h1 data-lang="en">Adolescent Mental Well-being in Rome</h1>
-
-        <p class="hero-sub" data-lang="it">
-          EcoPsy è il primo grande studio epidemiologico longitudinale sull'esperienza emotiva quotidiana degli adolescenti nell'area metropolitana di Roma, finanziato dal Fondo Italiano per la Scienza (FIS–MUR).
-        </p>
-        <p class="hero-sub" data-lang="en">
-          EcoPsy is the first large-scale longitudinal epidemiological study on daily emotional experiences of adolescents in the metropolitan area of Rome, funded by the Italian Fund for Science (FIS–MUR).
-        </p>
-
+        <p class="hero-sub" data-lang="it">EcoPsy è il primo grande studio epidemiologico longitudinale sull'esperienza emotiva quotidiana degli adolescenti nell'area metropolitana di Roma, finanziato dal Fondo Italiano per la Scienza (FIS–MUR).</p>
+        <p class="hero-sub" data-lang="en">EcoPsy is the first large-scale longitudinal epidemiological study on daily emotional experiences of adolescents in the metropolitan area of Rome, funded by the Italian Fund for Science (FIS–MUR).</p>
         <div class="btn-group">
-          <a href="#progetto" class="btn btn-primary" data-lang="it">Scopri il progetto</a>
-          <a href="#progetto" class="btn btn-primary" data-lang="en">Explore the project</a>
-          <a href="#scuole" class="btn btn-outline" data-lang="it">Info per le scuole</a>
-          <a href="#scuole" class="btn btn-outline" data-lang="en">Info for schools</a>
+          <a href="progetto.html" class="btn btn-hero-primary" data-lang="it">Scopri il progetto</a>
+          <a href="progetto.html" class="btn btn-hero-primary" data-lang="en">Explore the project</a>
+          <a href="scuole.html" class="btn btn-hero-outline" data-lang="it">Info per le scuole</a>
+          <a href="scuole.html" class="btn btn-hero-outline" data-lang="en">Info for schools</a>
         </div>
-
         <div class="hero-logos">
           <img src="assets/logo_torvergata.png" alt="Università di Roma Tor Vergata" />
           <img src="assets/logo_fis.png" alt="FIS – Fondo Italiano per la Scienza" />
         </div>
       </div>
-
       <div class="hero-stats">
         <div class="stat-card">
           <div class="stat-number">15–18k</div>
@@ -425,327 +151,91 @@
   </div>
 </section>
 
-<!-- ═══════════════════ IL PROGETTO ═══════════════════ -->
-<section id="progetto">
+<!-- OVERVIEW -->
+<section style="padding: 80px 0; background: var(--green-pale);">
   <div class="container">
-    <p class="section-label" data-lang="it">Il Progetto</p>
-    <p class="section-label" data-lang="en">The Project</p>
-
-    <h2 data-lang="it">Tre obiettivi per capire la salute mentale giovanile</h2>
-    <h2 data-lang="en">Three objectives to understand youth mental health</h2>
-
-    <p class="section-intro" data-lang="it">
-      EcoPsy integra dati EMA individuali con determinanti socio-ecologici (SEDs) per studiare il benessere mentale degli adolescenti nella città di Roma, combinando neuroscienze, psicologia, ingegneria informatica ed economia urbana.
-    </p>
-    <p class="section-intro" data-lang="en">
-      EcoPsy integrates individual EMA data with socio-ecological determinants (SEDs) to study the mental well-being of adolescents in Rome, combining neuroscience, psychology, computer engineering, and urban economics.
-    </p>
-
-    <div class="objectives-grid">
-      <div class="obj-card">
-        <div class="obj-icon">🗺️</div>
-        <h3 data-lang="it">Mappare il benessere</h3>
-        <h3 data-lang="en">Map well-being</h3>
-        <p data-lang="it">Rilevare la distribuzione del benessere mentale e le sue dinamiche longitudinali tra gli adolescenti romani.</p>
-        <p data-lang="en">Map the distribution of mental well-being and its longitudinal dynamics among adolescents in Rome.</p>
-      </div>
-      <div class="obj-card">
-        <div class="obj-icon">🌍</div>
-        <h3 data-lang="it">Determinanti socio-ecologici</h3>
-        <h3 data-lang="en">Socio-ecological determinants</h3>
-        <p data-lang="it">Studiare il ruolo dei fattori urbani, economici, sociali e climatici sulla salute mentale e sui comportamenti additivi.</p>
-        <p data-lang="en">Study the role of urban, economic, social, and climatic factors on mental health and addictive behaviors.</p>
-      </div>
-      <div class="obj-card">
-        <div class="obj-icon">🤖</div>
-        <h3 data-lang="it">Modello predittivo ML</h3>
-        <h3 data-lang="en">ML predictive model</h3>
-        <p data-lang="it">Sviluppare un modello di Machine Learning per predire il rischio di disagio psichico basato sull'interazione persona–ambiente.</p>
-        <p data-lang="en">Develop a Machine Learning model to predict mental distress risk based on person–environment interactions.</p>
-      </div>
-    </div>
-
-    <div class="design-strip">
-      <div class="design-item">
-        <div class="design-number">14–19</div>
-        <div class="design-desc" data-lang="it">Anni degli studenti partecipanti</div>
-        <div class="design-desc" data-lang="en">Age range of participants</div>
-      </div>
-      <div class="design-item">
-        <div class="design-number">4×</div>
-        <div class="design-desc" data-lang="it">Burst EMA da 10 giorni per anno</div>
-        <div class="design-desc" data-lang="en">10-day EMA bursts per year</div>
-      </div>
-      <div class="design-item">
-        <div class="design-number">18 m</div>
-        <div class="design-desc" data-lang="it">Raccolta dati totale (su 3 anni)</div>
-        <div class="design-desc" data-lang="en">Total data collection (across 3 years)</div>
-      </div>
-      <div class="design-item">
-        <div class="design-number">FIS</div>
-        <div class="design-desc" data-lang="it">Finanziamento MUR – Fondo Italiano per la Scienza</div>
-        <div class="design-desc" data-lang="en">Funded by MUR – Italian Fund for Science</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════════ METODO ═══════════════════ -->
-<section id="metodo">
-  <div class="container">
-    <p class="section-label" data-lang="it">Metodologia</p>
-    <p class="section-label" data-lang="en">Methodology</p>
-
-    <h2 data-lang="it">L'EMA: ascoltare la vita quotidiana in tempo reale</h2>
-    <h2 data-lang="en">EMA: listening to everyday life in real time</h2>
-
-    <div class="method-grid">
-      <div>
-        <div class="phone-row">
-          <div class="phone-wrap"><img src="assets/ema_screen1.png" alt="EMA – notifica" /></div>
-          <div class="phone-wrap"><img src="assets/ema_screen2.png" alt="EMA – umore" /></div>
-          <div class="phone-wrap"><img src="assets/ema_screen3.png" alt="EMA – contesto" /></div>
-          <div class="phone-wrap"><img src="assets/ema_screen4.png" alt="EMA – feedback" /></div>
-        </div>
-      </div>
-
-      <div>
-        <div class="method-steps">
-          <div class="step">
-            <div class="step-dot">1</div>
-            <div>
-              <h4 data-lang="it">Mattina – Diario del sonno</h4>
-              <h4 data-lang="en">Morning – Sleep diary</h4>
-              <p data-lang="it">Qualità e durata del sonno, benessere al risveglio.</p>
-              <p data-lang="en">Sleep quality and duration, well-being at waking.</p>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-dot">2</div>
-            <div>
-              <h4 data-lang="it">Durante il giorno – Micro-questionari</h4>
-              <h4 data-lang="en">During day – Micro-questionnaires</h4>
-              <p data-lang="it">4–5 item su umore, contesto, NSSI, craving, attività fisica. 4–5 rilevazioni/giorno.</p>
-              <p data-lang="en">4–5 items on affect, context, NSSI, craving, physical activity. 4–5 prompts/day.</p>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-dot">3</div>
-            <div>
-              <h4 data-lang="it">Sera – Riassunto del giorno</h4>
-              <h4 data-lang="en">Evening – End-of-day review</h4>
-              <p data-lang="it">Umore, nota vocale, selfie, uso di sostanze.</p>
-              <p data-lang="en">Affect, vocal note, selfie, substance use.</p>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-dot">4</div>
-            <div>
-              <h4 data-lang="it">Dati passivi</h4>
-              <h4 data-lang="en">Passive data</h4>
-              <p data-lang="it">GPS, accelerometro, tempo di schermo, sonno – raccolti in background.</p>
-              <p data-lang="en">GPS, accelerometer, screen time, sleep – collected in background.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="sed-box">
-          <h4 data-lang="it">+ Determinanti Socio-Ecologici (SEDs)</h4>
-          <h4 data-lang="en">+ Socio-Ecological Determinants (SEDs)</h4>
-          <p data-lang="it">I dati EMA vengono integrati con variabili secondarie di contesto urbano: verde urbano, inquinamento, densità abitativa, indici di deprivazione economica, coesione sociale.</p>
-          <p data-lang="en">EMA data are integrated with secondary urban context variables: green spaces, pollution, housing density, economic deprivation indices, social cohesion.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════════ TEAM ═══════════════════ -->
-<section id="team">
-  <div class="container">
-    <p class="section-label">Team</p>
-    <h2 data-lang="it">Ricercatori e collaboratori</h2>
-    <h2 data-lang="en">Researchers and collaborators</h2>
-
-    <p class="section-intro" data-lang="it">
-      Un team multidisciplinare di 8 postdoc e collaboratori istituzionali che unisce psicologia clinica, neuroscienze, ingegneria informatica ed economia urbana.
-    </p>
-    <p class="section-intro" data-lang="en">
-      A multidisciplinary team of 8 postdoctoral researchers and institutional collaborators spanning clinical psychology, neuroscience, computer engineering, and urban economics.
-    </p>
-
-    <div class="team-pi">
-      <div class="pi-avatar">RR</div>
-      <div>
-        <div class="pi-name">Dr. Rodolfo Rossi</div>
-        <div class="pi-role" data-lang="it">Principal Investigator · RTD-A Psicologia Clinica</div>
-        <div class="pi-role" data-lang="en">Principal Investigator · RTD-A Clinical Psychology</div>
-        <div class="pi-affil">Dipartimento di Medicina dei Sistemi – Università di Roma Tor Vergata</div>
-      </div>
-    </div>
-
-    <div class="team-roles">
-      <div class="role-card">
-        <div class="role-icon">🧠</div>
-        <div class="role-title" data-lang="it">Neuroscienze / Psicologia</div>
-        <div class="role-title" data-lang="en">Neuroscience / Psychology</div>
-        <div class="role-count">2 postdoc (NS1, NS2)</div>
-      </div>
-      <div class="role-card">
-        <div class="role-icon">💻</div>
-        <div class="role-title" data-lang="it">Ingegneria Informatica</div>
-        <div class="role-title" data-lang="en">Computer Engineering</div>
-        <div class="role-count">2 postdoc (CE1, CE2)</div>
-      </div>
-      <div class="role-card">
-        <div class="role-icon">🔢</div>
-        <div class="role-title" data-lang="it">Informatica</div>
-        <div class="role-title" data-lang="en">Computer Science</div>
-        <div class="role-count">2 postdoc (IN1, IN2)</div>
-      </div>
-      <div class="role-card">
-        <div class="role-icon">🏙️</div>
-        <div class="role-title" data-lang="it">Economia / Sociologia Urbana</div>
-        <div class="role-title" data-lang="en">Economics / Urban Sociology</div>
-        <div class="role-count">2 postdoc (EC1, EC2)</div>
-      </div>
-    </div>
-
-    <div class="collab-logos">
-      <strong style="font-size:.85rem;color:var(--text-muted);margin-right:8px;" data-lang="it">Partner istituzionali:</strong>
-      <strong style="font-size:.85rem;color:var(--text-muted);margin-right:8px;" data-lang="en">Institutional partners:</strong>
-      <span class="collab-tag">Sapienza – ERRLAB</span>
-      <span class="collab-tag">Università di Ferrara – Digital Computational Psy Lab</span>
-      <span class="collab-tag">Helyra srls</span>
-      <span class="collab-tag" data-lang="it">Comitato Etico Consultivo</span>
-      <span class="collab-tag" data-lang="en">Ethical Advisory Board</span>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════════ SCUOLE ═══════════════════ -->
-<section id="scuole">
-  <div class="container">
-    <p class="section-label" data-lang="it">Per le Scuole</p>
-    <p class="section-label" data-lang="en">For Schools</p>
-
-    <h2 data-lang="it">Partecipare allo studio</h2>
-    <h2 data-lang="en">Joining the study</h2>
-
-    <p class="section-intro" data-lang="it">
-      EcoPsy coinvolge istituti secondari di II grado dell'area metropolitana di Roma. La partecipazione è gratuita e volontaria: offre alla scuola risorse scientifiche e agli studenti un'esperienza autentica di ricerca.
-    </p>
-    <p class="section-intro" data-lang="en">
-      EcoPsy involves upper secondary schools in the metropolitan area of Rome. Participation is free and voluntary, offering schools scientific resources and students an authentic research experience.
-    </p>
-
-    <div class="schools-grid">
-      <div class="school-card">
-        <h3 data-lang="it">Come funziona la partecipazione</h3>
-        <h3 data-lang="en">How participation works</h3>
-        <p data-lang="it">Dopo l'approvazione del Collegio Docenti, gli studenti di classi selezionate vengono invitati a partecipare. È richiesto il consenso informato di genitori e studenti. I dati sono anonimi e gestiti nel rispetto del GDPR.</p>
-        <p data-lang="en">After approval by the faculty council, students from selected classes are invited to participate. Informed consent is required from both parents and students. Data are anonymous and handled in compliance with GDPR.</p>
-        <ul>
-          <li data-lang="it">Approvazione in Collegio Docenti</li>
-          <li data-lang="en">Approval by the faculty council</li>
-          <li data-lang="it">Consenso informato (genitori + studenti)</li>
-          <li data-lang="en">Informed consent (parents + students)</li>
-          <li data-lang="it">App su smartphone personale</li>
-          <li data-lang="en">App on personal smartphone</li>
-          <li data-lang="it">4 burst EMA da 10 giorni/anno</li>
-          <li data-lang="en">4 EMA bursts of 10 days/year</li>
-        </ul>
-      </div>
-      <div class="school-card">
-        <h3 data-lang="it">EcoPsy Lab – PCTO / Scuola-Lavoro</h3>
-        <h3 data-lang="en">EcoPsy Lab – School-to-Work Program</h3>
-        <p data-lang="it">Offriamo un percorso PCTO strutturato: <strong>"EcoPsy Lab"</strong> introduce gli studenti alla ricerca epidemiologica con 4 sessioni da 2 ore in università + studio autonomo. Un'opportunità unica di orientamento scientifico.</p>
-        <p data-lang="en">We offer a structured PCTO (school-to-work) program: <strong>"EcoPsy Lab"</strong> introduces students to epidemiological research with 4 × 2-hour sessions at the university + independent study — a unique scientific orientation opportunity.</p>
-      </div>
-    </div>
-
-    <div class="contact-box">
-      <div>
-        <h3 data-lang="it">La tua scuola vuole partecipare?</h3>
-        <h3 data-lang="en">Does your school want to join?</h3>
-        <p data-lang="it">Contattaci per ricevere la documentazione informativa e avviare la procedura di adesione.</p>
-        <p data-lang="en">Contact us to receive the information package and start the joining process.</p>
-      </div>
-      <a href="mailto:rudy86.rossi@gmail.com" class="btn">
-        <span data-lang="it">Scrivici</span>
-        <span data-lang="en">Get in touch</span>
+    <p class="section-label" data-lang="it">Esplora il progetto</p>
+    <p class="section-label" data-lang="en">Explore the project</p>
+    <h2 data-lang="it">Tutto su EcoPsy</h2>
+    <h2 data-lang="en">Everything about EcoPsy</h2>
+    <div class="overview-grid">
+      <a href="progetto.html" class="ov-card">
+        <div class="ov-icon">🗺️</div>
+        <h3 data-lang="it">Il Progetto</h3>
+        <h3 data-lang="en">The Project</h3>
+        <p data-lang="it">Obiettivi, disegno dello studio e finanziamento FIS–MUR.</p>
+        <p data-lang="en">Objectives, study design, and FIS–MUR funding.</p>
+        <span class="ov-link" data-lang="it">Scopri di più →</span>
+        <span class="ov-link" data-lang="en">Learn more →</span>
+      </a>
+      <a href="metodo.html" class="ov-card">
+        <div class="ov-icon">📱</div>
+        <h3 data-lang="it">Metodo</h3>
+        <h3 data-lang="en">Methods</h3>
+        <p data-lang="it">Come funziona l'EMA e i determinanti socio-ecologici.</p>
+        <p data-lang="en">How EMA works and the socio-ecological determinants.</p>
+        <span class="ov-link" data-lang="it">Scopri di più →</span>
+        <span class="ov-link" data-lang="en">Learn more →</span>
+      </a>
+      <a href="team.html" class="ov-card">
+        <div class="ov-icon">👥</div>
+        <h3>Team</h3>
+        <p data-lang="it">PI, postdoc e partner istituzionali del progetto.</p>
+        <p data-lang="en">PI, postdocs, and institutional partners.</p>
+        <span class="ov-link" data-lang="it">Scopri di più →</span>
+        <span class="ov-link" data-lang="en">Learn more →</span>
+      </a>
+      <a href="scuole.html" class="ov-card">
+        <div class="ov-icon">🏫</div>
+        <h3 data-lang="it">Per le Scuole</h3>
+        <h3 data-lang="en">For Schools</h3>
+        <p data-lang="it">Come aderire allo studio e il programma PCTO EcoPsy Lab.</p>
+        <p data-lang="en">How to join the study and the EcoPsy Lab program.</p>
+        <span class="ov-link" data-lang="it">Scopri di più →</span>
+        <span class="ov-link" data-lang="en">Learn more →</span>
+      </a>
+      <a href="news.html" class="ov-card">
+        <div class="ov-icon">📰</div>
+        <h3>News</h3>
+        <p data-lang="it">Aggiornamenti, eventi e progressi del progetto.</p>
+        <p data-lang="en">Updates, events, and project milestones.</p>
+        <span class="ov-link" data-lang="it">Leggi le news →</span>
+        <span class="ov-link" data-lang="en">Read news →</span>
+      </a>
+      <a href="mailto:rudy86.rossi@gmail.com" class="ov-card">
+        <div class="ov-icon">✉️</div>
+        <h3 data-lang="it">Contatti</h3>
+        <h3 data-lang="en">Contact</h3>
+        <p data-lang="it">Per informazioni, collaborazioni o richieste di adesione.</p>
+        <p data-lang="en">For information, collaborations, or joining requests.</p>
+        <span class="ov-link">rudy86.rossi@gmail.com →</span>
       </a>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════ NEWS ═══════════════════ -->
-<section id="news">
-  <div class="container">
-    <p class="section-label">News</p>
-    <h2 data-lang="it">Aggiornamenti dal progetto</h2>
-    <h2 data-lang="en">Project updates</h2>
-
-    <div class="news-grid">
-      <div class="news-card">
-        <div class="news-body">
-          <span class="news-tag" data-lang="it">Avvio progetto</span>
-          <span class="news-tag" data-lang="en">Project launch</span>
-          <div class="news-date">2026</div>
-          <h3 data-lang="it">EcoPsy ottiene il finanziamento FIS–MUR</h3>
-          <h3 data-lang="en">EcoPsy awarded FIS–MUR funding</h3>
-          <p data-lang="it">Il progetto EcoPsy è stato selezionato e finanziato dal Fondo Italiano per la Scienza del Ministero dell'Università e della Ricerca.</p>
-          <p data-lang="en">EcoPsy has been selected and funded by the Italian Fund for Science of the Ministry of University and Research.</p>
-        </div>
-      </div>
-      <div class="news-card">
-        <div class="news-body">
-          <span class="news-tag" data-lang="it">Reclutamento</span>
-          <span class="news-tag" data-lang="en">Recruitment</span>
-          <div class="news-date">2026</div>
-          <h3 data-lang="it">Oltre 19 scuole hanno aderito allo studio</h3>
-          <h3 data-lang="en">Over 19 schools have joined the study</h3>
-          <p data-lang="it">Il reclutamento delle scuole nell'area metropolitana di Roma prosegue con successo. Le prime manifestazioni di interesse formali sono già pervenute.</p>
-          <p data-lang="en">School recruitment in the metropolitan area of Rome is progressing successfully, with formal letters of interest already received.</p>
-        </div>
-      </div>
-      <div class="news-card">
-        <div class="news-body">
-          <span class="news-tag" data-lang="it">Comitato Etico</span>
-          <span class="news-tag" data-lang="en">Ethics Committee</span>
-          <div class="news-date">Febbraio 2026</div>
-          <h3 data-lang="it">Sottomissione al Comitato Etico</h3>
-          <h3 data-lang="en">Ethics Committee submission</h3>
-          <p data-lang="it">Tutta la documentazione è stata sottomessa al Comitato Etico in data 05/02/2026, inclusi protocollo, consensi informati e informativa privacy.</p>
-          <p data-lang="en">All documentation was submitted to the Ethics Committee on 05/02/2026, including protocol, informed consents, and privacy notices.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════════ FOOTER ═══════════════════ -->
+<!-- FOOTER -->
 <footer>
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
         <div class="logo-text">Eco<span style="color:#6fe0a0">Psy</span></div>
-        <p data-lang="it">Primo studio epidemiologico longitudinale sul benessere mentale degli adolescenti nell'area metropolitana di Roma.<br />Finanziato da FIS – MUR (3 anni).</p>
-        <p data-lang="en">First large-scale longitudinal epidemiological study on adolescent mental well-being in the metropolitan area of Rome.<br />Funded by FIS – MUR (3 years).</p>
+        <p data-lang="it">Primo studio epidemiologico longitudinale sul benessere mentale degli adolescenti nell'area metropolitana di Roma. Finanziato da FIS – MUR (3 anni).</p>
+        <p data-lang="en">First large-scale longitudinal epidemiological study on adolescent mental well-being in Rome. Funded by FIS – MUR (3 years).</p>
         <div class="footer-logos">
           <img src="assets/logo_torvergata.png" alt="Tor Vergata" />
           <img src="assets/logo_fis.png" alt="FIS" />
         </div>
       </div>
       <div>
-        <h4 data-lang="it">Navigazione</h4>
-        <h4 data-lang="en">Navigation</h4>
+        <h4 data-lang="it">Pagine</h4>
+        <h4 data-lang="en">Pages</h4>
         <ul>
-          <li><a href="#progetto" data-lang="it">Il Progetto</a><a href="#progetto" data-lang="en">The Project</a></li>
-          <li><a href="#metodo" data-lang="it">Metodo</a><a href="#metodo" data-lang="en">Methods</a></li>
-          <li><a href="#team">Team</a></li>
-          <li><a href="#scuole" data-lang="it">Scuole</a><a href="#scuole" data-lang="en">Schools</a></li>
-          <li><a href="#news">News</a></li>
+          <li><a href="progetto.html" data-lang="it">Il Progetto</a><a href="progetto.html" data-lang="en">The Project</a></li>
+          <li><a href="metodo.html" data-lang="it">Metodo</a><a href="metodo.html" data-lang="en">Methods</a></li>
+          <li><a href="team.html">Team</a></li>
+          <li><a href="scuole.html" data-lang="it">Scuole</a><a href="scuole.html" data-lang="en">Schools</a></li>
+          <li><a href="news.html">News</a></li>
         </ul>
       </div>
       <div>
@@ -767,7 +257,6 @@
   </div>
 </footer>
 
-<!-- ═══════════════════ JS ═══════════════════ -->
 <script>
   function toggleLang(btn) {
     const isEN = document.body.classList.toggle('lang-en');
@@ -775,6 +264,5 @@
     document.documentElement.lang = isEN ? 'en' : 'it';
   }
 </script>
-
 </body>
 </html>

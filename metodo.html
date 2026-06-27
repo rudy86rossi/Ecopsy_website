@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Metodo – EcoPsy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .phone-row { display: flex; gap: 16px; justify-content: center; margin-bottom: 48px; }
+    .phone-wrap {
+      border-radius: 18px; overflow: hidden;
+      border: 3px solid var(--green-pale);
+      box-shadow: 0 8px 32px rgba(0,0,0,.12);
+      flex: 1; max-width: 200px;
+    }
+    .phone-wrap img { width: 100%; }
+    .phone-label { text-align: center; font-size: .78rem; color: var(--text-muted); margin-top: 8px; font-weight: 500; }
+
+    .steps-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 48px; }
+    .step-card {
+      background: var(--white); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 24px; box-shadow: var(--shadow);
+      display: flex; gap: 16px;
+    }
+    .step-dot {
+      min-width: 40px; height: 40px; border-radius: 50%;
+      background: var(--green-dark); color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .85rem; font-weight: 700; flex-shrink: 0;
+    }
+    .step-card h4 { font-size: .95rem; font-weight: 600; color: var(--green-dark); margin-bottom: 6px; }
+    .step-card p { font-size: .88rem; color: var(--text-muted); }
+
+    .sed-section { margin-top: 48px; }
+    .sed-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .sed-card {
+      background: var(--white); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 22px; box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .sed-icon { font-size: 2rem; margin-bottom: 10px; }
+    .sed-card h4 { font-size: .9rem; font-weight: 600; color: var(--green-dark); margin-bottom: 6px; }
+    .sed-card p { font-size: .82rem; color: var(--text-muted); }
+
+    .passive-box {
+      margin-top: 40px; background: var(--green-dark); border-radius: var(--radius);
+      padding: 32px 36px; color: var(--white);
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; text-align: center;
+    }
+    .passive-item .pi-icon { font-size: 2rem; margin-bottom: 8px; }
+    .passive-item h4 { font-size: .9rem; font-weight: 600; margin-bottom: 4px; }
+    .passive-item p { font-size: .8rem; color: rgba(255,255,255,.65); }
+
+    @media (max-width: 900px) {
+      .steps-grid, .sed-grid { grid-template-columns: 1fr; }
+      .passive-box { grid-template-columns: 1fr 1fr; }
+      .phone-row { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="container header-inner">
+    <a href="index.html" style="text-decoration:none"><div class="logo-text">Eco<span>Psy</span></div></a>
+    <nav>
+      <a href="progetto.html" data-lang="it">Il Progetto</a>
+      <a href="progetto.html" data-lang="en">The Project</a>
+      <a href="metodo.html" class="active" data-lang="it">Metodo</a>
+      <a href="metodo.html" class="active" data-lang="en">Methods</a>
+      <a href="team.html">Team</a>
+      <a href="scuole.html" data-lang="it">Scuole</a>
+      <a href="scuole.html" data-lang="en">Schools</a>
+      <a href="news.html">News</a>
+      <button class="lang-btn" onclick="toggleLang(this)">EN</button>
+    </nav>
+  </div>
+</header>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="container">
+    <p class="section-label" data-lang="it">Metodologia</p>
+    <p class="section-label" data-lang="en">Methodology</p>
+    <h1 data-lang="it">L'EMA: ascoltare la vita quotidiana in tempo reale</h1>
+    <h1 data-lang="en">EMA: listening to everyday life in real time</h1>
+    <p data-lang="it">La Valutazione Ecologica Momentanea (EMA) cattura emozioni, comportamenti e contesti multipli volte al giorno, direttamente nella vita di tutti i giorni degli adolescenti.</p>
+    <p data-lang="en">Ecological Momentary Assessment (EMA) captures emotions, behaviors, and contexts multiple times per day, directly in adolescents' everyday lives.</p>
+  </div>
+</div>
+
+<!-- SCHERMATE EMA -->
+<section>
+  <div class="container">
+    <p class="section-label" data-lang="it">L'app EMA</p>
+    <p class="section-label" data-lang="en">The EMA app</p>
+    <h2 data-lang="it">Quattro momenti di raccolta al giorno</h2>
+    <h2 data-lang="en">Four collection moments per day</h2>
+    <p class="section-intro" data-lang="it">L'app invia notifiche in momenti casuali della giornata. Ogni risposta richiede meno di 2 minuti.</p>
+    <p class="section-intro" data-lang="en">The app sends notifications at random times during the day. Each response takes less than 2 minutes.</p>
+
+    <div class="phone-row">
+      <div>
+        <div class="phone-wrap"><img src="assets/ema_screen1.png" alt="EMA – notifica" /></div>
+        <p class="phone-label" data-lang="it">Notifica</p>
+        <p class="phone-label" data-lang="en">Notification</p>
+      </div>
+      <div>
+        <div class="phone-wrap"><img src="assets/ema_screen2.png" alt="EMA – umore" /></div>
+        <p class="phone-label" data-lang="it">Umore</p>
+        <p class="phone-label" data-lang="en">Mood</p>
+      </div>
+      <div>
+        <div class="phone-wrap"><img src="assets/ema_screen3.png" alt="EMA – contesto" /></div>
+        <p class="phone-label" data-lang="it">Contesto</p>
+        <p class="phone-label" data-lang="en">Context</p>
+      </div>
+      <div>
+        <div class="phone-wrap"><img src="assets/ema_screen4.png" alt="EMA – feedback" /></div>
+        <p class="phone-label" data-lang="it">Feedback</p>
+        <p class="phone-label" data-lang="en">Feedback</p>
+      </div>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-dot">☀️</div>
+        <div>
+          <h4 data-lang="it">Mattina – Diario del sonno</h4>
+          <h4 data-lang="en">Morning – Sleep diary</h4>
+          <p data-lang="it">Qualità e durata del sonno, umore al risveglio, sensazione di riposo.</p>
+          <p data-lang="en">Sleep quality and duration, morning mood, sense of rest.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-dot">📱</div>
+        <div>
+          <h4 data-lang="it">Durante il giorno – Micro-questionari (4–5×)</h4>
+          <h4 data-lang="en">During day – Micro-questionnaires (4–5×)</h4>
+          <p data-lang="it">Umore, contesto sociale e fisico, NSSI, craving, attività fisica. 4–5 item per prompt.</p>
+          <p data-lang="en">Mood, social and physical context, NSSI, craving, physical activity. 4–5 items per prompt.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-dot">🌙</div>
+        <div>
+          <h4 data-lang="it">Sera – Fine giornata</h4>
+          <h4 data-lang="en">Evening – End-of-day</h4>
+          <p data-lang="it">Umore serale, nota vocale, selfie, uso di sostanze, eventi della giornata.</p>
+          <p data-lang="en">Evening mood, vocal note, selfie, substance use, events of the day.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-dot">📊</div>
+        <div>
+          <h4 data-lang="it">Disegno: 4 burst × 10 giorni</h4>
+          <h4 data-lang="en">Design: 4 bursts × 10 days</h4>
+          <p data-lang="it">4 periodi di raccolta intensiva per anno, ripetuti per 3 anni. In totale ~18 mesi di dati.</p>
+          <p data-lang="en">4 intensive collection periods per year, repeated for 3 years. ~18 months of data in total.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="passive-box">
+      <div class="passive-item">
+        <div class="pi-icon">📍</div>
+        <h4>GPS</h4>
+        <p data-lang="it">Posizione e mobilità nel territorio</p>
+        <p data-lang="en">Position and mobility across territory</p>
+      </div>
+      <div class="passive-item">
+        <div class="pi-icon">🏃</div>
+        <h4 data-lang="it">Accelerometro</h4>
+        <h4 data-lang="en">Accelerometer</h4>
+        <p data-lang="it">Attività fisica e movimento</p>
+        <p data-lang="en">Physical activity and movement</p>
+      </div>
+      <div class="passive-item">
+        <div class="pi-icon">📲</div>
+        <h4 data-lang="it">Tempo di schermo</h4>
+        <h4 data-lang="en">Screen time</h4>
+        <p data-lang="it">Uso del telefono e social media</p>
+        <p data-lang="en">Phone and social media use</p>
+      </div>
+      <div class="passive-item">
+        <div class="pi-icon">💤</div>
+        <h4 data-lang="it">Sonno passivo</h4>
+        <h4 data-lang="en">Passive sleep</h4>
+        <p data-lang="it">Qualità e durata del sonno da sensori</p>
+        <p data-lang="en">Sleep quality and duration from sensors</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SEDs -->
+<section class="alt">
+  <div class="container">
+    <p class="section-label" data-lang="it">Determinanti socio-ecologici</p>
+    <p class="section-label" data-lang="en">Socio-ecological determinants</p>
+    <h2 data-lang="it">Il contesto urbano conta</h2>
+    <h2 data-lang="en">Urban context matters</h2>
+    <p class="section-intro" data-lang="it">I dati EMA individuali vengono integrati con variabili secondarie di contesto per studiare come l'ambiente urbano influenza la salute mentale.</p>
+    <p class="section-intro" data-lang="en">Individual EMA data are integrated with secondary context variables to study how the urban environment influences mental health.</p>
+
+    <div class="sed-grid">
+      <div class="sed-card">
+        <div class="sed-icon">🌳</div>
+        <h4 data-lang="it">Verde urbano</h4>
+        <h4 data-lang="en">Urban green spaces</h4>
+        <p data-lang="it">Parchi, aree verdi, NDVI per zona di residenza.</p>
+        <p data-lang="en">Parks, green areas, NDVI by residential zone.</p>
+      </div>
+      <div class="sed-card">
+        <div class="sed-icon">🏭</div>
+        <h4 data-lang="it">Inquinamento</h4>
+        <h4 data-lang="en">Pollution</h4>
+        <p data-lang="it">Qualità dell'aria, rumore, inquinamento luminoso.</p>
+        <p data-lang="en">Air quality, noise, light pollution.</p>
+      </div>
+      <div class="sed-card">
+        <div class="sed-icon">🏘️</div>
+        <h4 data-lang="it">Densità abitativa</h4>
+        <h4 data-lang="en">Housing density</h4>
+        <p data-lang="it">Caratteristiche del quartiere e dell'ambiente costruito.</p>
+        <p data-lang="en">Neighborhood and built environment characteristics.</p>
+      </div>
+      <div class="sed-card">
+        <div class="sed-icon">💶</div>
+        <h4 data-lang="it">Deprivazione economica</h4>
+        <h4 data-lang="en">Economic deprivation</h4>
+        <p data-lang="it">Indici di reddito, disoccupazione e povertà per area.</p>
+        <p data-lang="en">Income, unemployment, and poverty indices by area.</p>
+      </div>
+      <div class="sed-card">
+        <div class="sed-icon">🤝</div>
+        <h4 data-lang="it">Coesione sociale</h4>
+        <h4 data-lang="en">Social cohesion</h4>
+        <p data-lang="it">Senso di comunità, reti sociali, fiducia interpersonale.</p>
+        <p data-lang="en">Sense of community, social networks, interpersonal trust.</p>
+      </div>
+      <div class="sed-card">
+        <div class="sed-icon">🌡️</div>
+        <h4 data-lang="it">Fattori climatici</h4>
+        <h4 data-lang="en">Climatic factors</h4>
+        <p data-lang="it">Temperatura, umidità, eventi climatici estremi.</p>
+        <p data-lang="en">Temperature, humidity, extreme weather events.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo-text">Eco<span style="color:#6fe0a0">Psy</span></div>
+        <p data-lang="it">Primo studio epidemiologico longitudinale sul benessere mentale degli adolescenti nell'area metropolitana di Roma. Finanziato da FIS – MUR (3 anni).</p>
+        <p data-lang="en">First large-scale longitudinal study on adolescent mental well-being in Rome. Funded by FIS – MUR (3 years).</p>
+        <div class="footer-logos">
+          <img src="assets/logo_torvergata.png" alt="Tor Vergata" />
+          <img src="assets/logo_fis.png" alt="FIS" />
+        </div>
+      </div>
+      <div>
+        <h4 data-lang="it">Pagine</h4><h4 data-lang="en">Pages</h4>
+        <ul>
+          <li><a href="progetto.html" data-lang="it">Il Progetto</a><a href="progetto.html" data-lang="en">The Project</a></li>
+          <li><a href="metodo.html" data-lang="it">Metodo</a><a href="metodo.html" data-lang="en">Methods</a></li>
+          <li><a href="team.html">Team</a></li>
+          <li><a href="scuole.html" data-lang="it">Scuole</a><a href="scuole.html" data-lang="en">Schools</a></li>
+          <li><a href="news.html">News</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 data-lang="it">Contatti</h4><h4 data-lang="en">Contact</h4>
+        <ul>
+          <li>Dr. Rodolfo Rossi</li>
+          <li><a href="mailto:rudy86.rossi@gmail.com">rudy86.rossi@gmail.com</a></li>
+          <li style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.4)" data-lang="it">Dipartimento di Medicina dei Sistemi<br />Università di Roma Tor Vergata</li>
+          <li style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.4)" data-lang="en">Department of Systems Medicine<br />University of Rome Tor Vergata</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 EcoPsy – Università di Roma Tor Vergata</span>
+      <span data-lang="it">Progetto finanziato da FIS – Fondo Italiano per la Scienza, MUR</span>
+      <span data-lang="en">Project funded by FIS – Italian Fund for Science, MUR</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function toggleLang(btn) {
+    const isEN = document.body.classList.toggle('lang-en');
+    btn.textContent = isEN ? 'IT' : 'EN';
+    document.documentElement.lang = isEN ? 'en' : 'it';
+  }
+</script>
+</body>
+</html>

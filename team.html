@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team – EcoPsy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .pi-card {
+      display: flex; gap: 32px; align-items: center;
+      background: var(--white); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 36px;
+      box-shadow: var(--shadow); margin-bottom: 48px;
+    }
+    .pi-avatar {
+      width: 110px; height: 110px; border-radius: 50%;
+      background: var(--green-dark); display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem; color: var(--white); flex-shrink: 0; font-weight: 700;
+    }
+    .pi-name { font-size: 1.4rem; font-weight: 700; color: var(--green-dark); }
+    .pi-role { font-size: .9rem; color: var(--text-muted); margin-top: 4px; }
+    .pi-affil { font-size: .88rem; color: var(--green-mid); margin-top: 4px; font-weight: 500; }
+    .pi-bio { font-size: .9rem; color: var(--text-muted); margin-top: 12px; line-height: 1.6; }
+
+    .team-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 48px; }
+    .team-card {
+      background: var(--white); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 24px; box-shadow: var(--shadow); text-align: center;
+    }
+    .team-avatar {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: var(--green-pale); border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; margin: 0 auto 12px;
+    }
+    .team-card .name { font-size: .9rem; font-weight: 600; color: var(--green-dark); }
+    .team-card .discipline {
+      display: inline-block; background: var(--green-pale); color: var(--green-mid);
+      font-size: .72rem; font-weight: 700; padding: 3px 10px; border-radius: 12px;
+      margin: 6px 0; text-transform: uppercase; letter-spacing: .4px;
+    }
+
+    .collab-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .collab-card {
+      background: var(--white); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 24px; box-shadow: var(--shadow);
+    }
+    .collab-card h4 { font-size: .95rem; font-weight: 600; color: var(--green-dark); margin-bottom: 6px; }
+    .collab-card p { font-size: .85rem; color: var(--text-muted); }
+    .collab-badge {
+      display: inline-block; background: var(--green-pale); color: var(--green-mid);
+      font-size: .72rem; font-weight: 700; padding: 3px 10px; border-radius: 12px;
+      margin-bottom: 10px; text-transform: uppercase; letter-spacing: .4px;
+    }
+
+    @media (max-width: 900px) {
+      .pi-card { flex-direction: column; text-align: center; }
+      .team-grid { grid-template-columns: 1fr 1fr; }
+      .collab-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="container header-inner">
+    <a href="index.html" style="text-decoration:none"><div class="logo-text">Eco<span>Psy</span></div></a>
+    <nav>
+      <a href="progetto.html" data-lang="it">Il Progetto</a>
+      <a href="progetto.html" data-lang="en">The Project</a>
+      <a href="metodo.html" data-lang="it">Metodo</a>
+      <a href="metodo.html" data-lang="en">Methods</a>
+      <a href="team.html" class="active">Team</a>
+      <a href="scuole.html" data-lang="it">Scuole</a>
+      <a href="scuole.html" data-lang="en">Schools</a>
+      <a href="news.html">News</a>
+      <button class="lang-btn" onclick="toggleLang(this)">EN</button>
+    </nav>
+  </div>
+</header>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="container">
+    <p class="section-label">Team</p>
+    <h1 data-lang="it">Ricercatori e collaboratori</h1>
+    <h1 data-lang="en">Researchers and collaborators</h1>
+    <p data-lang="it">Un team multidisciplinare che unisce psicologia clinica, neuroscienze, ingegneria informatica ed economia urbana.</p>
+    <p data-lang="en">A multidisciplinary team combining clinical psychology, neuroscience, computer engineering, and urban economics.</p>
+  </div>
+</div>
+
+<!-- PI -->
+<section>
+  <div class="container">
+    <p class="section-label" data-lang="it">Principal Investigator</p>
+    <p class="section-label" data-lang="en">Principal Investigator</p>
+    <div class="pi-card">
+      <div class="pi-avatar">RR</div>
+      <div>
+        <div class="pi-name">Dr. Rodolfo Rossi</div>
+        <div class="pi-role" data-lang="it">RTD-A in Psicologia Clinica</div>
+        <div class="pi-role" data-lang="en">RTD-A in Clinical Psychology</div>
+        <div class="pi-affil">Dipartimento di Medicina dei Sistemi – Università di Roma Tor Vergata</div>
+        <p class="pi-bio" data-lang="it">Responsabile scientifico del progetto EcoPsy. Le sue ricerche si focalizzano sull'epidemiologia della salute mentale, sui metodi EMA e sulle interazioni persona–ambiente nei disturbi psicopatologici.</p>
+        <p class="pi-bio" data-lang="en">Scientific leader of the EcoPsy project. His research focuses on mental health epidemiology, EMA methods, and person–environment interactions in psychopathological disorders.</p>
+      </div>
+    </div>
+
+    <p class="section-label" data-lang="it">Postdoc e ricercatori</p>
+    <p class="section-label" data-lang="en">Postdocs and researchers</p>
+    <h2 data-lang="it">Il team di ricerca (8 postdoc)</h2>
+    <h2 data-lang="en">The research team (8 postdocs)</h2>
+    <p class="section-intro" data-lang="it">Quattro aree disciplinari, due postdoc ciascuna — da neuroscienze a economia urbana.</p>
+    <p class="section-intro" data-lang="en">Four disciplinary areas, two postdocs each — from neuroscience to urban economics.</p>
+
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-avatar">🧠</div>
+        <div class="name">NS1</div>
+        <div class="discipline" data-lang="it">Neuroscienze</div>
+        <div class="discipline" data-lang="en">Neuroscience</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">🧠</div>
+        <div class="name">NS2</div>
+        <div class="discipline" data-lang="it">Psicologia</div>
+        <div class="discipline" data-lang="en">Psychology</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">💻</div>
+        <div class="name">CE1</div>
+        <div class="discipline" data-lang="it">Ing. Informatica</div>
+        <div class="discipline" data-lang="en">Computer Eng.</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">💻</div>
+        <div class="name">CE2</div>
+        <div class="discipline" data-lang="it">Ing. Informatica</div>
+        <div class="discipline" data-lang="en">Computer Eng.</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">🔢</div>
+        <div class="name">IN1</div>
+        <div class="discipline" data-lang="it">Informatica</div>
+        <div class="discipline" data-lang="en">Computer Science</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">🔢</div>
+        <div class="name">IN2</div>
+        <div class="discipline" data-lang="it">Informatica</div>
+        <div class="discipline" data-lang="en">Computer Science</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">🏙️</div>
+        <div class="name">EC1</div>
+        <div class="discipline" data-lang="it">Economia</div>
+        <div class="discipline" data-lang="en">Economics</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">🏙️</div>
+        <div class="name">EC2</div>
+        <div class="discipline" data-lang="it">Sociologia Urbana</div>
+        <div class="discipline" data-lang="en">Urban Sociology</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COLLABORATORI -->
+<section class="alt">
+  <div class="container">
+    <p class="section-label" data-lang="it">Partner istituzionali</p>
+    <p class="section-label" data-lang="en">Institutional partners</p>
+    <h2 data-lang="it">Collaborazioni e advisory</h2>
+    <h2 data-lang="en">Collaborations and advisory</h2>
+    <div class="collab-grid">
+      <div class="collab-card">
+        <span class="collab-badge" data-lang="it">Convenzione firmata</span>
+        <span class="collab-badge" data-lang="en">Signed agreement</span>
+        <h4 data-lang="it">Sapienza – ERRLAB</h4>
+        <h4 data-lang="en">Sapienza – ERRLAB</h4>
+        <p data-lang="it">Dept. Psicologia Dinamica Clinica e Salute.<br />Referente: Prof. Anna Maria Speranza.</p>
+        <p data-lang="en">Dept. of Dynamic Clinical Psychology and Health.<br />Contact: Prof. Anna Maria Speranza.</p>
+      </div>
+      <div class="collab-card">
+        <span class="collab-badge" data-lang="it">In definizione</span>
+        <span class="collab-badge" data-lang="en">In progress</span>
+        <h4 data-lang="it">Università di Ferrara</h4>
+        <h4 data-lang="en">University of Ferrara</h4>
+        <p data-lang="it">Digital Computational Psy Lab. Collaborazione per analisi computazionali e Machine Learning.</p>
+        <p data-lang="en">Digital Computational Psy Lab. Collaboration for computational analyses and Machine Learning.</p>
+      </div>
+      <div class="collab-card">
+        <span class="collab-badge">App EMA</span>
+        <h4>Helyra srls</h4>
+        <p data-lang="it">Sviluppo dell'app per la raccolta dati EMA attiva e passiva su smartphone.</p>
+        <p data-lang="en">Development of the smartphone app for active and passive EMA data collection.</p>
+      </div>
+      <div class="collab-card">
+        <span class="collab-badge" data-lang="it">Advisory</span>
+        <span class="collab-badge" data-lang="en">Advisory</span>
+        <h4 data-lang="it">Comitato Etico Consultivo (EAB)</h4>
+        <h4 data-lang="en">Ethical Advisory Board (EAB)</h4>
+        <p data-lang="it">Supervisione etica indipendente dello studio, protezione dei partecipanti minorenni.</p>
+        <p data-lang="en">Independent ethical supervision of the study, protection of minor participants.</p>
+      </div>
+      <div class="collab-card">
+        <span class="collab-badge" data-lang="it">Comunicazione</span>
+        <span class="collab-badge" data-lang="en">Communication</span>
+        <h4 data-lang="it">Social Media</h4>
+        <h4 data-lang="en">Social Media</h4>
+        <p data-lang="it">Ilaria Boccanera – Gestione della comunicazione social e divulgazione del progetto.</p>
+        <p data-lang="en">Ilaria Boccanera – Social media management and project outreach.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo-text">Eco<span style="color:#6fe0a0">Psy</span></div>
+        <p data-lang="it">Primo studio epidemiologico longitudinale sul benessere mentale degli adolescenti nell'area metropolitana di Roma. Finanziato da FIS – MUR (3 anni).</p>
+        <p data-lang="en">First large-scale longitudinal study on adolescent mental well-being in Rome. Funded by FIS – MUR (3 years).</p>
+        <div class="footer-logos">
+          <img src="assets/logo_torvergata.png" alt="Tor Vergata" />
+          <img src="assets/logo_fis.png" alt="FIS" />
+        </div>
+      </div>
+      <div>
+        <h4 data-lang="it">Pagine</h4><h4 data-lang="en">Pages</h4>
+        <ul>
+          <li><a href="progetto.html" data-lang="it">Il Progetto</a><a href="progetto.html" data-lang="en">The Project</a></li>
+          <li><a href="metodo.html" data-lang="it">Metodo</a><a href="metodo.html" data-lang="en">Methods</a></li>
+          <li><a href="team.html">Team</a></li>
+          <li><a href="scuole.html" data-lang="it">Scuole</a><a href="scuole.html" data-lang="en">Schools</a></li>
+          <li><a href="news.html">News</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 data-lang="it">Contatti</h4><h4 data-lang="en">Contact</h4>
+        <ul>
+          <li>Dr. Rodolfo Rossi</li>
+          <li><a href="mailto:rudy86.rossi@gmail.com">rudy86.rossi@gmail.com</a></li>
+          <li style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.4)" data-lang="it">Dipartimento di Medicina dei Sistemi<br />Università di Roma Tor Vergata</li>
+          <li style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.4)" data-lang="en">Department of Systems Medicine<br />University of Rome Tor Vergata</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 EcoPsy – Università di Roma Tor Vergata</span>
+      <span data-lang="it">Progetto finanziato da FIS – Fondo Italiano per la Scienza, MUR</span>
+      <span data-lang="en">Project funded by FIS – Italian Fund for Science, MUR</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function toggleLang(btn) {
+    const isEN = document.body.classList.toggle('lang-en');
+    btn.textContent = isEN ? 'IT' : 'EN';
+    document.documentElement.lang = isEN ? 'en' : 'it';
+  }
+</script>
+</body>
+</html>

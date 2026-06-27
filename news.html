@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>News – EcoPsy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .news-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .news-card {
+      background: var(--white); border-radius: var(--radius);
+      border: 1px solid var(--border); overflow: hidden;
+      box-shadow: var(--shadow); transition: transform .2s;
+    }
+    .news-card:hover { transform: translateY(-4px); }
+    .news-body { padding: 24px; }
+    .news-tag {
+      display: inline-block; padding: 4px 12px; border-radius: 20px;
+      font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+      background: var(--green-pale); color: var(--green-mid); margin-bottom: 10px;
+    }
+    .news-date { font-size: .78rem; color: var(--text-muted); margin-bottom: 6px; }
+    .news-card h3 { font-size: .97rem; font-weight: 600; color: var(--green-dark); margin-bottom: 8px; line-height: 1.4; }
+    .news-card p { font-size: .87rem; color: var(--text-muted); }
+
+    .news-featured {
+      grid-column: 1 / -1;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: center;
+      padding: 32px;
+    }
+    .news-featured h3 { font-size: 1.2rem; }
+    .news-featured p { font-size: .95rem; }
+
+    @media (max-width: 900px) {
+      .news-grid { grid-template-columns: 1fr; }
+      .news-featured { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="container header-inner">
+    <a href="index.html" style="text-decoration:none"><div class="logo-text">Eco<span>Psy</span></div></a>
+    <nav>
+      <a href="progetto.html" data-lang="it">Il Progetto</a>
+      <a href="progetto.html" data-lang="en">The Project</a>
+      <a href="metodo.html" data-lang="it">Metodo</a>
+      <a href="metodo.html" data-lang="en">Methods</a>
+      <a href="team.html">Team</a>
+      <a href="scuole.html" data-lang="it">Scuole</a>
+      <a href="scuole.html" data-lang="en">Schools</a>
+      <a href="news.html" class="active">News</a>
+      <button class="lang-btn" onclick="toggleLang(this)">EN</button>
+    </nav>
+  </div>
+</header>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="container">
+    <p class="section-label">News</p>
+    <h1 data-lang="it">Aggiornamenti dal progetto</h1>
+    <h1 data-lang="en">Project updates</h1>
+    <p data-lang="it">Progressi, eventi, pubblicazioni e annunci dal team EcoPsy.</p>
+    <p data-lang="en">Progress, events, publications, and announcements from the EcoPsy team.</p>
+  </div>
+</div>
+
+<!-- NEWS -->
+<section>
+  <div class="container">
+    <div class="news-grid">
+
+      <!-- Featured -->
+      <div class="news-card news-featured">
+        <div>
+          <span class="news-tag" data-lang="it">Avvio progetto</span>
+          <span class="news-tag" data-lang="en">Project launch</span>
+          <div class="news-date">2026</div>
+          <h3 data-lang="it">EcoPsy ottiene il finanziamento FIS–MUR e avvia le attività</h3>
+          <h3 data-lang="en">EcoPsy awarded FIS–MUR funding and launches activities</h3>
+          <p data-lang="it">Il progetto EcoPsy è stato selezionato e finanziato dal Fondo Italiano per la Scienza del Ministero dell'Università e della Ricerca per un periodo di 3 anni. Il team è stato costituito e le attività preliminari sono in corso: reclutamento scuole, iter etico, sviluppo dell'app EMA.</p>
+          <p data-lang="en">EcoPsy has been selected and funded by the Italian Fund for Science of the Ministry of University and Research for a 3-year period. The team has been formed and preliminary activities are underway: school recruitment, ethics process, EMA app development.</p>
+        </div>
+        <div style="background:var(--green-pale);border-radius:var(--radius);padding:24px;text-align:center;">
+          <div style="font-size:3.5rem;margin-bottom:12px;">🎉</div>
+          <div style="font-size:1.1rem;font-weight:700;color:var(--green-dark)" data-lang="it">Progetto avviato</div>
+          <div style="font-size:1.1rem;font-weight:700;color:var(--green-dark)" data-lang="en">Project launched</div>
+          <div style="font-size:.85rem;color:var(--text-muted);margin-top:6px)">FIS – Fondo Italiano per la Scienza<br />MUR, 2026–2029</div>
+        </div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-body">
+          <span class="news-tag" data-lang="it">Reclutamento scuole</span>
+          <span class="news-tag" data-lang="en">School recruitment</span>
+          <div class="news-date" data-lang="it">Giugno 2026</div>
+          <div class="news-date" data-lang="en">June 2026</div>
+          <h3 data-lang="it">19 scuole hanno deliberato l'adesione in Collegio Docenti</h3>
+          <h3 data-lang="en">19 schools have voted to join in their faculty council</h3>
+          <p data-lang="it">Il reclutamento delle scuole superiori dell'area metropolitana di Roma procede con successo. Ulteriori 7 istituti hanno già inviato manifestazione di interesse formale.</p>
+          <p data-lang="en">Recruitment of upper secondary schools in the Rome metropolitan area is proceeding successfully. An additional 7 schools have sent formal letters of interest.</p>
+        </div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-body">
+          <span class="news-tag" data-lang="it">Comitato Etico</span>
+          <span class="news-tag" data-lang="en">Ethics Committee</span>
+          <div class="news-date" data-lang="it">Febbraio 2026</div>
+          <div class="news-date" data-lang="en">February 2026</div>
+          <h3 data-lang="it">Sottomissione al Comitato Etico completata</h3>
+          <h3 data-lang="en">Ethics Committee submission completed</h3>
+          <p data-lang="it">Tutta la documentazione richiesta è stata sottomessa in data 05/02/2026: protocollo, consensi informati (adulti e minorenni), informative privacy, lista scuole.</p>
+          <p data-lang="en">All required documentation was submitted on 05/02/2026: protocol, informed consents (adults and minors), privacy notices, school list.</p>
+        </div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-body">
+          <span class="news-tag" data-lang="it">Collaborazioni</span>
+          <span class="news-tag" data-lang="en">Collaborations</span>
+          <div class="news-date">2026</div>
+          <h3 data-lang="it">Accordo di collaborazione firmato con Sapienza – ERRLAB</h3>
+          <h3 data-lang="en">Collaboration agreement signed with Sapienza – ERRLAB</h3>
+          <p data-lang="it">Formalizzata la convenzione scientifica con il Dept. di Psicologia Dinamica Clinica e Salute dell'Università La Sapienza di Roma, referente Prof. Anna Maria Speranza.</p>
+          <p data-lang="en">Scientific agreement formalized with the Dept. of Dynamic Clinical Psychology and Health at Sapienza University of Rome, contact Prof. Anna Maria Speranza.</p>
+        </div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-body">
+          <span class="news-tag" data-lang="it">App EMA</span>
+          <span class="news-tag" data-lang="en">EMA App</span>
+          <div class="news-date" data-lang="it">Maggio 2026</div>
+          <div class="news-date" data-lang="en">May 2026</div>
+          <h3 data-lang="it">Preventivo ricevuto da Helyra srls per lo sviluppo dell'app</h3>
+          <h3 data-lang="en">Quote received from Helyra srls for app development</h3>
+          <p data-lang="it">Helyra srls ha presentato il preventivo per lo sviluppo dell'app EMA (raccolta dati attiva + passiva). La negoziazione contrattuale è in corso.</p>
+          <p data-lang="en">Helyra srls submitted a quote for EMA app development (active + passive data collection). Contract negotiation is underway.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo-text">Eco<span style="color:#6fe0a0">Psy</span></div>
+        <p data-lang="it">Primo studio epidemiologico longitudinale sul benessere mentale degli adolescenti nell'area metropolitana di Roma. Finanziato da FIS – MUR (3 anni).</p>
+        <p data-lang="en">First large-scale longitudinal study on adolescent mental well-being in Rome. Funded by FIS – MUR (3 years).</p>
+        <div class="footer-logos">
+          <img src="assets/logo_torvergata.png" alt="Tor Vergata" />
+          <img src="assets/logo_fis.png" alt="FIS" />
+        </div>
+      </div>
+      <div>
+        <h4 data-lang="it">Pagine</h4><h4 data-lang="en">Pages</h4>
+        <ul>
+          <li><a href="progetto.html" data-lang="it">Il Progetto</a><a href="progetto.html" data-lang="en">The Project</a></li>
+          <li><a href="metodo.html" data-lang="it">Metodo</a><a href="metodo.html" data-lang="en">Methods</a></li>
+          <li><a href="team.html">Team</a></li>
+          <li><a href="scuole.html" data-lang="it">Scuole</a><a href="scuole.html" data-lang="en">Schools</a></li>
+          <li><a href="news.html">News</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 data-lang="it">Contatti</h4><h4 data-lang="en">Contact</h4>
+        <ul>
+          <li>Dr. Rodolfo Rossi</li>
+          <li><a href="mailto:rudy86.rossi@gmail.com">rudy86.rossi@gmail.com</a></li>
+          <li style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.4)" data-lang="it">Dipartimento di Medicina dei Sistemi<br />Università di Roma Tor Vergata</li>
+          <li style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.4)" data-lang="en">Department of Systems Medicine<br />University of Rome Tor Vergata</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 EcoPsy – Università di Roma Tor Vergata</span>
+      <span data-lang="it">Progetto finanziato da FIS – Fondo Italiano per la Scienza, MUR</span>
+      <span data-lang="en">Project funded by FIS – Italian Fund for Science, MUR</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function toggleLang(btn) {
+    const isEN = document.body.classList.toggle('lang-en');
+    btn.textContent = isEN ? 'IT' : 'EN';
+    document.documentElement.lang = isEN ? 'en' : 'it';
+  }
+</script>
+</body>
+</html>
