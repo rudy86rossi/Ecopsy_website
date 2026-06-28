@@ -167,7 +167,7 @@ h2 {
 
 /* ── Footer ── */
 footer {
-  background: #1a4a2e; color: rgba(255,255,255,.7);
+  background: #1a2e38; color: rgba(255,255,255,.7);
   padding: 48px 0 28px;
 }
 .footer-grid {
@@ -183,7 +183,7 @@ footer ul li a:hover { color: #6fe0a0; text-decoration: none; }
 .footer-logos { display: flex; gap: 16px; align-items: center; justify-content: space-between; margin-top: 16px; width: 100%; }
 .footer-logos img { flex: 1; min-width: 0; max-height: 48px; width: auto; object-fit: contain; object-position: left center; opacity: 1; }
 .footer-bottom {
-  border-top: 1px solid rgba(255,255,255,.1); padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,.12); padding-top: 20px;
   font-size: .78rem; color: rgba(255,255,255,.4);
   display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
 }
