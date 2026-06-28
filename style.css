@@ -175,7 +175,7 @@ footer ul li { font-size: .85rem; margin-bottom: 6px; }
 footer ul li a { color: rgba(255,255,255,.65); }
 footer ul li a:hover { color: #6fe0a0; text-decoration: none; }
 .footer-logos { display: flex; gap: 16px; align-items: center; margin-top: 16px; }
-.footer-logos img { height: 28px; filter: brightness(0) invert(1); opacity: .65; }
+.footer-logos img { height: 36px; opacity: .9; }
 .footer-bottom {
   border-top: 1px solid rgba(255,255,255,.1); padding-top: 20px;
   font-size: .78rem; color: rgba(255,255,255,.4);
