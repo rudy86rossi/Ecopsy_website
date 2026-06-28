@@ -180,8 +180,8 @@ footer ul { list-style: none; }
 footer ul li { font-size: .85rem; margin-bottom: 6px; }
 footer ul li a { color: rgba(255,255,255,.65); }
 footer ul li a:hover { color: #6fe0a0; text-decoration: none; }
-.footer-logos { display: flex; gap: 20px; align-items: center; margin-top: 16px; }
-.footer-logos img { height: 36px; opacity: .9; }
+.footer-logos { display: flex; gap: 16px; align-items: center; justify-content: space-between; margin-top: 16px; width: 100%; }
+.footer-logos img { flex: 1; min-width: 0; max-height: 48px; width: auto; object-fit: contain; object-position: left center; opacity: 1; }
 .footer-bottom {
   border-top: 1px solid rgba(255,255,255,.1); padding-top: 20px;
   font-size: .78rem; color: rgba(255,255,255,.4);
