@@ -83,6 +83,15 @@ nav a.active { font-weight: 600; }
 }
 .lang-btn:hover { background: var(--green-mid); }
 
+/* ── Hero tagline (sottotitolo) ── */
+.hero-tagline {
+  font-size: 1rem;
+  font-style: italic;
+  color: rgba(255,255,255,.6);
+  margin-bottom: 20px;
+  letter-spacing: .01em;
+}
+
 /* ── Page hero (mini) ── */
 .page-hero {
   background: linear-gradient(135deg, var(--green-dark) 0%, #0f2e1c 100%);
