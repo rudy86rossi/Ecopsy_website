@@ -1,5 +1,6 @@
 /* ══════════════════════════════════════════
    EcoPsy – Shared Stylesheet
+   Font: Plus Jakarta Sans (titoli) + Inter (corpo)
    ══════════════════════════════════════════ */
 
 /* ── Reset & Variables ── */
@@ -10,7 +11,6 @@
   --green-mid:   #2d7a4f;
   --green-light: #4aa56e;
   --green-pale:  #f0f7f2;
-  --blue-accent: #1a3a5c;
   --text:        #1e1e1e;
   --text-muted:  #5a6672;
   --border:      #dde6e0;
@@ -18,12 +18,14 @@
   --shadow:      0 4px 24px rgba(26,74,46,.08);
   --radius:      12px;
   --max-w:       1140px;
+  --font-head:   'Plus Jakarta Sans', sans-serif;
+  --font-body:   'Inter', sans-serif;
 }
 
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.7;
   color: var(--text);
@@ -33,6 +35,8 @@ body {
 img { max-width: 100%; height: auto; display: block; }
 a { color: var(--green-mid); text-decoration: none; }
 a:hover { text-decoration: underline; }
+
+h1, h2, h3, h4 { font-family: var(--font-head); }
 
 /* ── Layout ── */
 .container { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
@@ -56,40 +60,40 @@ header {
   height: 68px;
 }
 .logo-text {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.5rem;
-  color: var(--green-dark);
-  letter-spacing: -.5px;
+  font-family: var(--font-head);
+  font-size: 1.5rem; font-weight: 800;
+  color: var(--green-dark); letter-spacing: -.5px;
 }
 .logo-text span { color: var(--green-mid); }
 
 nav { display: flex; align-items: center; gap: 6px; }
 nav a {
-  font-size: .875rem; font-weight: 500;
+  font-family: var(--font-head);
+  font-size: .85rem; font-weight: 600;
   color: var(--text-muted); padding: 6px 12px; border-radius: 6px;
   transition: background .15s, color .15s;
 }
 nav a:hover,
 nav a.active { background: var(--green-pale); color: var(--green-dark); text-decoration: none; }
-nav a.active { font-weight: 600; }
+nav a.active { font-weight: 700; }
 
 .lang-btn {
   margin-left: 16px;
   background: var(--green-dark); color: var(--white);
   border: none; border-radius: 6px;
-  padding: 6px 14px; font-size: .8rem; font-weight: 600;
+  padding: 6px 14px; font-size: .78rem; font-weight: 700;
+  font-family: var(--font-head);
   cursor: pointer; letter-spacing: .5px;
   transition: background .15s;
 }
 .lang-btn:hover { background: var(--green-mid); }
 
-/* ── Hero tagline (sottotitolo) ── */
+/* ── Hero tagline ── */
 .hero-tagline {
-  font-size: 1rem;
-  font-style: italic;
-  color: rgba(255,255,255,.6);
-  margin-bottom: 20px;
-  letter-spacing: .01em;
+  font-family: var(--font-head);
+  font-size: 1rem; font-style: italic; font-weight: 400;
+  color: rgba(255,255,255,.65);
+  margin-bottom: 20px; letter-spacing: .01em;
 }
 
 /* ── Page hero (mini) ── */
@@ -99,21 +103,23 @@ nav a.active { font-weight: 600; }
 }
 .page-hero .section-label { color: rgba(255,255,255,.6); }
 .page-hero h1 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-head);
   font-size: clamp(1.8rem, 3.5vw, 2.8rem);
-  line-height: 1.2; margin-bottom: 12px;
+  font-weight: 800; line-height: 1.15; margin-bottom: 12px;
 }
 .page-hero p { color: rgba(255,255,255,.75); font-size: 1.05rem; max-width: 640px; }
 
 /* ── Section headings ── */
 .section-label {
-  font-size: .75rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  font-family: var(--font-head);
+  font-size: .72rem; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase;
   color: var(--green-mid); margin-bottom: 10px;
 }
 h2 {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(1.8rem, 3vw, 2.4rem);
-  color: var(--green-dark); line-height: 1.2; margin-bottom: 16px;
+  font-family: var(--font-head);
+  font-size: clamp(1.7rem, 3vw, 2.3rem);
+  font-weight: 800;
+  color: var(--green-dark); line-height: 1.15; margin-bottom: 16px;
 }
 .section-intro {
   font-size: 1.05rem; color: var(--text-muted); max-width: 680px; margin-bottom: 48px;
@@ -121,9 +127,9 @@ h2 {
 
 /* ── Buttons ── */
 .btn {
-  display: inline-block;
+  display: inline-block; font-family: var(--font-head);
   padding: 12px 28px; border-radius: 8px;
-  font-size: .95rem; font-weight: 600;
+  font-size: .9rem; font-weight: 700;
   transition: transform .15s, box-shadow .15s;
   cursor: pointer;
 }
@@ -145,7 +151,7 @@ h2 {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
 }
 .design-item { text-align: center; }
-.design-number { font-size: 2.2rem; font-weight: 700; color: #6fe0a0; }
+.design-number { font-family: var(--font-head); font-size: 2.2rem; font-weight: 800; color: #6fe0a0; }
 .design-desc { font-size: .82rem; color: rgba(255,255,255,.72); margin-top: 4px; line-height: 1.4; }
 
 /* ── Contact box ── */
@@ -154,7 +160,7 @@ h2 {
   padding: 36px 40px; color: var(--white);
   display: flex; align-items: center; justify-content: space-between; gap: 24px;
 }
-.contact-box h3 { font-size: 1.2rem; font-weight: 600; margin-bottom: 4px; }
+.contact-box h3 { font-family: var(--font-head); font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
 .contact-box p { font-size: .9rem; color: rgba(255,255,255,.75); }
 .contact-box a.btn { background: #6fe0a0; color: var(--green-dark); }
 .contact-box a.btn:hover { background: var(--white); }
@@ -169,12 +175,12 @@ footer {
 }
 .footer-brand .logo-text { font-size: 1.3rem; color: var(--white); margin-bottom: 10px; }
 .footer-brand p { font-size: .85rem; line-height: 1.6; }
-footer h4 { font-size: .85rem; font-weight: 600; color: var(--white); margin-bottom: 12px; text-transform: uppercase; letter-spacing: .8px; }
+footer h4 { font-family: var(--font-head); font-size: .8rem; font-weight: 700; color: var(--white); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
 footer ul { list-style: none; }
 footer ul li { font-size: .85rem; margin-bottom: 6px; }
 footer ul li a { color: rgba(255,255,255,.65); }
 footer ul li a:hover { color: #6fe0a0; text-decoration: none; }
-.footer-logos { display: flex; gap: 16px; align-items: center; margin-top: 16px; }
+.footer-logos { display: flex; gap: 20px; align-items: center; margin-top: 16px; }
 .footer-logos img { height: 36px; opacity: .9; }
 .footer-bottom {
   border-top: 1px solid rgba(255,255,255,.1); padding-top: 20px;
