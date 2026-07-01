@@ -9,55 +9,175 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <style>
-    .phone-row { display: flex; gap: 16px; justify-content: center; margin-bottom: 48px; }
+    /* ── Strumenti tradizionali ── */
+    .tools-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-bottom: 0; }
+    .tool-card {
+      background: var(--white); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 28px 24px; box-shadow: var(--shadow);
+    }
+    .tool-card .tc-num { font-family: var(--font-head); font-size: .7rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--green-mid); margin-bottom: 10px; }
+    .tool-card h4 { font-family: var(--font-head); font-size: 1rem; font-weight: 700; color: var(--green-dark); margin-bottom: 8px; }
+    .tool-card p { font-size: .88rem; color: var(--text-muted); line-height: 1.6; }
+
+    /* ── Limiti ── */
+    .limits-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .limit-card {
+      border-left: 4px solid var(--green-mid); padding: 24px 24px 24px 28px;
+      background: var(--white); border-radius: 0 var(--radius) var(--radius) 0;
+      box-shadow: var(--shadow);
+    }
+    .limit-card h4 { font-family: var(--font-head); font-size: 1rem; font-weight: 700; color: var(--green-dark); margin-bottom: 8px; }
+    .limit-card p { font-size: .88rem; color: var(--text-muted); line-height: 1.65; }
+    .img-full { width: 100%; border-radius: var(--radius); box-shadow: var(--shadow); margin-top: 36px; display: block; }
+    .img-caption { font-size: .78rem; color: var(--text-muted); text-align: center; margin-top: 8px; font-style: italic; }
+
+    /* ── Tipi di dato ── */
+    .data-types { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+    .data-type-card {
+      background: var(--white); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 26px 22px; box-shadow: var(--shadow);
+      position: relative;
+    }
+    .data-type-card .dt-num {
+      font-family: var(--font-head); font-size: 2.4rem; font-weight: 800;
+      color: var(--green-pale); position: absolute; top: 16px; right: 20px; line-height: 1;
+    }
+    .data-type-card h4 { font-family: var(--font-head); font-size: .95rem; font-weight: 700; color: var(--green-dark); margin-bottom: 8px; }
+    .data-type-card p { font-size: .85rem; color: var(--text-muted); line-height: 1.6; }
+
+    /* ── Numbers strip ── */
+    .burst-strip {
+      background: var(--green-dark); border-radius: var(--radius);
+      padding: 36px; display: grid; grid-template-columns: repeat(4,1fr); gap: 24px;
+      text-align: center; margin-top: 48px;
+    }
+    .burst-item .bi-num { font-family: var(--font-head); font-size: 2.8rem; font-weight: 800; color: #6fe0a0; line-height: 1; }
+    .burst-item .bi-label { font-size: .82rem; color: rgba(255,255,255,.7); margin-top: 6px; line-height: 1.4; }
+
+    /* ── Cosa si può fare ── */
+    .can-do-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .can-do-card {
+      background: var(--white); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 28px 24px; box-shadow: var(--shadow);
+    }
+    .can-do-card .cd-tag { font-family: var(--font-head); font-size: .68rem; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--green-mid); margin-bottom: 10px; }
+    .can-do-card h4 { font-family: var(--font-head); font-size: 1rem; font-weight: 700; color: var(--green-dark); margin-bottom: 10px; }
+    .can-do-card p { font-size: .87rem; color: var(--text-muted); line-height: 1.65; }
+
+    /* ── Come funziona: 4 step ── */
+    .how-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; }
+    .how-card {
+      background: var(--white); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 24px 20px; box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .how-card .hw-dot {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--green-dark); color: #6fe0a0;
+      font-family: var(--font-head); font-size: .85rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px;
+    }
+    .how-card h4 { font-family: var(--font-head); font-size: .9rem; font-weight: 700; color: var(--green-dark); margin-bottom: 8px; }
+    .how-card p { font-size: .83rem; color: var(--text-muted); line-height: 1.55; }
+
+    /* ── Phone screens ── */
+    .phone-row { display: flex; gap: 16px; justify-content: center; margin-top: 40px; }
     .phone-wrap {
       border-radius: 18px; overflow: hidden;
       border: 3px solid var(--green-pale);
       box-shadow: 0 8px 32px rgba(0,0,0,.12);
-      flex: 1; max-width: 200px;
+      flex: 1; max-width: 190px;
     }
-    .phone-wrap img { width: 100%; }
-    .phone-label { text-align: center; font-size: .78rem; color: var(--text-muted); margin-top: 8px; font-weight: 500; }
+    .phone-wrap img { width: 100%; display: block; }
+    .phone-label { text-align: center; font-size: .78rem; color: var(--text-muted); margin-top: 8px; font-weight: 600; }
 
-    .steps-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 48px; }
-    .step-card {
+    /* ── Comparison table ── */
+    .compare-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    .compare-table th {
+      font-family: var(--font-head); font-size: .78rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px; padding: 14px 18px;
+      text-align: left; border-bottom: 2px solid var(--border);
+    }
+    .compare-table th:first-child { color: var(--text-muted); }
+    .compare-table th.col-ema { background: var(--green-dark); color: #6fe0a0; border-radius: var(--radius) var(--radius) 0 0; }
+    .compare-table td { padding: 13px 18px; border-bottom: 1px solid var(--border); color: var(--text-muted); vertical-align: top; }
+    .compare-table td:first-child { font-weight: 600; color: var(--text); }
+    .compare-table td.col-ema { background: var(--green-pale); color: var(--green-dark); font-weight: 600; }
+    .compare-table tr:last-child td { border-bottom: none; }
+
+    /* ── Parametri configurabili ── */
+    .params-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; }
+    .param-card {
       background: var(--white); border-radius: var(--radius);
-      border: 1px solid var(--border); padding: 24px; box-shadow: var(--shadow);
-      display: flex; gap: 16px;
+      border: 1px solid var(--border); padding: 24px 20px; box-shadow: var(--shadow);
     }
-    .step-dot {
-      min-width: 40px; height: 40px; border-radius: 50%;
-      background: var(--green-dark); color: var(--white);
-      display: flex; align-items: center; justify-content: center;
-      font-size: .85rem; font-weight: 700; flex-shrink: 0;
-    }
-    .step-card h4 { font-size: .95rem; font-weight: 600; color: var(--green-dark); margin-bottom: 6px; }
-    .step-card p { font-size: .88rem; color: var(--text-muted); }
+    .param-card h4 { font-family: var(--font-head); font-size: .9rem; font-weight: 700; color: var(--green-dark); margin-bottom: 12px; }
+    .param-card ul { list-style: none; padding: 0; }
+    .param-card ul li { font-size: .83rem; color: var(--text-muted); padding: 4px 0; border-bottom: 1px solid var(--border); }
+    .param-card ul li:last-child { border-bottom: none; }
+    .param-card ul li::before { content: "›  "; color: var(--green-mid); font-weight: 700; }
 
-    .sed-section { margin-top: 48px; }
-    .sed-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    /* ── Trasparenza ── */
+    .risk-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+    .risk-card {
+      border-radius: var(--radius); border: 1px solid var(--border);
+      background: var(--white); padding: 26px 22px; box-shadow: var(--shadow);
+    }
+    .risk-card .rc-problem { font-family: var(--font-head); font-size: .75rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #c0392b; margin-bottom: 8px; }
+    .risk-card h4 { font-family: var(--font-head); font-size: .95rem; font-weight: 700; color: var(--green-dark); margin-bottom: 14px; }
+    .risk-card .rc-solution { font-family: var(--font-head); font-size: .72rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--green-mid); margin-bottom: 6px; }
+    .risk-card p { font-size: .85rem; color: var(--text-muted); line-height: 1.6; }
+
+    /* ── Consenso ── */
+    .consent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 40px; }
+    .consent-card {
+      background: var(--green-pale); border-radius: var(--radius);
+      padding: 28px 24px; border: 1px solid var(--border);
+    }
+    .consent-card h4 { font-family: var(--font-head); font-size: 1rem; font-weight: 700; color: var(--green-dark); margin-bottom: 10px; }
+    .consent-card p { font-size: .87rem; color: var(--text-muted); line-height: 1.65; }
+
+    /* ── SEDs ── */
+    .sed-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
     .sed-card {
       background: var(--white); border-radius: var(--radius);
       border: 1px solid var(--border); padding: 22px; box-shadow: var(--shadow);
       text-align: center;
     }
     .sed-icon { font-size: 2rem; margin-bottom: 10px; }
-    .sed-card h4 { font-size: .9rem; font-weight: 600; color: var(--green-dark); margin-bottom: 6px; }
+    .sed-card h4 { font-family: var(--font-head); font-size: .9rem; font-weight: 600; color: var(--green-dark); margin-bottom: 6px; }
     .sed-card p { font-size: .82rem; color: var(--text-muted); }
 
-    .passive-box {
-      margin-top: 40px; background: var(--green-dark); border-radius: var(--radius);
-      padding: 32px 36px; color: var(--white);
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; text-align: center;
+    /* ── Download box ── */
+    .download-box {
+      background: var(--green-dark); border-radius: var(--radius);
+      padding: 32px 40px; color: var(--white);
+      display: flex; align-items: center; justify-content: space-between; gap: 24px;
+      margin-top: 48px;
     }
-    .passive-item .pi-icon { font-size: 2rem; margin-bottom: 8px; }
-    .passive-item h4 { font-size: .9rem; font-weight: 600; margin-bottom: 4px; }
-    .passive-item p { font-size: .8rem; color: rgba(255,255,255,.65); }
+    .download-box h3 { font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+    .download-box p { font-size: .88rem; color: rgba(255,255,255,.7); }
+    .download-box a.btn-download {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #6fe0a0; color: var(--green-dark);
+      font-family: var(--font-head); font-weight: 700; font-size: .88rem;
+      padding: 13px 26px; border-radius: 8px; text-decoration: none;
+      white-space: nowrap; transition: background .15s, transform .15s;
+    }
+    .download-box a.btn-download:hover { background: #fff; transform: translateY(-2px); }
 
+    /* ── Responsive ── */
     @media (max-width: 900px) {
-      .steps-grid, .sed-grid { grid-template-columns: 1fr; }
-      .passive-box { grid-template-columns: 1fr 1fr; }
+      .tools-grid, .sed-grid, .params-grid { grid-template-columns: 1fr 1fr; }
+      .limits-grid, .can-do-grid, .consent-grid { grid-template-columns: 1fr; }
+      .data-types, .how-grid { grid-template-columns: 1fr 1fr; }
+      .burst-strip { grid-template-columns: 1fr 1fr; }
       .phone-row { flex-wrap: wrap; }
+      .download-box { flex-direction: column; text-align: center; }
+    }
+    @media (max-width: 600px) {
+      .tools-grid, .sed-grid, .params-grid, .risk-grid, .data-types, .how-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -84,25 +204,222 @@
 <!-- PAGE HERO -->
 <div class="page-hero">
   <div class="container">
-    <p class="section-label" data-lang="it">Metodologia</p>
-    <p class="section-label" data-lang="en">Methodology</p>
-    <h1 data-lang="it">L'EMA: ascoltare la vita quotidiana in tempo reale</h1>
-    <h1 data-lang="en">EMA: listening to everyday life in real time</h1>
-    <p data-lang="it">La Valutazione Ecologica Momentanea (EMA) cattura emozioni, comportamenti e contesti multipli volte al giorno, direttamente nella vita di tutti i giorni degli adolescenti.</p>
-    <p data-lang="en">Ecological Momentary Assessment (EMA) captures emotions, behaviors, and contexts multiple times per day, directly in adolescents' everyday lives.</p>
+    <p class="section-label" data-lang="it">Ecological Momentary Assessment</p>
+    <p class="section-label" data-lang="en">Ecological Momentary Assessment</p>
+    <h1 data-lang="it">Misurare il benessere degli studenti nella vita reale</h1>
+    <h1 data-lang="en">Measuring students' well-being in real life</h1>
+    <p data-lang="it">Una guida all'EMA per capire come raccogliamo dati direttamente nel contesto di vita degli adolescenti, superando i limiti degli strumenti tradizionali.</p>
+    <p data-lang="en">A guide to EMA: how we collect data directly in adolescents' real-life context, overcoming the limitations of traditional tools.</p>
   </div>
 </div>
 
-<!-- SCHERMATE EMA -->
+<!-- 01 — STRUMENTI TRADIZIONALI -->
 <section>
   <div class="container">
-    <p class="section-label" data-lang="it">L'app EMA</p>
-    <p class="section-label" data-lang="en">The EMA app</p>
-    <h2 data-lang="it">Quattro momenti di raccolta al giorno</h2>
-    <h2 data-lang="en">Four collection moments per day</h2>
-    <p class="section-intro" data-lang="it">L'app invia notifiche in momenti casuali della giornata. Ogni risposta richiede meno di 2 minuti.</p>
-    <p class="section-intro" data-lang="en">The app sends notifications at random times during the day. Each response takes less than 2 minutes.</p>
+    <p class="section-label" data-lang="it">01 · Il punto di partenza</p>
+    <p class="section-label" data-lang="en">01 · Starting point</p>
+    <h2 data-lang="it">Come misuriamo oggi il benessere degli studenti?</h2>
+    <h2 data-lang="en">How do we currently measure students' well-being?</h2>
+    <p class="section-intro" data-lang="it">Gli strumenti più diffusi per valutare il benessere psicologico degli studenti sono tre, ciascuno con punti di forza e limiti importanti.</p>
+    <p class="section-intro" data-lang="en">The most common tools for assessing students' psychological well-being are three, each with important strengths and limitations.</p>
 
+    <div class="tools-grid">
+      <div class="tool-card">
+        <div class="tc-num" data-lang="it">Strumento 1</div>
+        <div class="tc-num" data-lang="en">Tool 1</div>
+        <h4 data-lang="it">Questionari autosomministrati</h4>
+        <h4 data-lang="en">Self-administered questionnaires</h4>
+        <p data-lang="it">Fogli con domande standardizzate compilati dallo studente su come si è sentito nelle ultime due settimane. Veloci ed economici, ma soggetti al bias del ricordo.</p>
+        <p data-lang="en">Standardized question sheets completed by the student about how they felt over the past two weeks. Fast and inexpensive, but subject to recall bias.</p>
+      </div>
+      <div class="tool-card">
+        <div class="tc-num" data-lang="it">Strumento 2</div>
+        <div class="tc-num" data-lang="en">Tool 2</div>
+        <h4 data-lang="it">Interviste cliniche</h4>
+        <h4 data-lang="en">Clinical interviews</h4>
+        <p data-lang="it">Colloqui strutturati con uno psicologo. Molto precisi ma costosi e riservati a contesti specialistici. Non scalabili su un'intera popolazione scolastica.</p>
+        <p data-lang="en">Structured interviews with a psychologist. Very accurate but expensive and reserved for specialist settings. Not scalable across an entire school population.</p>
+      </div>
+      <div class="tool-card">
+        <div class="tc-num" data-lang="it">Strumento 3</div>
+        <div class="tc-num" data-lang="en">Tool 3</div>
+        <h4 data-lang="it">Report multipli</h4>
+        <h4 data-lang="en">Multiple informant reports</h4>
+        <p data-lang="it">Genitori e insegnanti descrivono il comportamento dello studente tramite questionari o interviste. Utili ma indiretti: filtrano la percezione di un terzo.</p>
+        <p data-lang="en">Parents and teachers describe students' behaviour through questionnaires or interviews. Useful but indirect: they filter a third party's perception.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 — LIMITI -->
+<section class="alt">
+  <div class="container">
+    <p class="section-label" data-lang="it">02 · Il problema</p>
+    <p class="section-label" data-lang="en">02 · The problem</p>
+    <h2 data-lang="it">I limiti degli strumenti tradizionali</h2>
+    <h2 data-lang="en">Limitations of traditional tools</h2>
+    <p class="section-intro" data-lang="it">Due problemi fondamentali rendono questi strumenti insufficienti per studiare il benessere degli adolescenti in modo accurato.</p>
+    <p class="section-intro" data-lang="en">Two fundamental problems make these tools insufficient for accurately studying adolescent well-being.</p>
+
+    <div class="limits-grid">
+      <div class="limit-card">
+        <h4 data-lang="it">Il bias del ricordo</h4>
+        <h4 data-lang="en">Recall bias</h4>
+        <p data-lang="it">Quando chiediamo «come ti sei sentito nelle ultime due settimane?» stiamo interrogando la memoria, non l'esperienza reale. La memoria è selettiva: ricordiamo i momenti intensi e dimentichiamo tutto ciò che sta nel mezzo. Uno studente può sentirsi bene oggi e rispondere in modo positivo anche dopo una settimana molto difficile.</p>
+        <p data-lang="en">When we ask "how have you felt in the past two weeks?" we are querying memory, not real experience. Memory is selective: we remember intense moments and forget everything in between. A student may feel well today and respond positively even after a very difficult week.</p>
+      </div>
+      <div class="limit-card">
+        <h4 data-lang="it">La validità ecologica</h4>
+        <h4 data-lang="en">Ecological validity</h4>
+        <p data-lang="it">Una misura ha alta validità ecologica quando viene raccolta nel contesto di vita reale della persona. Un test condotto nello studio di uno psicologo ha bassa validità ecologica: il setting controllato non rispecchia i momenti in cui il disagio emerge davvero — a casa, di sera, dopo una lite con un amico. Questo problema è ancora più critico con gli adolescenti: le emozioni sono molto variabili e uno snapshot in ambiente artificiale cattura solo un frammento di questa realtà.</p>
+        <p data-lang="en">A measure has high ecological validity when it is collected in the person's real-life context. A test conducted in a psychologist's office has low ecological validity: the controlled setting does not reflect the moments when distress truly emerges — at home, in the evening, after an argument with a friend. This problem is even more critical with adolescents, whose emotions are highly variable.</p>
+      </div>
+    </div>
+    <img src="assets/img_context_comparison.png" alt="Contesto sperimentale vs contesto naturale EMA" class="img-full" />
+    <p class="img-caption" data-lang="it">Contesto sperimentale (questionario in classe) vs contesto naturale (EMA nella vita reale)</p>
+    <p class="img-caption" data-lang="en">Experimental context (classroom questionnaire) vs natural context (EMA in real life)</p>
+  </div>
+</section>
+
+<!-- 03 — DAL SINGOLO SCATTO AL FILM -->
+<section>
+  <div class="container">
+    <p class="section-label" data-lang="it">03 · Una nuova prospettiva</p>
+    <p class="section-label" data-lang="en">03 · A new perspective</p>
+    <h2 data-lang="it">Dal singolo scatto al film completo</h2>
+    <h2 data-lang="en">From a single snapshot to the full film</h2>
+    <p class="section-intro" data-lang="it">La scelta del metodo di raccolta cambia radicalmente cosa possiamo capire di una persona. Esistono tre livelli di profondità.</p>
+    <p class="section-intro" data-lang="en">The choice of data collection method radically changes what we can understand about a person. There are three levels of depth.</p>
+
+    <div class="data-types">
+      <div class="data-type-card">
+        <div class="dt-num">1</div>
+        <h4 data-lang="it">Dato cross-sezionale</h4>
+        <h4 data-lang="en">Cross-sectional data</h4>
+        <p data-lang="it">Una fotografia: misuriamo qualcosa in un unico momento. Rapido ed economico, ma non dice nulla su come la persona cambia nel tempo.</p>
+        <p data-lang="en">A snapshot: we measure something at a single point. Quick and inexpensive, but tells us nothing about how the person changes over time.</p>
+      </div>
+      <div class="data-type-card">
+        <div class="dt-num">2</div>
+        <h4 data-lang="it">Dato longitudinale</h4>
+        <h4 data-lang="en">Longitudinal data</h4>
+        <p data-lang="it">Aggiunge il tempo: misuriamo le stesse persone in più occasioni. Possiamo seguire una traiettoria. Limite: tra una misurazione e l'altra può succedere di tutto.</p>
+        <p data-lang="en">Adds time: we measure the same people on multiple occasions and can follow a trajectory. Limitation: anything can happen between one measurement and the next.</p>
+      </div>
+      <div class="data-type-card">
+        <div class="dt-num">3</div>
+        <h4 data-lang="it">Dato longitudinale intensivo</h4>
+        <h4 data-lang="en">Intensive longitudinal data</h4>
+        <p data-lang="it">Molte misure ravvicinate nell'arco di giorni o settimane. Permette di cogliere non solo la traiettoria ma la variabilità giorno per giorno — quanto oscilla l'umore, quanto è instabile il benessere.</p>
+        <p data-lang="en">Many closely-spaced measurements over days or weeks. Captures not only the trajectory but day-to-day variability — how much mood fluctuates, how unstable well-being is.</p>
+      </div>
+    </div>
+
+    <img src="assets/img_ema_burst_design.png" alt="Studio longitudinale classico vs EMA burst design" class="img-full" style="margin-top:36px;" />
+    <p class="img-caption" data-lang="it">Studio longitudinale classico (3 data point in 18 mesi) vs disegno EMA-Burst ad alta frequenza</p>
+    <p class="img-caption" data-lang="en">Classic longitudinal study (3 data points in 18 months) vs high-frequency EMA-Burst design</p>
+
+    <!-- Numbers strip -->
+    <div class="burst-strip">
+      <div class="burst-item">
+        <div class="bi-num">6</div>
+        <div class="bi-label" data-lang="it">burst totali</div>
+        <div class="bi-label" data-lang="en">total bursts</div>
+      </div>
+      <div class="burst-item">
+        <div class="bi-num">15</div>
+        <div class="bi-label" data-lang="it">giorni per burst</div>
+        <div class="bi-label" data-lang="en">days per burst</div>
+      </div>
+      <div class="burst-item">
+        <div class="bi-num">4</div>
+        <div class="bi-label" data-lang="it">segnali al giorno<br/>(fuori orario scolastico)</div>
+        <div class="bi-label" data-lang="en">signals per day<br/>(outside school hours)</div>
+      </div>
+      <div class="burst-item">
+        <div class="bi-num">18</div>
+        <div class="bi-label" data-lang="it">mesi di studio</div>
+        <div class="bi-label" data-lang="en">months of study</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 — COSA SI PUÒ FARE -->
+<section class="alt">
+  <div class="container">
+    <p class="section-label" data-lang="it">04 · Applicazioni</p>
+    <p class="section-label" data-lang="en">04 · Applications</p>
+    <h2 data-lang="it">Cosa si può fare con dati intensivi</h2>
+    <h2 data-lang="en">What intensive data enables</h2>
+    <p class="section-intro" data-lang="it">I dati EMA aprono possibilità analitiche che i metodi tradizionali non consentono.</p>
+    <p class="section-intro" data-lang="en">EMA data opens analytical possibilities that traditional methods do not allow.</p>
+
+    <div class="can-do-grid">
+      <div class="can-do-card">
+        <div class="cd-tag">Early Warning Signs</div>
+        <h4 data-lang="it">Segnali precoci di crisi</h4>
+        <h4 data-lang="en">Early warning signs of crisis</h4>
+        <p data-lang="it">L'alta variabilità emotiva può precedere l'insorgenza di episodi depressivi o ansiosi. I dati EMA permettono di identificare segnali precoci — il cosiddetto <em>critical slowing down</em> — che indicano che qualcosa sta cambiando prima che il problema diventi clinicamente evidente. Monitorare la variabilità, anziché solo il livello medio del benessere, permette di intervenire prima e in modo più mirato.</p>
+        <p data-lang="en">High emotional variability can precede the onset of depressive or anxiety episodes. EMA data allows us to identify early warning signs — so-called <em>critical slowing down</em> — indicating something is changing before the problem becomes clinically evident. Monitoring variability, rather than just the average level of well-being, enables earlier and more targeted intervention.</p>
+        <img src="assets/img_ews_chart.png" alt="Grafico Early Warning Signs" class="img-full" style="margin-top:20px;" />
+      </div>
+      <div class="can-do-card">
+        <div class="cd-tag" data-lang="it">Contesto ambientale</div>
+        <div class="cd-tag" data-lang="en">Environmental context</div>
+        <h4 data-lang="it">Mappe di rischio per la salute mentale</h4>
+        <h4 data-lang="en">Mental health risk maps</h4>
+        <p data-lang="it">I dati EMA permettono di collegare ogni rilevazione al luogo in cui si trovava lo studente, costruendo mappe di rischio spaziali. Diversi quartieri presentano profili ambientali distinti — densità di traffico, verde urbano, servizi sociali — che influenzano il benessere psicologico. Questi dati sono utili per interventi di urbanistica e politiche di salute mentale.</p>
+        <p data-lang="en">EMA data allows each measurement to be linked to the student's location, building spatial risk maps. Different neighbourhoods show distinct environmental profiles — traffic density, urban green space, social services — that influence psychological well-being. This data informs urban planning and mental health policy.</p>
+        <img src="assets/img_risk_map.png" alt="Mappa di rischio benessere psicologico per area urbana" class="img-full" style="margin-top:20px;" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 — COME FUNZIONA -->
+<section>
+  <div class="container">
+    <p class="section-label" data-lang="it">05 · Lo strumento</p>
+    <p class="section-label" data-lang="en">05 · The tool</p>
+    <h2 data-lang="it">Cos'è l'EMA e come funziona nel nostro studio</h2>
+    <h2 data-lang="en">What is EMA and how it works in our study</h2>
+    <p class="section-intro" data-lang="it">EMA sta per Ecological Momentary Assessment — il principale metodo di raccolta di dati longitudinali intensivi. Si basa su un'app che invia notifiche in momenti prestabiliti, aprendo brevissimi questionari (90–120 secondi per sessione).</p>
+    <p class="section-intro" data-lang="en">EMA stands for Ecological Momentary Assessment — the leading method for collecting intensive longitudinal data. It relies on an app that sends notifications at set moments, opening very short questionnaires (90–120 seconds per session).</p>
+
+    <div class="how-grid">
+      <div class="how-card">
+        <div class="hw-dot">1</div>
+        <h4 data-lang="it">Presentazione in classe</h4>
+        <h4 data-lang="en">Classroom presentation</h4>
+        <p data-lang="it">I ricercatori presentano il progetto. Raccolta del consenso scritto di genitori e studenti.</p>
+        <p data-lang="en">Researchers present the project. Written consent collected from parents and students.</p>
+      </div>
+      <div class="how-card">
+        <div class="hw-dot">2</div>
+        <h4 data-lang="it">Installazione dell'app</h4>
+        <h4 data-lang="en">App installation</h4>
+        <p data-lang="it">Lo studente installa l'app EMA in un breve incontro fuori dall'orario scolastico.</p>
+        <p data-lang="en">The student installs the EMA app in a brief session outside school hours.</p>
+      </div>
+      <div class="how-card">
+        <div class="hw-dot">3</div>
+        <h4 data-lang="it">6 Burst × 15 giorni</h4>
+        <h4 data-lang="en">6 Bursts × 15 days</h4>
+        <p data-lang="it">Ogni ~3 mesi: fino a 4 notifiche/giorno esclusivamente fuori dall'orario scolastico. Lo smartphone rimane spento durante le lezioni.</p>
+        <p data-lang="en">Every ~3 months: up to 4 notifications/day exclusively outside school hours. The smartphone stays off during lessons.</p>
+      </div>
+      <div class="how-card">
+        <div class="hw-dot">4</div>
+        <h4 data-lang="it">Chiusura (mese 18)</h4>
+        <h4 data-lang="en">Closure (month 18)</h4>
+        <p data-lang="it">L'app viene disinstallata. Lo studente riceve un breve resoconto collettivo dei risultati.</p>
+        <p data-lang="en">The app is uninstalled. The student receives a brief collective summary of the results.</p>
+      </div>
+    </div>
+
+    <!-- Phone screens -->
     <div class="phone-row">
       <div>
         <div class="phone-wrap"><img src="assets/ema_screen1.png" alt="EMA – notifica" /></div>
@@ -111,7 +428,7 @@
       </div>
       <div>
         <div class="phone-wrap"><img src="assets/ema_screen2.png" alt="EMA – umore" /></div>
-        <p class="phone-label" data-lang="it">Umore</p>
+        <p class="phone-label" data-lang="it">Stato d'animo</p>
         <p class="phone-label" data-lang="en">Mood</p>
       </div>
       <div>
@@ -125,80 +442,205 @@
         <p class="phone-label" data-lang="en">Feedback</p>
       </div>
     </div>
+  </div>
+</section>
 
-    <div class="steps-grid">
-      <div class="step-card">
-        <div class="step-dot">☀️</div>
-        <div>
-          <h4 data-lang="it">Mattina – Diario del sonno</h4>
-          <h4 data-lang="en">Morning – Sleep diary</h4>
-          <p data-lang="it">Qualità e durata del sonno, umore al risveglio, sensazione di riposo.</p>
-          <p data-lang="en">Sleep quality and duration, morning mood, sense of rest.</p>
-        </div>
-      </div>
-      <div class="step-card">
-        <div class="step-dot">📱</div>
-        <div>
-          <h4 data-lang="it">Durante il giorno – Micro-questionari (4–5×)</h4>
-          <h4 data-lang="en">During day – Micro-questionnaires (4–5×)</h4>
-          <p data-lang="it">Umore, contesto sociale e fisico, NSSI, craving, attività fisica. 4–5 item per prompt.</p>
-          <p data-lang="en">Mood, social and physical context, NSSI, craving, physical activity. 4–5 items per prompt.</p>
-        </div>
-      </div>
-      <div class="step-card">
-        <div class="step-dot">🌙</div>
-        <div>
-          <h4 data-lang="it">Sera – Fine giornata</h4>
-          <h4 data-lang="en">Evening – End-of-day</h4>
-          <p data-lang="it">Umore serale, nota vocale, selfie, uso di sostanze, eventi della giornata.</p>
-          <p data-lang="en">Evening mood, vocal note, selfie, substance use, events of the day.</p>
-        </div>
-      </div>
-      <div class="step-card">
-        <div class="step-dot">📊</div>
-        <div>
-          <h4 data-lang="it">Disegno: 4 burst × 10 giorni</h4>
-          <h4 data-lang="en">Design: 4 bursts × 10 days</h4>
-          <p data-lang="it">4 periodi di raccolta intensiva per anno, ripetuti per 3 anni. In totale ~18 mesi di dati.</p>
-          <p data-lang="en">4 intensive collection periods per year, repeated for 3 years. ~18 months of data in total.</p>
-        </div>
-      </div>
-    </div>
+<!-- 06 — CONFRONTO -->
+<section class="alt">
+  <div class="container">
+    <p class="section-label" data-lang="it">06 · Il confronto</p>
+    <p class="section-label" data-lang="en">06 · The comparison</p>
+    <h2 data-lang="it">EMA-Burst vs Metodi Tradizionali</h2>
+    <h2 data-lang="en">EMA-Burst vs Traditional Methods</h2>
 
-    <div class="passive-box">
-      <div class="passive-item">
-        <div class="pi-icon">📍</div>
-        <h4>GPS</h4>
-        <p data-lang="it">Posizione e mobilità nel territorio</p>
-        <p data-lang="en">Position and mobility across territory</p>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th data-lang="it">Metodo tradizionale</th>
+          <th data-lang="en">Traditional method</th>
+          <th class="col-ema">EMA-Burst</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td data-lang="it">Contesto</td>
+          <td data-lang="en">Context</td>
+          <td data-lang="it">Setting controllato</td>
+          <td data-lang="en">Controlled setting</td>
+          <td class="col-ema" data-lang="it">Vita reale</td>
+          <td class="col-ema" data-lang="en">Real life</td>
+        </tr>
+        <tr>
+          <td data-lang="it">Frequenza</td>
+          <td data-lang="en">Frequency</td>
+          <td data-lang="it">1–3 misure in tutto lo studio</td>
+          <td data-lang="en">1–3 measures across the entire study</td>
+          <td class="col-ema">4/giorno × 15 gg × 6 burst</td>
+        </tr>
+        <tr>
+          <td data-lang="it">Bias di memoria</td>
+          <td data-lang="en">Memory bias</td>
+          <td data-lang="it">Elevato (retrospettivo)</td>
+          <td data-lang="en">High (retrospective)</td>
+          <td class="col-ema" data-lang="it">Nullo (momento presente)</td>
+          <td class="col-ema" data-lang="en">None (present moment)</td>
+        </tr>
+        <tr>
+          <td data-lang="it">Variabilità</td>
+          <td data-lang="en">Variability</td>
+          <td data-lang="it">Non rilevabile</td>
+          <td data-lang="en">Not detectable</td>
+          <td class="col-ema" data-lang="it">Misurata con precisione</td>
+          <td class="col-ema" data-lang="en">Measured with precision</td>
+        </tr>
+        <tr>
+          <td data-lang="it">Carico studente</td>
+          <td data-lang="en">Student burden</td>
+          <td data-lang="it">Basso (una sola volta)</td>
+          <td data-lang="en">Low (one time only)</td>
+          <td class="col-ema" data-lang="it">Moderato (solo nei burst)</td>
+          <td class="col-ema" data-lang="en">Moderate (only during bursts)</td>
+        </tr>
+        <tr>
+          <td data-lang="it">Ricchezza dati</td>
+          <td data-lang="en">Data richness</td>
+          <td data-lang="it">Limitata</td>
+          <td data-lang="en">Limited</td>
+          <td class="col-ema" data-lang="it">Altissima</td>
+          <td class="col-ema" data-lang="en">Very high</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 07 — PARAMETRI CONFIGURABILI -->
+<section>
+  <div class="container">
+    <p class="section-label" data-lang="it">07 · Flessibilità</p>
+    <p class="section-label" data-lang="en">07 · Flexibility</p>
+    <h2 data-lang="it">I parametri configurabili dell'EMA</h2>
+    <h2 data-lang="en">Configurable EMA parameters</h2>
+    <p class="section-intro" data-lang="it">L'EMA è flessibile: i parametri vengono definiti nella fase di co-progettazione con gli studenti e adattati alle esigenze di ogni scuola.</p>
+    <p class="section-intro" data-lang="en">EMA is flexible: parameters are defined during co-design with students and adapted to each school's needs.</p>
+
+    <div class="params-grid">
+      <div class="param-card">
+        <h4 data-lang="it">Design temporale</h4>
+        <h4 data-lang="en">Temporal design</h4>
+        <ul>
+          <li data-lang="it">Numero di burst e durata</li>
+          <li data-lang="en">Number of bursts and duration</li>
+          <li data-lang="it">Frequenza segnali/giorno</li>
+          <li data-lang="en">Signal frequency per day</li>
+          <li data-lang="it">Finestre orarie (es. 15:00–22:00)</li>
+          <li data-lang="en">Time windows (e.g. 15:00–22:00)</li>
+        </ul>
       </div>
-      <div class="passive-item">
-        <div class="pi-icon">🏃</div>
-        <h4 data-lang="it">Accelerometro</h4>
-        <h4 data-lang="en">Accelerometer</h4>
-        <p data-lang="it">Attività fisica e movimento</p>
-        <p data-lang="en">Physical activity and movement</p>
+      <div class="param-card">
+        <h4 data-lang="it">Contenuto</h4>
+        <h4 data-lang="en">Content</h4>
+        <ul>
+          <li data-lang="it">Domande sullo stato d'animo</li>
+          <li data-lang="en">Mood questions</li>
+          <li data-lang="it">Domande sul contesto sociale</li>
+          <li data-lang="en">Social context questions</li>
+          <li data-lang="it">Scale validate internazionalmente</li>
+          <li data-lang="en">Internationally validated scales</li>
+        </ul>
       </div>
-      <div class="passive-item">
-        <div class="pi-icon">📲</div>
-        <h4 data-lang="it">Tempo di schermo</h4>
-        <h4 data-lang="en">Screen time</h4>
-        <p data-lang="it">Uso del telefono e social media</p>
-        <p data-lang="en">Phone and social media use</p>
+      <div class="param-card">
+        <h4 data-lang="it">Notifiche</h4>
+        <h4 data-lang="en">Notifications</h4>
+        <ul>
+          <li data-lang="it">Completamente randomizzate</li>
+          <li data-lang="en">Fully randomised</li>
+          <li data-lang="it">Distanza minima tra segnali</li>
+          <li data-lang="en">Minimum gap between signals</li>
+          <li data-lang="it">Messaggi personalizzabili</li>
+          <li data-lang="en">Customisable messages</li>
+        </ul>
       </div>
-      <div class="passive-item">
-        <div class="pi-icon">💤</div>
-        <h4 data-lang="it">Sonno passivo</h4>
-        <h4 data-lang="en">Passive sleep</h4>
-        <p data-lang="it">Qualità e durata del sonno da sensori</p>
-        <p data-lang="en">Sleep quality and duration from sensors</p>
+      <div class="param-card">
+        <h4 data-lang="it">Feedback</h4>
+        <h4 data-lang="en">Feedback</h4>
+        <ul>
+          <li data-lang="it">Grafico umore in tempo reale</li>
+          <li data-lang="en">Real-time mood chart</li>
+          <li data-lang="it">Facoltativo e personalizzabile</li>
+          <li data-lang="en">Optional and customisable</li>
+          <li data-lang="it">Visibile solo allo studente</li>
+          <li data-lang="en">Visible only to the student</li>
+        </ul>
       </div>
     </div>
   </div>
 </section>
 
-<!-- SEDs -->
+<!-- 08 — TRASPARENZA -->
 <section class="alt">
+  <div class="container">
+    <p class="section-label" data-lang="it">08 · Trasparenza</p>
+    <p class="section-label" data-lang="en">08 · Transparency</p>
+    <h2 data-lang="it">Le criticità e come le gestiamo</h2>
+    <h2 data-lang="en">Challenges and how we address them</h2>
+    <p class="section-intro" data-lang="it">Vogliamo essere completamente trasparenti sui limiti di questo progetto e su come intendiamo affrontarli.</p>
+    <p class="section-intro" data-lang="en">We want to be fully transparent about this project's limitations and how we intend to address them.</p>
+
+    <div class="risk-grid">
+      <div class="risk-card">
+        <div class="rc-problem" data-lang="it">Criticità</div>
+        <div class="rc-problem" data-lang="en">Challenge</div>
+        <h4 data-lang="it">La partecipazione può stancare</h4>
+        <h4 data-lang="en">Participation can be tiring</h4>
+        <div class="rc-solution" data-lang="it">Come lo gestiamo</div>
+        <div class="rc-solution" data-lang="en">How we address it</div>
+        <p data-lang="it">Massimo 7 domande per sessione (~90 sec). Gli studenti possono saltare senza conseguenze. Monitoriamo la compliance e interveniamo se cala.</p>
+        <p data-lang="en">Maximum 7 questions per session (~90 sec). Students can skip without consequences. We monitor compliance and intervene if it drops.</p>
+      </div>
+      <div class="risk-card">
+        <div class="rc-problem" data-lang="it">Criticità</div>
+        <div class="rc-problem" data-lang="en">Challenge</div>
+        <h4 data-lang="it">I dati sono sensibili</h4>
+        <h4 data-lang="en">Data is sensitive</h4>
+        <div class="rc-solution" data-lang="it">Come lo gestiamo</div>
+        <div class="rc-solution" data-lang="en">How we address it</div>
+        <p data-lang="it">Tutti i dati sono anonimi e cifrati. Server sicuri, conformità GDPR. Nessun insegnante o genitore avrà accesso alle risposte individuali.</p>
+        <p data-lang="en">All data is anonymous and encrypted. Secure servers, GDPR compliant. No teacher or parent will have access to individual responses.</p>
+      </div>
+      <div class="risk-card">
+        <div class="rc-problem" data-lang="it">Criticità</div>
+        <div class="rc-problem" data-lang="en">Challenge</div>
+        <h4 data-lang="it">Un item in un momento difficile</h4>
+        <h4 data-lang="en">A question at a difficult moment</h4>
+        <div class="rc-solution" data-lang="it">Come lo gestiamo</div>
+        <div class="rc-solution" data-lang="en">How we address it</div>
+        <p data-lang="it">I dati sono rigorosamente anonimi: il team non può risalire al singolo. Al termine di ogni sessione l'app mostra le risorse di supporto: Telefono Amico (02 2327 2327), consultorio, medico di base, centro di salute mentale.</p>
+        <p data-lang="en">Data is strictly anonymous: the team cannot identify individuals. At the end of each session the app displays support resources: helplines, local clinic, GP, mental health centre.</p>
+      </div>
+    </div>
+
+    <!-- Consenso e incentivi -->
+    <div class="consent-grid" style="margin-top:40px;">
+      <div class="consent-card">
+        <h4 data-lang="it">Gli incentivi alla partecipazione</h4>
+        <h4 data-lang="en">Participation incentives</h4>
+        <p data-lang="it">Non ricorriamo a compensazione monetaria diretta. Nella fase di co-progettazione definiremo insieme alla scuola un pacchetto di incentivi appropriato: crediti formativi, attestati di partecipazione, accesso a laboratori o attività dedicate. Questa pratica è approvata dal comitato etico.</p>
+        <p data-lang="en">We do not use direct monetary compensation. During co-design we will define an appropriate incentive package with the school: training credits, participation certificates, access to dedicated labs or activities. This practice is approved by the ethics committee.</p>
+      </div>
+      <div class="consent-card">
+        <h4 data-lang="it">Il doppio consenso</h4>
+        <h4 data-lang="en">Dual consent</h4>
+        <p data-lang="it">Per ogni studente è obbligatorio il consenso scritto di un genitore o tutore e il consenso informato dello studente stesso. Entrambi possono ritirarsi dallo studio in qualsiasi momento, senza fornire spiegazioni e senza alcuna conseguenza.</p>
+        <p data-lang="en">For each student, written consent from a parent or guardian and the student's own informed consent are mandatory. Both may withdraw from the study at any time, without explanation and without consequence.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 09 — SEDs -->
+<section>
   <div class="container">
     <p class="section-label" data-lang="it">Determinanti socio-ecologici</p>
     <p class="section-label" data-lang="en">Socio-ecological determinants</p>
@@ -210,46 +652,53 @@
     <div class="sed-grid">
       <div class="sed-card">
         <div class="sed-icon">🌳</div>
-        <h4 data-lang="it">Verde urbano</h4>
-        <h4 data-lang="en">Urban green spaces</h4>
+        <h4 data-lang="it">Verde urbano</h4><h4 data-lang="en">Urban green spaces</h4>
         <p data-lang="it">Parchi, aree verdi, NDVI per zona di residenza.</p>
         <p data-lang="en">Parks, green areas, NDVI by residential zone.</p>
       </div>
       <div class="sed-card">
         <div class="sed-icon">🏭</div>
-        <h4 data-lang="it">Inquinamento</h4>
-        <h4 data-lang="en">Pollution</h4>
+        <h4 data-lang="it">Inquinamento</h4><h4 data-lang="en">Pollution</h4>
         <p data-lang="it">Qualità dell'aria, rumore, inquinamento luminoso.</p>
         <p data-lang="en">Air quality, noise, light pollution.</p>
       </div>
       <div class="sed-card">
         <div class="sed-icon">🏘️</div>
-        <h4 data-lang="it">Densità abitativa</h4>
-        <h4 data-lang="en">Housing density</h4>
+        <h4 data-lang="it">Densità abitativa</h4><h4 data-lang="en">Housing density</h4>
         <p data-lang="it">Caratteristiche del quartiere e dell'ambiente costruito.</p>
-        <p data-lang="en">Neighborhood and built environment characteristics.</p>
+        <p data-lang="en">Neighbourhood and built environment characteristics.</p>
       </div>
       <div class="sed-card">
         <div class="sed-icon">💶</div>
-        <h4 data-lang="it">Deprivazione economica</h4>
-        <h4 data-lang="en">Economic deprivation</h4>
+        <h4 data-lang="it">Deprivazione economica</h4><h4 data-lang="en">Economic deprivation</h4>
         <p data-lang="it">Indici di reddito, disoccupazione e povertà per area.</p>
         <p data-lang="en">Income, unemployment, and poverty indices by area.</p>
       </div>
       <div class="sed-card">
         <div class="sed-icon">🤝</div>
-        <h4 data-lang="it">Coesione sociale</h4>
-        <h4 data-lang="en">Social cohesion</h4>
+        <h4 data-lang="it">Coesione sociale</h4><h4 data-lang="en">Social cohesion</h4>
         <p data-lang="it">Senso di comunità, reti sociali, fiducia interpersonale.</p>
         <p data-lang="en">Sense of community, social networks, interpersonal trust.</p>
       </div>
       <div class="sed-card">
         <div class="sed-icon">🌡️</div>
-        <h4 data-lang="it">Fattori climatici</h4>
-        <h4 data-lang="en">Climatic factors</h4>
+        <h4 data-lang="it">Fattori climatici</h4><h4 data-lang="en">Climatic factors</h4>
         <p data-lang="it">Temperatura, umidità, eventi climatici estremi.</p>
         <p data-lang="en">Temperature, humidity, extreme weather events.</p>
       </div>
+    </div>
+
+    <!-- Download box -->
+    <div class="download-box">
+      <div>
+        <h3 data-lang="it">Scarica la guida completa all'EMA</h3>
+        <h3 data-lang="en">Download the complete EMA guide</h3>
+        <p data-lang="it">Il documento illustra il metodo EMA, il disegno dello studio e cosa chiediamo alle scuole partecipanti.</p>
+        <p data-lang="en">The document illustrates the EMA method, study design, and what we ask of participating schools.</p>
+      </div>
+      <a href="assets/EMA_Scuole.pdf" download class="btn-download">
+        ↓ <span data-lang="it">Scarica PDF</span><span data-lang="en">Download PDF</span>
+      </a>
     </div>
   </div>
 </section>
@@ -263,9 +712,9 @@
         <p data-lang="it">Primo studio epidemiologico longitudinale sul benessere mentale degli adolescenti nell'area metropolitana di Roma. Finanziato da FIS – MUR (3 anni).</p>
         <p data-lang="en">First large-scale longitudinal study on adolescent mental well-being in Rome. Funded by FIS – MUR (3 years).</p>
         <div class="footer-logos">
+          <img src="assets/logo_mur_vec.png" alt="MUR" />
           <img src="assets/logo_torvergata.png" alt="Tor Vergata" />
           <img src="assets/logo_fis_vec.png" alt="FIS" />
-          <img src="assets/logo_mur_vec.png" alt="MUR" />
         </div>
       </div>
       <div>
