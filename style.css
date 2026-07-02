@@ -218,7 +218,8 @@ footer ul li a:hover { color: #6fe0a0; text-decoration: none; }
   }
   nav.open { display: flex; }
   nav a { display: block; padding: 10px 14px; font-size: .95rem; }
-  nav a[data-lang] { display: none; }
+  nav a[data-lang="en"] { display: none; }
+  nav a[data-lang="it"] { display: block; }
   body.lang-en nav a[data-lang="it"] { display: none; }
   body.lang-en nav a[data-lang="en"] { display: block; }
   nav a:not([data-lang]) { display: block; }
