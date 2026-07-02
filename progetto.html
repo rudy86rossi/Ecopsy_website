@@ -199,6 +199,9 @@
 <header>
   <div class="container header-inner">
     <a href="index.html" style="text-decoration:none"><img src="assets/logo_ecopsy.png" alt="EcoPsy" style="height:40px;" /></a>
+    <button class="menu-toggle" onclick="toggleMenu(this)" aria-label="Menu">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="4" width="22" height="2.2" rx="1.1" fill="currentColor"/><rect y="9.9" width="22" height="2.2" rx="1.1" fill="currentColor"/><rect y="15.8" width="22" height="2.2" rx="1.1" fill="currentColor"/></svg>
+    </button>
     <nav>
       <a href="progetto.html" class="active" data-lang="it">Il Progetto</a>
       <a href="progetto.html" class="active" data-lang="en">The Project</a>
@@ -703,10 +706,16 @@
 </footer>
 
 <script>
+  function toggleMenu(btn) {
+    const nav = document.querySelector("nav");
+    nav.classList.toggle("open");
+    btn.setAttribute("aria-expanded", nav.classList.contains("open"));
+  }
   function toggleLang(btn) {
     const isEN = document.body.classList.toggle('lang-en');
     btn.textContent = isEN ? 'IT' : 'EN';
     document.documentElement.lang = isEN ? 'en' : 'it';
+    document.querySelector("nav").classList.remove("open");
   }
 </script>
 </body>
