@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Partecipa – EcoPsy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Sub-nav ── */
+    .sub-nav { background: var(--green-pale); border-bottom: 1px solid var(--border); }
+    .sub-nav-inner { display: flex; gap: 0; overflow-x: auto; }
+    .sub-nav a {
+      display: block; padding: 12px 20px; white-space: nowrap; text-decoration: none;
+      font-family: var(--font-head); font-size: .82rem; font-weight: 600;
+      color: var(--text-muted); border-bottom: 3px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .sub-nav a:hover { color: var(--green-dark); text-decoration: none; }
+    .sub-nav a.active { color: var(--green-dark); border-bottom-color: var(--green-mid); font-weight: 700; }
+
+    /* ── Info grid (scuole) ── */
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 48px; }
+    .info-card {
+      background: var(--white); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 28px 24px; box-shadow: var(--shadow);
+    }
+    .info-card h3 { font-family: var(--font-head); font-size: 1rem; font-weight: 700; color: var(--green-dark); margin-bottom: 14px; }
+    .info-card ul { list-style: none; padding: 0; }
+    .info-card ul li {
+      font-size: .88rem; color: var(--text-muted); padding: 6px 0;
+      border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: flex-start;
+    }
+    .info-card ul li:last-child { border-bottom: none; }
+    .info-card ul li::before { content: '—'; color: var(--green-mid); font-weight: 700; flex-shrink: 0; }
+
+    /* ── FSL promo box ── */
+    .fsl-promo {
+      background: var(--green-dark); border-radius: var(--radius);
+      padding: 32px 36px; color: var(--white);
+      display: flex; align-items: center; justify-content: space-between; gap: 24px;
+      margin-bottom: 0;
+    }
+    .fsl-promo h3 { font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; }
+    .fsl-promo p { font-size: .88rem; color: rgba(255,255,255,.75); max-width: 520px; }
+    .fsl-promo a.btn { background: #6fe0a0; color: var(--green-dark); white-space: nowrap; }
+    .fsl-promo a.btn:hover { background: var(--white); }
+
+    /* ── EMA steps ── */
+    .ema-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 40px; }
+    .ema-step {
+      background: var(--white); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 20px 16px; text-align: center; box-shadow: var(--shadow);
+    }
+    .ema-num {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--green-dark); color: var(--white);
+      font-family: var(--font-head); font-weight: 700; font-size: .85rem;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 10px;
+    }
+    .ema-step h4 { font-family: var(--font-head); font-size: .85rem; font-weight: 700; color: var(--green-dark); margin-bottom: 4px; }
+    .ema-step p { font-size: .78rem; color: var(--text-muted); line-height: 1.4; }
+
+    /* ── Garanzie ── */
+    .garanzie-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .garanzia {
+      background: var(--white); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 20px; box-shadow: var(--shadow); text-align: center;
+    }
+    .garanzia .icon { font-size: 1.6rem; margin-bottom: 8px; }
+    .garanzia h4 { font-family: var(--font-head); font-size: .85rem; font-weight: 700; color: var(--green-dark); margin-bottom: 4px; }
+    .garanzia p { font-size: .78rem; color: var(--text-muted); line-height: 1.4; }
+
+    @media (max-width: 900px) {
+      .info-grid { grid-template-columns: 1fr; }
+      .fsl-promo { flex-direction: column; }
+      .ema-steps { grid-template-columns: 1fr 1fr; }
+      .garanzie-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="container header-inner">
+    <a href="index.html" style="text-decoration:none"><img src="assets/logo_ecopsy.png" alt="EcoPsy" style="height:40px;" /></a>
+    <button class="menu-toggle" onclick="toggleMenu(this)" aria-label="Menu">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="4" width="22" height="2.2" rx="1.1" fill="currentColor"/><rect y="9.9" width="22" height="2.2" rx="1.1" fill="currentColor"/><rect y="15.8" width="22" height="2.2" rx="1.1" fill="currentColor"/></svg>
+    </button>
+    <nav>
+      <a href="progetto.html" data-lang="it">Il Progetto</a>
+      <a href="progetto.html" data-lang="en">The Project</a>
+      <a href="metodologia.html" data-lang="it">Metodologia</a>
+      <a href="metodologia.html" data-lang="en">Methodology</a>
+      <a href="team.html">Team</a>
+      <a href="partecipa.html" class="active" data-lang="it">Partecipa</a>
+      <a href="partecipa.html" class="active" data-lang="en">Join</a>
+      <a href="news.html">News</a>
+      <button class="lang-btn" onclick="toggleLang(this)">EN</button>
+    </nav>
+  </div>
+</header>
+
+<!-- SUB-NAV -->
+<div class="sub-nav">
+  <div class="container sub-nav-inner">
+    <a href="partecipa.html" class="active">
+      <span data-lang="it">Partecipa al progetto</span>
+      <span data-lang="en">Join the project</span>
+    </a>
+    <a href="fsl-2026-2027.html">FSL 2026–2027</a>
+    <a href="fsl-2027-2028.html">FSL 2027–2028</a>
+  </div>
+</div>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="container">
+    <p class="section-label" data-lang="it">Per le scuole e gli studenti</p>
+    <p class="section-label" data-lang="en">For schools and students</p>
+    <h1 data-lang="it">Partecipa al progetto</h1>
+    <h1 data-lang="en">Join the project</h1>
+    <p data-lang="it">EcoPsy coinvolge istituti secondari di II grado nell'area metropolitana di Roma. La partecipazione è gratuita, volontaria e approvata dal Comitato Etico.</p>
+    <p data-lang="en">EcoPsy involves upper secondary schools in the metropolitan area of Rome. Participation is free, voluntary, and approved by the Ethics Committee.</p>
+  </div>
+</div>
+
+<!-- SEZIONE SCUOLE -->
+<section style="padding: 64px 0 56px;">
+  <div class="container">
+    <p class="section-label" data-lang="it">Per i dirigenti e docenti</p>
+    <p class="section-label" data-lang="en">For school principals and teachers</p>
+    <h2 data-lang="it">La tua scuola</h2>
+    <h2 data-lang="en">Your school</h2>
+    <p class="section-intro" data-lang="it">Cosa chiediamo e cosa offriamo alle scuole che aderiscono a EcoPsy.</p>
+    <p class="section-intro" data-lang="en">What we ask of schools and what we offer them in return.</p>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <h3 data-lang="it">Cosa chiediamo alla scuola</h3>
+        <h3 data-lang="en">What we ask of the school</h3>
+        <ul>
+          <li>
+            <span data-lang="it">Delibera di adesione in Collegio Docenti</span>
+            <span data-lang="en">Faculty council approval resolution</span>
+          </li>
+          <li>
+            <span data-lang="it">1 ora per la presentazione del progetto agli studenti</span>
+            <span data-lang="en">1 hour for the student presentation</span>
+          </li>
+          <li>
+            <span data-lang="it">Distribuzione del materiale informativo alle famiglie</span>
+            <span data-lang="en">Distribution of information to families</span>
+          </li>
+          <li>
+            <span data-lang="it">Un referente interno (docente o personale ATA)</span>
+            <span data-lang="en">An internal contact person (teacher or support staff)</span>
+          </li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h3 data-lang="it">Cosa offriamo alla scuola</h3>
+        <h3 data-lang="en">What we offer the school</h3>
+        <ul>
+          <li>
+            <span data-lang="it">Report anonimo sui dati di benessere della scuola</span>
+            <span data-lang="en">Anonymous report on the school's well-being data</span>
+          </li>
+          <li>
+            <span data-lang="it">Programma FSL/PCTO <em>EcoPsy Lab</em> per gli studenti (classi 3ª–5ª)</span>
+            <span data-lang="en">FSL/PCTO programme <em>EcoPsy Lab</em> for students (years 3–5)</span>
+          </li>
+          <li>
+            <span data-lang="it">Materiali divulgativi su salute mentale giovanile</span>
+            <span data-lang="en">Educational materials on youth mental health</span>
+          </li>
+          <li>
+            <span data-lang="it">Nessun costo per la scuola</span>
+            <span data-lang="en">No cost to the school</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- FSL promo -->
+    <div class="fsl-promo">
+      <div>
+        <h3 data-lang="it">Formazione Scuola-Lavoro 2026–2027</h3>
+        <h3 data-lang="en">School-to-Work Programme 2026–2027</h3>
+        <p data-lang="it">Vuoi iscrivere gli studenti al percorso FSL <em>EcoPsy Lab: Progettare il Benessere attraverso i Dati</em>? Trova la guida completa alla procedura di iscrizione sulla piattaforma di Ateneo.</p>
+        <p data-lang="en">Want to enrol students in the FSL programme <em>EcoPsy Lab: Progettare il Benessere attraverso i Dati</em>? Find the full enrolment guide on the University platform.</p>
+      </div>
+      <a href="fsl-2026-2027.html" class="btn">
+        <span data-lang="it">Guida all'iscrizione →</span>
+        <span data-lang="en">Enrolment guide →</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- SEZIONE STUDENTI E FAMIGLIE -->
+<section class="alt" style="padding: 64px 0;">
+  <div class="container">
+    <p class="section-label" data-lang="it">Per gli studenti e le famiglie</p>
+    <p class="section-label" data-lang="en">For students and families</p>
+    <h2 data-lang="it">Come funziona la partecipazione</h2>
+    <h2 data-lang="en">How participation works</h2>
+    <p class="section-intro" data-lang="it">Cosa succede concretamente quando uno studente partecipa a EcoPsy.</p>
+    <p class="section-intro" data-lang="en">What actually happens when a student takes part in EcoPsy.</p>
+
+    <div class="ema-steps">
+      <div class="ema-step">
+        <div class="ema-num">1</div>
+        <h4 data-lang="it">Consenso informato</h4>
+        <h4 data-lang="en">Informed consent</h4>
+        <p data-lang="it">Per i minorenni è richiesto il consenso dei genitori. La partecipazione è sempre volontaria.</p>
+        <p data-lang="en">Parental consent is required for minors. Participation is always voluntary.</p>
+      </div>
+      <div class="ema-step">
+        <div class="ema-num">2</div>
+        <h4 data-lang="it">Installazione app</h4>
+        <h4 data-lang="en">App installation</h4>
+        <p data-lang="it">Lo studente installa l'app EcoPsy sul proprio smartphone (iOS / Android).</p>
+        <p data-lang="en">The student installs the EcoPsy app on their smartphone (iOS / Android).</p>
+      </div>
+      <div class="ema-step">
+        <div class="ema-num">3</div>
+        <h4 data-lang="it">Questionari baseline</h4>
+        <h4 data-lang="en">Baseline questionnaires</h4>
+        <p data-lang="it">Una sessione iniziale (~25 min) di questionari su benessere, ambiente e stile di vita.</p>
+        <p data-lang="en">An initial session (~25 min) of questionnaires on well-being, environment and lifestyle.</p>
+      </div>
+      <div class="ema-step">
+        <div class="ema-num">4</div>
+        <h4 data-lang="it">Campionamento EMA</h4>
+        <h4 data-lang="en">EMA sampling</h4>
+        <p data-lang="it">4 volte all'anno, per 10 giorni: brevi notifiche (~2 min) su umore e attività quotidiane.</p>
+        <p data-lang="en">4 times a year, for 10 days: short notifications (~2 min) on mood and daily activities.</p>
+      </div>
+    </div>
+
+    <div class="garanzie-grid">
+      <div class="garanzia">
+        <div class="icon">🔒</div>
+        <h4 data-lang="it">Dati anonimi</h4>
+        <h4 data-lang="en">Anonymous data</h4>
+        <p data-lang="it">Nessun dato personale identificabile viene trattato o condiviso.</p>
+        <p data-lang="en">No personally identifiable data is processed or shared.</p>
+      </div>
+      <div class="garanzia">
+        <div class="icon">✋</div>
+        <h4 data-lang="it">Ritiro in qualsiasi momento</h4>
+        <h4 data-lang="en">Withdraw any time</h4>
+        <p data-lang="it">Lo studente può smettere di partecipare in qualsiasi momento, senza conseguenze.</p>
+        <p data-lang="en">The student can stop participating at any time, without consequences.</p>
+      </div>
+      <div class="garanzia">
+        <div class="icon">✅</div>
+        <h4 data-lang="it">Approvato dal Comitato Etico</h4>
+        <h4 data-lang="en">Ethics Committee approved</h4>
+        <p data-lang="it">Il protocollo è stato approvato dal Comitato Etico di Ateneo (febbraio 2026).</p>
+        <p data-lang="en">The protocol was approved by the University Ethics Committee (February 2026).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTATTO -->
+<section style="padding: 56px 0 72px;">
+  <div class="container">
+    <div class="contact-box">
+      <div>
+        <h3 data-lang="it">La tua scuola vuole partecipare?</h3>
+        <h3 data-lang="en">Does your school want to join?</h3>
+        <p data-lang="it">Scrivici per ricevere la documentazione informativa e avviare la procedura di adesione.</p>
+        <p data-lang="en">Write to us to receive the information package and start the joining process.</p>
+      </div>
+      <a href="mailto:segreteria@ecopsy.eu" class="btn">
+        <span data-lang="it">Contattaci →</span>
+        <span data-lang="en">Get in touch →</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo-text">Eco<span style="color:#6fe0a0">Psy</span></div>
+        <p data-lang="it">Primo studio epidemiologico longitudinale sul benessere mentale degli adolescenti nell'area metropolitana di Roma. Finanziato da FIS – MUR (3 anni).</p>
+        <p data-lang="en">First large-scale longitudinal study on adolescent mental well-being in Rome. Funded by FIS – MUR (3 years).</p>
+        <div class="footer-logos">
+          <img src="assets/logo_mur_vec.png" alt="MUR" />
+          <img src="assets/logo_torvergata.png" alt="Tor Vergata" />
+          <img src="assets/logo_fis_vec.png" alt="FIS" />
+        </div>
+      </div>
+      <div>
+        <h4 data-lang="it">Pagine</h4><h4 data-lang="en">Pages</h4>
+        <ul>
+          <li><a href="progetto.html" data-lang="it">Il Progetto</a><a href="progetto.html" data-lang="en">The Project</a></li>
+          <li><a href="metodologia.html" data-lang="it">Metodologia</a><a href="metodologia.html" data-lang="en">Methodology</a></li>
+          <li><a href="team.html">Team</a></li>
+          <li><a href="partecipa.html" data-lang="it">Partecipa</a><a href="partecipa.html" data-lang="en">Join</a></li>
+          <li><a href="news.html">News</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 data-lang="it">Contatti</h4><h4 data-lang="en">Contact</h4>
+        <ul>
+          <li>Dr. Rodolfo Rossi</li>
+          <li><a href="mailto:segreteria@ecopsy.eu">segreteria@ecopsy.eu</a></li>
+          <li style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.4)" data-lang="it">Dipartimento di Medicina dei Sistemi<br />Università di Roma Tor Vergata<br />via Montpellier 1, 00133 Roma</li>
+          <li style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.4)" data-lang="en">Department of Systems Medicine<br />University of Rome Tor Vergata<br />via Montpellier 1, 00133 Roma</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 EcoPsy – Università di Roma Tor Vergata</span>
+      <span data-lang="it">Progetto finanziato da FIS – Fondo Italiano per la Scienza, MUR</span>
+      <span data-lang="en">Project funded by FIS – Italian Fund for Science, MUR</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function toggleMenu(btn) {
+    const nav = document.querySelector("nav");
+    nav.classList.toggle("open");
+    btn.setAttribute("aria-expanded", nav.classList.contains("open"));
+  }
+  function toggleLang(btn) {
+    const isEN = document.body.classList.toggle('lang-en');
+    btn.textContent = isEN ? 'IT' : 'EN';
+    document.documentElement.lang = isEN ? 'en' : 'it';
+    document.querySelector("nav").classList.remove("open");
+  }
+  document.querySelectorAll('nav a').forEach(a => a.addEventListener('click', () => {
+    document.querySelector('nav').classList.remove('open');
+  }));
+</script>
+</body>
+</html>

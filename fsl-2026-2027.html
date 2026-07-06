@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FSL 2026-2027 – EcoPsy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Sub-nav ── */
+    .sub-nav { background: var(--green-pale); border-bottom: 1px solid var(--border); }
+    .sub-nav-inner { display: flex; gap: 0; overflow-x: auto; }
+    .sub-nav a {
+      display: block; padding: 12px 20px; white-space: nowrap; text-decoration: none;
+      font-family: var(--font-head); font-size: .82rem; font-weight: 600;
+      color: var(--text-muted); border-bottom: 3px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .sub-nav a:hover { color: var(--green-dark); text-decoration: none; }
+    .sub-nav a.active { color: var(--green-dark); border-bottom-color: var(--green-mid); font-weight: 700; }
+
+    /* ── Decision flowchart ── */
+    .decision-wrap { max-width: 820px; margin: 0 auto 56px; }
+    .decision-q {
+      background: var(--white); border: 2px solid var(--green-mid);
+      border-radius: var(--radius); padding: 22px 28px;
+      text-align: center; font-family: var(--font-head);
+      font-size: 1rem; font-weight: 600; color: var(--green-dark);
+      margin-bottom: 12px;
+    }
+    .paths-grid { display: flex; flex-direction: column; gap: 12px; }
+    .path { border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
+    .path summary {
+      padding: 16px 20px; font-family: var(--font-head);
+      font-size: .88rem; font-weight: 700; letter-spacing: .3px;
+      cursor: pointer; list-style: none;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      user-select: none;
+    }
+    .path summary::-webkit-details-marker { display: none; }
+    .path-yes summary { background: var(--green-dark); color: var(--white); }
+    .path-no  summary { background: #e8f0fe; color: #1a3a6e; }
+    .path summary .chevron { font-size: 1.1rem; flex-shrink: 0; transition: transform .2s; }
+    .path[open] summary .chevron { transform: rotate(180deg); }
+    .path-yes summary .chevron { color: rgba(255,255,255,.7); }
+    .path-no  summary .chevron { color: #1a3a6e; }
+    .path-body { padding: 20px; background: var(--white); }
+    .path-step { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+    .path-step:last-child { margin-bottom: 0; }
+    .step-num {
+      flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+      background: var(--green-dark); color: var(--white);
+      font-family: var(--font-head); font-size: .72rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .path-no .step-num { background: #1a3a6e; }
+    .step-text { font-size: .88rem; color: var(--text); line-height: 1.45; padding-top: 2px; }
+    .step-text strong { color: var(--green-dark); }
+    .path-no .step-text strong { color: #1a3a6e; }
+    .step-link { font-size: .78rem; color: var(--green-mid); display: block; margin-top: 2px; }
+    .path-merge {
+      margin-top: 16px; padding: 12px 16px;
+      background: var(--green-pale); border-radius: 8px;
+      font-size: .82rem; color: var(--text-muted);
+      border-left: 3px solid var(--green-mid);
+    }
+    .path-merge strong { color: var(--green-dark); }
+
+    /* ── Docs grid ── */
+    .docs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 8px; }
+    .doc-card {
+      display: flex; align-items: center; gap: 16px;
+      padding: 18px 20px; background: var(--white);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow); text-decoration: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .doc-card:hover { border-color: var(--green-mid); box-shadow: 0 6px 20px rgba(26,74,46,.12); text-decoration: none; }
+    .doc-icon {
+      flex-shrink: 0; width: 40px; height: 40px; border-radius: 8px;
+      background: var(--green-pale); display: flex; align-items: center; justify-content: center; color: var(--green-dark);
+    }
+    .doc-info { flex: 1; }
+    .doc-info strong { font-family: var(--font-head); font-size: .88rem; font-weight: 700; color: var(--green-dark); display: block; margin-bottom: 2px; }
+    .doc-info span { font-size: .78rem; color: var(--text-muted); }
+    .doc-tag { font-size: .68rem; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; background: #fee2e2; color: #b91c1c; flex-shrink: 0; }
+    .doc-tag.opt { background: var(--green-pale); color: var(--green-dark); }
+
+    /* ── Contacts ── */
+    .contacts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .contact-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 28px; box-shadow: var(--shadow); }
+    .contact-card h4 { font-family: var(--font-head); font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 10px; }
+    .contact-card p { font-size: .9rem; color: var(--text); margin-bottom: 6px; }
+    .contact-card a { color: var(--green-mid); font-weight: 500; }
+    .contact-card .tel { font-size: .82rem; color: var(--text-muted); margin-top: 4px; }
+
+    @media (max-width: 900px) {
+      .docs-grid { grid-template-columns: 1fr; }
+      .contacts-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="container header-inner">
+    <a href="index.html" style="text-decoration:none"><img src="assets/logo_ecopsy.png" alt="EcoPsy" style="height:40px;" /></a>
+    <button class="menu-toggle" onclick="toggleMenu(this)" aria-label="Menu">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="4" width="22" height="2.2" rx="1.1" fill="currentColor"/><rect y="9.9" width="22" height="2.2" rx="1.1" fill="currentColor"/><rect y="15.8" width="22" height="2.2" rx="1.1" fill="currentColor"/></svg>
+    </button>
+    <nav>
+      <a href="progetto.html" data-lang="it">Il Progetto</a>
+      <a href="progetto.html" data-lang="en">The Project</a>
+      <a href="metodologia.html" data-lang="it">Metodologia</a>
+      <a href="metodologia.html" data-lang="en">Methodology</a>
+      <a href="team.html">Team</a>
+      <a href="partecipa.html" class="active" data-lang="it">Partecipa</a>
+      <a href="partecipa.html" class="active" data-lang="en">Join</a>
+      <a href="news.html">News</a>
+      <button class="lang-btn" onclick="toggleLang(this)">EN</button>
+    </nav>
+  </div>
+</header>
+
+<!-- SUB-NAV -->
+<div class="sub-nav">
+  <div class="container sub-nav-inner">
+    <a href="partecipa.html">
+      <span data-lang="it">Partecipa al progetto</span>
+      <span data-lang="en">Join the project</span>
+    </a>
+    <a href="fsl-2026-2027.html" class="active">FSL 2026–2027</a>
+    <a href="fsl-2027-2028.html">FSL 2027–2028</a>
+  </div>
+</div>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="container">
+    <p class="section-label" data-lang="it">Formazione Scuola-Lavoro / PCTO</p>
+    <p class="section-label" data-lang="en">School-to-Work Programme / PCTO</p>
+    <h1 data-lang="it">FSL 2026–2027</h1>
+    <h1 data-lang="en">FSL 2026–2027</h1>
+    <p data-lang="it">Guida rapida per i docenti referenti: come candidare gli studenti al FSL EcoPsy sulla piattaforma di Ateneo. Iscrizioni entro il <strong style="color:#6fe0a0">30 settembre 2026</strong>.</p>
+    <p data-lang="en">Quick guide for school coordinators: how to enrol students in the EcoPsy FSL programme. Deadline: <strong style="color:#6fe0a0">30 September 2026</strong>.</p>
+  </div>
+</div>
+
+<!-- FLOWCHART -->
+<section style="padding: 56px 0;">
+  <div class="container">
+    <div class="decision-wrap">
+      <div class="decision-q">
+        <span data-lang="it">La tua scuola è già convenzionata con Tor Vergata e ha un referente registrato su <a href="https://pcto.uniroma2.it" target="_blank" rel="noopener" style="color:var(--green-dark)">pcto.uniroma2.it</a>?</span>
+        <span data-lang="en">Is your school already partnered with Tor Vergata and registered on <a href="https://pcto.uniroma2.it" target="_blank" rel="noopener" style="color:var(--green-dark)">pcto.uniroma2.it</a>?</span>
+      </div>
+      <div class="paths-grid">
+
+        <!-- PATH A: già registrata -->
+        <details class="path path-yes" open>
+          <summary>
+            <span>
+              <span data-lang="it">✓ Scuola già registrata su pcto.uniroma2.it</span>
+              <span data-lang="en">✓ School already registered on pcto.uniroma2.it</span>
+            </span>
+            <span class="chevron">▾</span>
+          </summary>
+          <div class="path-body">
+            <div class="path-step">
+              <div class="step-num">1</div>
+              <div class="step-text" data-lang="it">Accedi a <a href="https://pcto.uniroma2.it" target="_blank" rel="noopener"><strong>pcto.uniroma2.it</strong></a> con le credenziali del referente scolastico</div>
+              <div class="step-text" data-lang="en">Log in to <a href="https://pcto.uniroma2.it" target="_blank" rel="noopener"><strong>pcto.uniroma2.it</strong></a> with the school coordinator's credentials</div>
+            </div>
+            <div class="path-step">
+              <div class="step-num">2</div>
+              <div class="step-text" data-lang="it">Cerca il progetto <strong>EcoPsy Lab: Progettare il Benessere attraverso i Dati</strong> (codice <strong>2026MED636</strong>), clicca "Candidatura" e indica il numero di posti richiesti</div>
+              <div class="step-text" data-lang="en">Search for <strong>EcoPsy Lab: Progettare il Benessere attraverso i Dati</strong> (code <strong>2026MED636</strong>), click "Candidatura" and enter the number of spots requested</div>
+            </div>
+            <div class="path-step">
+              <div class="step-num">3</div>
+              <div class="step-text" data-lang="it">Attendi la conferma del PI — riceverai notifica via piattaforma (di norma entro 48 ore)</div>
+              <div class="step-text" data-lang="en">Wait for PI confirmation — you will receive a platform notification (usually within 48 hours)</div>
+            </div>
+            <div class="path-step">
+              <div class="step-num">4</div>
+              <div class="step-text" data-lang="it"><strong>Solo dopo la conferma:</strong> carica i nominativi degli studenti e la dichiarazione firmata dal Dirigente Scolastico</div>
+              <div class="step-text" data-lang="en"><strong>Only after confirmation:</strong> upload student names and the declaration signed by the Head Teacher</div>
+            </div>
+          </div>
+        </details>
+
+        <!-- PATH B: non registrata -->
+        <details class="path path-no">
+          <summary>
+            <span>
+              <span data-lang="it">✗ Scuola non ancora registrata / senza convenzione</span>
+              <span data-lang="en">✗ School not yet registered / no agreement in place</span>
+            </span>
+            <span class="chevron">▾</span>
+          </summary>
+          <div class="path-body">
+            <div class="path-step">
+              <div class="step-num">1</div>
+              <div class="step-text" data-lang="it">Scarica e compila l'<strong>Allegato 1</strong>, firmato dal Dirigente Scolastico
+                <a class="step-link" href="docs/Allegato1_Registrazione_Scuola_FSL.pdf" download>↓ Allegato 1 (PDF)</a>
+              </div>
+              <div class="step-text" data-lang="en">Download and fill in <strong>Allegato 1</strong>, signed by the Head Teacher
+                <a class="step-link" href="docs/Allegato1_Registrazione_Scuola_FSL.pdf" download>↓ Allegato 1 (PDF)</a>
+              </div>
+            </div>
+            <div class="path-step">
+              <div class="step-num">2</div>
+              <div class="step-text" data-lang="it">Se non esiste una convenzione valida, scarica e fai firmare il <strong>Modello Convenzione</strong>
+                <a class="step-link" href="docs/Modello_Convenzione_FSL_TorVergata.doc" download>↓ Modello Convenzione (DOC)</a>
+              </div>
+              <div class="step-text" data-lang="en">If no valid agreement exists, download and sign the <strong>Convention Template</strong>
+                <a class="step-link" href="docs/Modello_Convenzione_FSL_TorVergata.doc" download>↓ Convention template (DOC)</a>
+              </div>
+            </div>
+            <div class="path-step">
+              <div class="step-num">3</div>
+              <div class="step-text" data-lang="it">Invia i documenti firmati a: <strong>scuola-lavoro@orientamento.uniroma2.it</strong></div>
+              <div class="step-text" data-lang="en">Send the signed documents to: <strong>scuola-lavoro@orientamento.uniroma2.it</strong></div>
+            </div>
+            <div class="path-step">
+              <div class="step-num">4</div>
+              <div class="step-text" data-lang="it">Ricevi le credenziali dall'Ufficio PCTO e segui i passi del percorso <em>Scuola già registrata</em> →</div>
+              <div class="step-text" data-lang="en">Receive credentials from the PCTO Office and follow the steps in the <em>Already registered</em> path →</div>
+            </div>
+            <div class="path-merge" data-lang="it">
+              <strong>Tempistiche:</strong> invia la documentazione entro la prima settimana di settembre per ricevere le credenziali in tempo utile prima della scadenza del 30 settembre.
+            </div>
+            <div class="path-merge" data-lang="en">
+              <strong>Timing:</strong> send documentation by the first week of September to receive credentials before the 30 September deadline.
+            </div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOCUMENTI -->
+<section class="alt" style="padding: 56px 0;">
+  <div class="container">
+    <p class="section-label" data-lang="it">Modulistica</p>
+    <p class="section-label" data-lang="en">Documents</p>
+    <h2 data-lang="it">Scarica i documenti</h2>
+    <h2 data-lang="en">Download documents</h2>
+    <div class="docs-grid">
+      <a class="doc-card" href="docs/Allegato1_Registrazione_Scuola_FSL.pdf" download>
+        <div class="doc-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 16l-4-4h2.5V4h3v8H16l-4 4z" fill="currentColor"/><path d="M4 20h16v-2H4v2z" fill="currentColor"/></svg></div>
+        <div class="doc-info">
+          <strong>Allegato 1 — Registrazione Scuola / Tutor</strong>
+          <span data-lang="it">Da compilare e firmare per registrare una nuova scuola sulla piattaforma</span>
+          <span data-lang="en">Fill and sign to register a new school on the platform</span>
+        </div>
+        <span class="doc-tag" data-lang="it">Nuove scuole</span>
+        <span class="doc-tag" data-lang="en">New schools</span>
+      </a>
+      <a class="doc-card" href="docs/Modello_Convenzione_FSL_TorVergata.doc" download>
+        <div class="doc-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 16l-4-4h2.5V4h3v8H16l-4 4z" fill="currentColor"/><path d="M4 20h16v-2H4v2z" fill="currentColor"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Modello Convenzione FSL – Tor Vergata</strong>
+          <strong data-lang="en">FSL Convention Template – Tor Vergata</strong>
+          <span data-lang="it">Per scuole prive di convenzione valida con l'Ateneo</span>
+          <span data-lang="en">For schools without a valid agreement with the University</span>
+        </div>
+        <span class="doc-tag" data-lang="it">Nuove scuole</span>
+        <span class="doc-tag" data-lang="en">New schools</span>
+      </a>
+      <a class="doc-card" href="docs/Vademecum_Docente_Parte1.pdf" download>
+        <div class="doc-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 16l-4-4h2.5V4h3v8H16l-4 4z" fill="currentColor"/><path d="M4 20h16v-2H4v2z" fill="currentColor"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Vademecum Docente – Parte 1</strong>
+          <strong data-lang="en">Teacher Guide – Part 1</strong>
+          <span data-lang="it">Guida alla piattaforma pcto.uniroma2.it per i docenti universitari</span>
+          <span data-lang="en">Platform guide (pcto.uniroma2.it) for university lecturers</span>
+        </div>
+        <span class="doc-tag opt" data-lang="it">Riferimento</span>
+        <span class="doc-tag opt" data-lang="en">Reference</span>
+      </a>
+      <a class="doc-card" href="docs/Vademecum_Docente_Parte2.pdf" download>
+        <div class="doc-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 16l-4-4h2.5V4h3v8H16l-4 4z" fill="currentColor"/><path d="M4 20h16v-2H4v2z" fill="currentColor"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Vademecum Docente – Parte 2</strong>
+          <strong data-lang="en">Teacher Guide – Part 2</strong>
+          <span data-lang="it">Gestione presenze, valutazioni e generazione attestati</span>
+          <span data-lang="en">Attendance management, assessments and certificate generation</span>
+        </div>
+        <span class="doc-tag opt" data-lang="it">Riferimento</span>
+        <span class="doc-tag opt" data-lang="en">Reference</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- CONTATTI -->
+<section style="padding: 56px 0 72px;">
+  <div class="container">
+    <p class="section-label" data-lang="it">Hai bisogno di aiuto?</p>
+    <p class="section-label" data-lang="en">Need help?</p>
+    <h2 data-lang="it">Contatti</h2>
+    <h2 data-lang="en">Contacts</h2>
+    <div class="contacts-grid">
+      <div class="contact-card">
+        <h4 data-lang="it">Ufficio PCTO – Tor Vergata</h4>
+        <h4 data-lang="en">PCTO Office – Tor Vergata</h4>
+        <p data-lang="it">Per registrazione scuola, convenzioni e supporto sulla piattaforma</p>
+        <p data-lang="en">For school registration, agreements and platform support</p>
+        <p><a href="mailto:scuola-lavoro@orientamento.uniroma2.it">scuola-lavoro@orientamento.uniroma2.it</a></p>
+        <p class="tel">Tel. 06 7259 3622 / 2536</p>
+      </div>
+      <div class="contact-card">
+        <h4>EcoPsy</h4>
+        <p data-lang="it">Per informazioni sul progetto, sulla procedura FSL e sul programma didattico</p>
+        <p data-lang="en">For information about the project, FSL procedure and teaching programme</p>
+        <p><a href="mailto:segreteria@ecopsy.eu">segreteria@ecopsy.eu</a></p>
+        <p class="tel" data-lang="it">Dr. Rodolfo Rossi – PI EcoPsy</p>
+        <p class="tel" data-lang="en">Dr. Rodolfo Rossi – EcoPsy PI</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo-text">Eco<span style="color:#6fe0a0">Psy</span></div>
+        <p data-lang="it">Primo studio epidemiologico longitudinale sul benessere mentale degli adolescenti nell'area metropolitana di Roma. Finanziato da FIS – MUR (3 anni).</p>
+        <p data-lang="en">First large-scale longitudinal study on adolescent mental well-being in Rome. Funded by FIS – MUR (3 years).</p>
+        <div class="footer-logos">
+          <img src="assets/logo_mur_vec.png" alt="MUR" />
+          <img src="assets/logo_torvergata.png" alt="Tor Vergata" />
+          <img src="assets/logo_fis_vec.png" alt="FIS" />
+        </div>
+      </div>
+      <div>
+        <h4 data-lang="it">Pagine</h4><h4 data-lang="en">Pages</h4>
+        <ul>
+          <li><a href="progetto.html" data-lang="it">Il Progetto</a><a href="progetto.html" data-lang="en">The Project</a></li>
+          <li><a href="metodologia.html" data-lang="it">Metodologia</a><a href="metodologia.html" data-lang="en">Methodology</a></li>
+          <li><a href="team.html">Team</a></li>
+          <li><a href="partecipa.html" data-lang="it">Partecipa</a><a href="partecipa.html" data-lang="en">Join</a></li>
+          <li><a href="news.html">News</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 data-lang="it">Contatti</h4><h4 data-lang="en">Contact</h4>
+        <ul>
+          <li>Dr. Rodolfo Rossi</li>
+          <li><a href="mailto:segreteria@ecopsy.eu">segreteria@ecopsy.eu</a></li>
+          <li style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.4)" data-lang="it">Dipartimento di Medicina dei Sistemi<br />Università di Roma Tor Vergata<br />via Montpellier 1, 00133 Roma</li>
+          <li style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.4)" data-lang="en">Department of Systems Medicine<br />University of Rome Tor Vergata<br />via Montpellier 1, 00133 Roma</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 EcoPsy – Università di Roma Tor Vergata</span>
+      <span data-lang="it">Progetto finanziato da FIS – Fondo Italiano per la Scienza, MUR</span>
+      <span data-lang="en">Project funded by FIS – Italian Fund for Science, MUR</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function toggleMenu(btn) {
+    const nav = document.querySelector("nav");
+    nav.classList.toggle("open");
+    btn.setAttribute("aria-expanded", nav.classList.contains("open"));
+  }
+  function toggleLang(btn) {
+    const isEN = document.body.classList.toggle('lang-en');
+    btn.textContent = isEN ? 'IT' : 'EN';
+    document.documentElement.lang = isEN ? 'en' : 'it';
+    document.querySelector("nav").classList.remove("open");
+  }
+  document.querySelectorAll('nav a').forEach(a => a.addEventListener('click', () => {
+    document.querySelector('nav').classList.remove('open');
+  }));
+</script>
+</body>
+</html>

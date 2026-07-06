@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FSL 2027-2028 – EcoPsy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Sub-nav ── */
+    .sub-nav { background: var(--green-pale); border-bottom: 1px solid var(--border); }
+    .sub-nav-inner { display: flex; gap: 0; overflow-x: auto; }
+    .sub-nav a {
+      display: block; padding: 12px 20px; white-space: nowrap; text-decoration: none;
+      font-family: var(--font-head); font-size: .82rem; font-weight: 600;
+      color: var(--text-muted); border-bottom: 3px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .sub-nav a:hover { color: var(--green-dark); text-decoration: none; }
+    .sub-nav a.active { color: var(--green-dark); border-bottom-color: var(--green-mid); font-weight: 700; }
+
+    /* ── Coming soon ── */
+    .coming-soon {
+      max-width: 600px; margin: 80px auto; text-align: center;
+      padding: 60px 40px; background: var(--white);
+      border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
+    }
+    .coming-badge {
+      display: inline-block; font-family: var(--font-head); font-size: .72rem; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase; color: var(--green-mid);
+      background: var(--green-pale); border-radius: 20px; padding: 4px 14px; margin-bottom: 20px;
+    }
+    .coming-soon h2 { font-size: 1.6rem; color: var(--green-dark); margin-bottom: 14px; }
+    .coming-soon p { font-size: .92rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 28px; }
+    .coming-soon a { display: inline-block; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="container header-inner">
+    <a href="index.html" style="text-decoration:none"><img src="assets/logo_ecopsy.png" alt="EcoPsy" style="height:40px;" /></a>
+    <button class="menu-toggle" onclick="toggleMenu(this)" aria-label="Menu">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="4" width="22" height="2.2" rx="1.1" fill="currentColor"/><rect y="9.9" width="22" height="2.2" rx="1.1" fill="currentColor"/><rect y="15.8" width="22" height="2.2" rx="1.1" fill="currentColor"/></svg>
+    </button>
+    <nav>
+      <a href="progetto.html" data-lang="it">Il Progetto</a>
+      <a href="progetto.html" data-lang="en">The Project</a>
+      <a href="metodologia.html" data-lang="it">Metodologia</a>
+      <a href="metodologia.html" data-lang="en">Methodology</a>
+      <a href="team.html">Team</a>
+      <a href="partecipa.html" class="active" data-lang="it">Partecipa</a>
+      <a href="partecipa.html" class="active" data-lang="en">Join</a>
+      <a href="news.html">News</a>
+      <button class="lang-btn" onclick="toggleLang(this)">EN</button>
+    </nav>
+  </div>
+</header>
+
+<!-- SUB-NAV -->
+<div class="sub-nav">
+  <div class="container sub-nav-inner">
+    <a href="partecipa.html">
+      <span data-lang="it">Partecipa al progetto</span>
+      <span data-lang="en">Join the project</span>
+    </a>
+    <a href="fsl-2026-2027.html">FSL 2026–2027</a>
+    <a href="fsl-2027-2028.html" class="active">FSL 2027–2028</a>
+  </div>
+</div>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="container">
+    <p class="section-label" data-lang="it">Formazione Scuola-Lavoro / PCTO</p>
+    <p class="section-label" data-lang="en">School-to-Work Programme / PCTO</p>
+    <h1 data-lang="it">FSL 2027–2028</h1>
+    <h1 data-lang="en">FSL 2027–2028</h1>
+    <p data-lang="it">Informazioni e istruzioni per l'anno scolastico 2027-2028 saranno disponibili a partire dall'estate 2027.</p>
+    <p data-lang="en">Information and instructions for the 2027-2028 school year will be available from summer 2027.</p>
+  </div>
+</div>
+
+<!-- COMING SOON -->
+<section style="padding: 32px 0 80px;">
+  <div class="container">
+    <div class="coming-soon">
+      <div class="coming-badge" data-lang="it">Prossimamente</div>
+      <div class="coming-badge" data-lang="en">Coming soon</div>
+      <h2 data-lang="it">Apertura iscrizioni estate 2027</h2>
+      <h2 data-lang="en">Enrolment opens summer 2027</h2>
+      <p data-lang="it">Le istruzioni per candidare gli studenti al percorso FSL <em>EcoPsy Lab</em> per l'anno scolastico 2027-2028 saranno pubblicate su questa pagina. Per essere aggiornato sulle date di apertura delle iscrizioni, scrivi a <a href="mailto:segreteria@ecopsy.eu">segreteria@ecopsy.eu</a>.</p>
+      <p data-lang="en">Instructions for enrolling students in the <em>EcoPsy Lab</em> FSL programme for the 2027-2028 school year will be published on this page. To be notified when enrolment opens, write to <a href="mailto:segreteria@ecopsy.eu">segreteria@ecopsy.eu</a>.</p>
+      <a href="fsl-2026-2027.html" class="btn btn-dark">
+        <span data-lang="it">Vedi FSL 2026–2027 →</span>
+        <span data-lang="en">See FSL 2026–2027 →</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo-text">Eco<span style="color:#6fe0a0">Psy</span></div>
+        <p data-lang="it">Primo studio epidemiologico longitudinale sul benessere mentale degli adolescenti nell'area metropolitana di Roma. Finanziato da FIS – MUR (3 anni).</p>
+        <p data-lang="en">First large-scale longitudinal study on adolescent mental well-being in Rome. Funded by FIS – MUR (3 years).</p>
+        <div class="footer-logos">
+          <img src="assets/logo_mur_vec.png" alt="MUR" />
+          <img src="assets/logo_torvergata.png" alt="Tor Vergata" />
+          <img src="assets/logo_fis_vec.png" alt="FIS" />
+        </div>
+      </div>
+      <div>
+        <h4 data-lang="it">Pagine</h4><h4 data-lang="en">Pages</h4>
+        <ul>
+          <li><a href="progetto.html" data-lang="it">Il Progetto</a><a href="progetto.html" data-lang="en">The Project</a></li>
+          <li><a href="metodologia.html" data-lang="it">Metodologia</a><a href="metodologia.html" data-lang="en">Methodology</a></li>
+          <li><a href="team.html">Team</a></li>
+          <li><a href="partecipa.html" data-lang="it">Partecipa</a><a href="partecipa.html" data-lang="en">Join</a></li>
+          <li><a href="news.html">News</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 data-lang="it">Contatti</h4><h4 data-lang="en">Contact</h4>
+        <ul>
+          <li>Dr. Rodolfo Rossi</li>
+          <li><a href="mailto:segreteria@ecopsy.eu">segreteria@ecopsy.eu</a></li>
+          <li style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.4)" data-lang="it">Dipartimento di Medicina dei Sistemi<br />Università di Roma Tor Vergata<br />via Montpellier 1, 00133 Roma</li>
+          <li style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.4)" data-lang="en">Department of Systems Medicine<br />University of Rome Tor Vergata<br />via Montpellier 1, 00133 Roma</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 EcoPsy – Università di Roma Tor Vergata</span>
+      <span data-lang="it">Progetto finanziato da FIS – Fondo Italiano per la Scienza, MUR</span>
+      <span data-lang="en">Project funded by FIS – Italian Fund for Science, MUR</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function toggleMenu(btn) {
+    const nav = document.querySelector("nav");
+    nav.classList.toggle("open");
+    btn.setAttribute("aria-expanded", nav.classList.contains("open"));
+  }
+  function toggleLang(btn) {
+    const isEN = document.body.classList.toggle('lang-en');
+    btn.textContent = isEN ? 'IT' : 'EN';
+    document.documentElement.lang = isEN ? 'en' : 'it';
+    document.querySelector("nav").classList.remove("open");
+  }
+  document.querySelectorAll('nav a').forEach(a => a.addEventListener('click', () => {
+    document.querySelector('nav').classList.remove('open');
+  }));
+</script>
+</body>
+</html>
