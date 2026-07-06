@@ -27,6 +27,28 @@
     .pi-affil { font-size: .88rem; color: var(--green-mid); margin-top: 4px; font-weight: 500; }
     .pi-bio { font-size: .9rem; color: var(--text-muted); margin-top: 12px; line-height: 1.6; }
 
+    /* ── Bio accordion ── */
+    .bio-details {
+      border: 1px solid var(--border); border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+      background: var(--white); box-shadow: var(--shadow);
+      margin-bottom: 48px;
+    }
+    .bio-details summary {
+      padding: 11px 36px; cursor: pointer; list-style: none;
+      display: flex; align-items: center; justify-content: space-between;
+      font-family: var(--font-head); font-size: .82rem; font-weight: 600;
+      color: var(--green-mid); background: var(--green-pale);
+      border-radius: 0 0 var(--radius) var(--radius);
+      user-select: none;
+    }
+    .bio-details[open] summary { border-radius: 0; border-bottom: 1px solid var(--border); }
+    .bio-details summary::-webkit-details-marker { display: none; }
+    .bio-details summary .chevron { transition: transform .2s; font-size: 1rem; }
+    .bio-details[open] summary .chevron { transform: rotate(180deg); }
+    .bio-body { padding: 24px 36px 28px; font-size: .9rem; color: var(--text-muted); line-height: 1.75; }
+    .bio-body p + p { margin-top: 14px; }
+
     .team-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 48px; }
     .team-card {
       background: var(--white); border-radius: var(--radius);
@@ -118,7 +140,7 @@
   <div class="container">
     <p class="section-label" data-lang="it">Principal Investigator</p>
     <p class="section-label" data-lang="en">Principal Investigator</p>
-    <div class="pi-card">
+    <div class="pi-card" style="margin-bottom:0; border-bottom-left-radius:0; border-bottom-right-radius:0; border-bottom:none;">
       <div class="pi-avatar"><img src="assets/photo_rr.jpg" alt="Dr. Rodolfo Rossi" /></div>
       <div>
         <div class="pi-name">Dr. Rodolfo Rossi</div>
@@ -129,6 +151,26 @@
         <p class="pi-bio" data-lang="en">Scientific leader of the EcoPsy project. His research focuses on mental health epidemiology, EMA methods, and person–environment interactions in psychopathological disorders.</p>
       </div>
     </div>
+    <details class="bio-details">
+      <summary>
+        <span>
+          <span data-lang="it">Curriculum vitae</span>
+          <span data-lang="en">Curriculum vitae</span>
+        </span>
+        <span class="chevron">▾</span>
+      </summary>
+      <div class="bio-body">
+        <p data-lang="it">Rodolfo Rossi si è laureato in Medicina e Chirurgia con lode presso l'Università degli Studi di Napoli Federico II (2011), dove ha conseguito anche la Specializzazione in Psichiatria e Psicoterapia con lode (2016). Ha ottenuto il Dottorato di Ricerca in Neuroscienze presso l'Università di Roma Tor Vergata (2021).</p>
+        <p data-lang="it">Dal 2016 al 2019 ha lavorato come medico dirigente presso il Dipartimento di Salute Mentale di Modena, prima di entrare nel Dipartimento di Medicina dei Sistemi di Tor Vergata, dove insegna Psicologia Clinica, Metodologia della Ricerca e Clinical Psychology nella Facoltà di Medicina e Chirurgia.</p>
+        <p data-lang="it">La sua attività di ricerca si colloca all'intersezione tra psicopatologia, epidemiologia psichiatrica e psicologia computazionale. Ha contribuito in modo significativo agli studi sulla salute mentale durante la pandemia COVID-19, documentando i sintomi trauma-spectrum nella popolazione generale italiana e il disagio psicologico degli operatori sanitari. Ulteriori linee di ricerca riguardano il trauma e la dissociazione, l'impatto della solitudine e dei social media sulla salute mentale, la psicosi correlata alla cannabis e le metodologie EMA per il campionamento ecologico in campioni ad alta numerosità.</p>
+        <p data-lang="it">È autore di oltre 120 lavori scientifici indicizzati su PubMed, con oltre 5.000 citazioni.</p>
+
+        <p data-lang="en">Rodolfo Rossi graduated in Medicine and Surgery with honours from the University of Naples Federico II (2011), where he also obtained his Specialisation in Psychiatry and Psychotherapy with honours (2016). He completed his PhD in Neuroscience at the University of Rome Tor Vergata (2021).</p>
+        <p data-lang="en">From 2016 to 2019 he worked as a senior physician at the Department of Mental Health in Modena, before joining the Department of Systems Medicine at Tor Vergata, where he teaches Clinical Psychology, Research Methodology, and Clinical Psychology in the Faculty of Medicine and Surgery.</p>
+        <p data-lang="en">His research sits at the intersection of psychopathology, psychiatric epidemiology, and computational psychology. He has made significant contributions to studies on mental health during the COVID-19 pandemic, documenting trauma-spectrum symptoms in the Italian general population and psychological distress among healthcare workers. Further research lines include trauma and dissociation, the impact of loneliness and social media on mental health, cannabis-related psychosis, and EMA methodologies for ecological sampling in large-scale populations.</p>
+        <p data-lang="en">He has authored over 120 peer-reviewed publications indexed in PubMed, with more than 5,000 citations.</p>
+      </div>
+    </details>
 
     <p class="section-label" style="margin-top:40px;" data-lang="it">Co-Principal Investigator</p>
     <p class="section-label" style="margin-top:40px;" data-lang="en">Co-Principal Investigator</p>
