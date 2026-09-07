@@ -29,7 +29,9 @@ EXCLUDES=(
   "assets/logo_fis_mur.png" "assets/logo_fis.png"
 )
 
-SFTP=(sftp -i "$KEY" -o IdentitiesOnly=yes "$USER@$HOST")
+# Options only; sftp requires the destination to be the LAST argument.
+SFTP_OPTS=(-i "$KEY" -o IdentitiesOnly=yes)
+SFTP=(sftp "${SFTP_OPTS[@]}" "$USER@$HOST")
 
 MODE="upload"
 for arg in "$@"; do
@@ -87,5 +89,5 @@ if [[ "$MODE" == "dry" ]]; then
 fi
 
 echo "Uploading $FILES files ($(numfmt --to=iec "$BYTES")) to $USER@$HOST:$REMOTE/"
-(cd "$STAGE" && "${SFTP[@]}" -b "$BATCH")
+(cd "$STAGE" && sftp "${SFTP_OPTS[@]}" -b "$BATCH" "$USER@$HOST")
 echo "Done. Check http://$HOST"
