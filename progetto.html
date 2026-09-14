@@ -115,11 +115,25 @@
     .stat-desc { font-size: .82rem; color: var(--text-muted); line-height: 1.5; }
 
     /* ── Determinanti grid ── */
-    .det-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 20px; }
-    .det-card { background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); padding: 22px 18px; }
-    .det-icon { font-size: 1.4rem; margin-bottom: 8px; }
-    .det-card h4 { font-family: var(--font-head); font-size: .9rem; font-weight: 700; color: var(--green-dark); margin-bottom: 6px; }
-    .det-card p { font-size: .83rem; color: var(--text-muted); line-height: 1.55; }
+    .det-grid {
+      display: flex; flex-direction: row; gap: 14px; margin-top: 20px;
+      overflow-x: auto; scroll-snap-type: x mandatory;
+      padding-bottom: 10px; cursor: grab;
+      /* hide scrollbar but keep scroll */
+      scrollbar-width: thin; scrollbar-color: var(--green-mid) transparent;
+    }
+    .det-grid::-webkit-scrollbar { height: 4px; }
+    .det-grid::-webkit-scrollbar-thumb { background: var(--green-mid); border-radius: 4px; }
+    .det-grid::-webkit-scrollbar-track { background: transparent; }
+    .det-card {
+      flex: 0 0 220px; scroll-snap-align: start;
+      background: var(--white); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 24px 18px 22px;
+      display: flex; flex-direction: column;
+    }
+    .det-icon { font-size: 1.6rem; margin-bottom: 12px; }
+    .det-card h4 { font-family: var(--font-head); font-size: .9rem; font-weight: 700; color: var(--green-dark); margin-bottom: 8px; }
+    .det-card p { font-size: .82rem; color: var(--text-muted); line-height: 1.55; flex: 1; }
     .det-tag { display: inline-block; font-size: .62rem; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; margin-bottom: 8px; }
     .det-tag.proximal { background: #e8f5ee; color: var(--green-dark); }
     .det-tag.distal { background: #e3eef6; color: #1a3a52; }
@@ -227,7 +241,7 @@
     @media (max-width: 900px) {
       .infog-grid { grid-template-columns: 1fr 1fr; }
       .stat-strip { grid-template-columns: 1fr 1fr; }
-      .det-grid { grid-template-columns: 1fr 1fr; }
+      /* .det-grid handled by flex carousel */
       .obj-grid { grid-template-columns: 1fr; }
       .princ-grid { grid-template-columns: 1fr; }
       .fsl-steps { grid-template-columns: 1fr 1fr; }
@@ -237,7 +251,7 @@
       .sample-item + .sample-item { border-left: none; border-top: 1px solid rgba(255,255,255,.15); padding-top: 20px; }
     }
     @media (max-width: 600px) {
-      .det-grid, .fsl-steps, .modalita-grid { grid-template-columns: 1fr; }
+      .fsl-steps, .modalita-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -376,8 +390,6 @@
           <p style="font-size:.92rem; color:var(--text-muted); line-height:1.7; margin-bottom:4px;" data-lang="en">Mental health is not just about biology. A set of environmental factors — socio-ecological determinants — profoundly shapes the risk of developing a psychological disorder.</p>
           <div class="det-grid">
             <div class="det-card">
-              <div class="det-tag proximal" data-lang="it">Prossimale</div>
-              <div class="det-tag proximal" data-lang="en">Proximal</div>
               <div class="det-icon">👨‍👩‍👧</div>
               <h4 data-lang="it">Famiglia e storia personale</h4>
               <h4 data-lang="en">Family and personal history</h4>
@@ -385,8 +397,6 @@
               <p data-lang="en">Family dynamics, adverse childhood experiences and parenting style are among the strongest predictors of psychopathological risk.</p>
             </div>
             <div class="det-card">
-              <div class="det-tag proximal" data-lang="it">Prossimale</div>
-              <div class="det-tag proximal" data-lang="en">Proximal</div>
               <div class="det-icon">🧑‍🤝‍🧑</div>
               <h4 data-lang="it">Relazioni tra pari e bullismo</h4>
               <h4 data-lang="en">Peer relationships and bullying</h4>
@@ -394,8 +404,6 @@
               <p data-lang="en">Bullying, including online, is associated with high risk of depression, anxiety and self-harming behaviours.</p>
             </div>
             <div class="det-card">
-              <div class="det-tag proximal" data-lang="it">Prossimale</div>
-              <div class="det-tag proximal" data-lang="en">Proximal</div>
               <div class="det-icon">📱</div>
               <h4 data-lang="it">Mondo digitale e social media</h4>
               <h4 data-lang="en">Digital world and social media</h4>
@@ -403,8 +411,6 @@
               <p data-lang="en">Intensive smartphone and social media use is associated with sleep disorders, isolation and worsened body image.</p>
             </div>
             <div class="det-card">
-              <div class="det-tag distal" data-lang="it">Distale</div>
-              <div class="det-tag distal" data-lang="en">Distal</div>
               <div class="det-icon">🏙️</div>
               <h4 data-lang="it">Ambiente urbano</h4>
               <h4 data-lang="en">Urban environment</h4>
@@ -412,8 +418,6 @@
               <p data-lang="en">Access to green spaces, noise, pollution and neighbourhood cohesion all affect the risk of anxiety and depression.</p>
             </div>
             <div class="det-card">
-              <div class="det-tag inequality" data-lang="it">Disuguaglianze</div>
-              <div class="det-tag inequality" data-lang="en">Inequality</div>
               <div class="det-icon">⚖️</div>
               <h4 data-lang="it">Disuguaglianze socioeconomiche</h4>
               <h4 data-lang="en">Socioeconomic inequalities</h4>
@@ -421,8 +425,6 @@
               <p data-lang="en">Poverty and lack of resources increase psychological risk and create gaps in access to mental health services.</p>
             </div>
             <div class="det-card">
-              <div class="det-tag urban" data-lang="it">Contesto urbano</div>
-              <div class="det-tag urban" data-lang="en">Urban context</div>
               <div class="det-icon">🌡️</div>
               <h4 data-lang="it">Fattori ambientali e climatici</h4>
               <h4 data-lang="en">Environmental and climatic factors</h4>
