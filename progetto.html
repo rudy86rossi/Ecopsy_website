@@ -119,9 +119,12 @@
       display: flex; flex-direction: row; gap: 14px; margin-top: 20px;
       overflow-x: auto; scroll-snap-type: x mandatory;
       padding-bottom: 10px; cursor: grab;
+      touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
       /* hide scrollbar but keep scroll */
       scrollbar-width: thin; scrollbar-color: var(--green-mid) transparent;
     }
+    .det-grid.dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
     .det-grid::-webkit-scrollbar { height: 4px; }
     .det-grid::-webkit-scrollbar-thumb { background: var(--green-mid); border-radius: 4px; }
     .det-grid::-webkit-scrollbar-track { background: transparent; }
@@ -723,6 +726,24 @@
     document.documentElement.lang = isEN ? 'en' : 'it';
     document.querySelector("nav").classList.remove("open");
   }
+  // Drag-to-scroll with the mouse; touch and trackpads scroll natively.
+  document.querySelectorAll('.det-grid').forEach(grid => {
+    let startX = 0, startScroll = 0, dragging = false;
+    grid.addEventListener('pointerdown', e => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      dragging = true;
+      startX = e.clientX;
+      startScroll = grid.scrollLeft;
+      grid.classList.add('dragging');
+      grid.setPointerCapture(e.pointerId);
+    });
+    grid.addEventListener('pointermove', e => {
+      if (dragging) grid.scrollLeft = startScroll - (e.clientX - startX);
+    });
+    const stop = () => { dragging = false; grid.classList.remove('dragging'); };
+    grid.addEventListener('pointerup', stop);
+    grid.addEventListener('pointercancel', stop);
+  });
 </script>
 </body>
 </html>

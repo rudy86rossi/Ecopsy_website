@@ -22,6 +22,9 @@
       font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
       background: var(--green-pale); color: var(--green-mid); margin-bottom: 10px;
     }
+    .news-tag[data-lang="en"],
+    body.lang-en .news-tag[data-lang="it"] { display: none; }
+    body.lang-en .news-tag[data-lang="en"] { display: inline-block; }
     .news-date { font-size: .78rem; color: var(--text-muted); margin-bottom: 6px; }
     .news-card h3 { font-size: .97rem; font-weight: 600; color: var(--green-dark); margin-bottom: 8px; line-height: 1.4; }
     .news-card p { font-size: .87rem; color: var(--text-muted); }
@@ -80,6 +83,29 @@
 <section>
   <div class="container">
     <div class="news-grid">
+
+      <!-- Indagine esplorativa -->
+      <div class="news-card news-featured">
+        <div>
+          <span class="news-tag" data-lang="it">Indagine</span>
+          <span class="news-tag" data-lang="en">Survey</span>
+          <div class="news-date" data-lang="it">Settembre 2026</div>
+          <div class="news-date" data-lang="en">September 2026</div>
+          <h3 data-lang="it">Al via l'indagine esplorativa per psicologi, psichiatri e ricercatori</h3>
+          <h3 data-lang="en">Exploratory survey for psychologists, psychiatrists and researchers now open</h3>
+          <p data-lang="it">Chiediamo a chi lavora nella psicologia clinica e nella ricerca quali costrutti psicologici e fattori di contesto considera più importanti per la salute mentale degli adolescenti. Le risposte orienteranno le prossime fasi di EcoPsy.</p>
+          <p data-lang="en">We are asking clinicians and researchers which psychological constructs and contextual factors they consider most important for adolescent mental health. The answers will shape the next phases of EcoPsy. The survey is in Italian.</p>
+        </div>
+        <div style="background:var(--green-pale);border-radius:var(--radius);padding:24px;text-align:center;">
+          <div style="font-size:3.5rem;margin-bottom:12px;">📋</div>
+          <div style="font-size:1.1rem;font-weight:700;color:var(--green-dark)" data-lang="it">Circa 5 minuti</div>
+          <div style="font-size:1.1rem;font-weight:700;color:var(--green-dark)" data-lang="en">About 5 minutes</div>
+          <a href="https://forms.gle/6gPWDSaFR98iircz6" target="_blank" rel="noopener" class="btn btn-primary" style="margin-top:16px;">
+            <span data-lang="it">Partecipa all'indagine →</span>
+            <span data-lang="en">Take the survey →</span>
+          </a>
+        </div>
+      </div>
 
       <!-- Featured -->
       <div class="news-card news-featured">
