@@ -9,17 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <style>
-    /* ── Sub-nav ── */
-    .sub-nav { background: var(--green-pale); border-bottom: 1px solid var(--border); }
-    .sub-nav-inner { display: flex; gap: 0; overflow-x: auto; }
-    .sub-nav a {
-      display: block; padding: 12px 20px; white-space: nowrap; text-decoration: none;
-      font-family: var(--font-head); font-size: .82rem; font-weight: 600;
-      color: var(--text-muted); border-bottom: 3px solid transparent;
-      transition: color .15s, border-color .15s;
-    }
-    .sub-nav a:hover { color: var(--green-dark); text-decoration: none; }
-    .sub-nav a.active { color: var(--green-dark); border-bottom-color: var(--green-mid); font-weight: 700; }
 
     /* ── Info grid (scuole) ── */
     .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 48px; }
@@ -100,6 +89,8 @@
       <a href="partecipa.html" class="active" data-lang="it">Partecipa</a>
       <a href="partecipa.html" class="active" data-lang="en">Join</a>
       <a href="news.html">News</a>
+      <a href="link-utili.html" data-lang="it">Link utili</a>
+      <a href="link-utili.html" data-lang="en">Useful links</a>
       <button class="lang-btn" onclick="toggleLang(this)">EN</button>
     </nav>
   </div>
@@ -266,6 +257,10 @@
         <p data-lang="en">The protocol was approved by the University Ethics Committee (February 2026).</p>
       </div>
     </div>
+    <p class="more-link">
+      <a href="link-utili.html#studenti-famiglie" data-lang="it">App Salvia DK, privacy e servizi di ascolto: vai ai link utili →</a>
+      <a href="link-utili.html#studenti-famiglie" data-lang="en">Salvia DK app, privacy and support lines: see useful links →</a>
+    </p>
   </div>
 </section>
 
@@ -309,6 +304,7 @@
           <li><a href="team.html">Team</a></li>
           <li><a href="partecipa.html" data-lang="it">Partecipa</a><a href="partecipa.html" data-lang="en">Join</a></li>
           <li><a href="news.html">News</a></li>
+          <li><a href="link-utili.html" data-lang="it">Link utili</a><a href="link-utili.html" data-lang="en">Useful links</a></li>
         </ul>
       </div>
       <div>

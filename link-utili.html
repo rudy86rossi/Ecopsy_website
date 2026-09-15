@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Link utili – EcoPsy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .sub-nav { position: sticky; top: 68px; z-index: 90; }
+    .links-section { padding: 56px 0; scroll-margin-top: 120px; }
+    .links-section .section-intro { margin-bottom: 28px; }
+
+    /* ── Help box ── */
+    .help-box {
+      background: var(--green-dark); border-radius: var(--radius);
+      padding: 32px 36px; color: var(--white);
+    }
+    .help-box h2 { color: var(--white); font-size: 1.4rem; margin-bottom: 6px; }
+    .help-box > p { color: rgba(255,255,255,.75); font-size: .92rem; margin-bottom: 24px; }
+    .help-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .help-item {
+      display: block; padding: 18px 20px; border-radius: 10px; color: var(--white);
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14);
+      transition: background .15s;
+    }
+    .help-item:hover { background: rgba(255,255,255,.14); text-decoration: none; }
+    .help-num { font-family: var(--font-head); font-size: 1.6rem; font-weight: 800; color: #6fe0a0; line-height: 1.1; }
+    .help-name { font-family: var(--font-head); font-size: .9rem; font-weight: 700; margin-top: 4px; }
+    .help-desc { font-size: .8rem; color: rgba(255,255,255,.7); line-height: 1.45; margin-top: 4px; }
+
+    .links-updated { font-size: .8rem; color: var(--text-muted); }
+
+    @media (max-width: 900px) {
+      .help-box { padding: 28px 24px; }
+      .help-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="container header-inner">
+    <a href="index.html" style="text-decoration:none"><img src="assets/logo_ecopsy.png" alt="EcoPsy" style="height:40px;" /></a>
+    <button class="menu-toggle" onclick="toggleMenu(this)" aria-label="Menu">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="4" width="22" height="2.2" rx="1.1" fill="currentColor"/><rect y="9.9" width="22" height="2.2" rx="1.1" fill="currentColor"/><rect y="15.8" width="22" height="2.2" rx="1.1" fill="currentColor"/></svg>
+    </button>
+    <nav>
+      <a href="progetto.html" data-lang="it">Il Progetto</a>
+      <a href="progetto.html" data-lang="en">The Project</a>
+      <a href="metodologia.html" data-lang="it">Metodologia</a>
+      <a href="metodologia.html" data-lang="en">Methodology</a>
+      <a href="team.html">Team</a>
+      <a href="partecipa.html" data-lang="it">Partecipa</a>
+      <a href="partecipa.html" data-lang="en">Join</a>
+      <a href="news.html">News</a>
+      <a href="link-utili.html" class="active" data-lang="it">Link utili</a>
+      <a href="link-utili.html" class="active" data-lang="en">Useful links</a>
+      <button class="lang-btn" onclick="toggleLang(this)">EN</button>
+    </nav>
+  </div>
+</header>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="container">
+    <p class="section-label" data-lang="it">Risorse</p>
+    <p class="section-label" data-lang="en">Resources</p>
+    <h1 data-lang="it">Link utili</h1>
+    <h1 data-lang="en">Useful links</h1>
+    <p data-lang="it">Servizi di ascolto, l'app dello studio, documenti per le scuole, partner e fonti scientifiche.</p>
+    <p data-lang="en">Support lines, the study app, documents for schools, partners and scientific sources.</p>
+  </div>
+</div>
+
+<!-- SUB-NAV -->
+<div class="sub-nav">
+  <div class="container sub-nav-inner">
+    <a href="#aiuto"><span data-lang="it">Aiuto</span><span data-lang="en">Get help</span></a>
+    <a href="#studenti-famiglie"><span data-lang="it">Studenti e famiglie</span><span data-lang="en">Students and families</span></a>
+    <a href="#scuole"><span data-lang="it">Scuole</span><span data-lang="en">Schools</span></a>
+    <a href="#ricerca"><span data-lang="it">Ricerca e partner</span><span data-lang="en">Research and partners</span></a>
+    <a href="#fonti"><span data-lang="it">Fonti</span><span data-lang="en">Sources</span></a>
+  </div>
+</div>
+
+<!-- AIUTO -->
+<section id="aiuto" class="links-section" style="padding-bottom: 16px;">
+  <div class="container">
+    <div class="help-box">
+      <h2 data-lang="it">Hai bisogno di aiuto adesso?</h2>
+      <h2 data-lang="en">Need help right now?</h2>
+      <p data-lang="it">Se tu o qualcuno che conosci è in difficoltà, puoi chiamare questi servizi. Sono gratuiti e riservati.</p>
+      <p data-lang="en">If you or someone you know is struggling, you can call these services. They are free and confidential.</p>
+      <div class="help-grid">
+        <a class="help-item" href="tel:112">
+          <div class="help-num">112</div>
+          <div class="help-name" data-lang="it">Numero unico di emergenza</div>
+          <div class="help-name" data-lang="en">Emergency number</div>
+          <div class="help-desc" data-lang="it">In caso di pericolo immediato per te o per altri.</div>
+          <div class="help-desc" data-lang="en">If you or someone else is in immediate danger.</div>
+        </a>
+        <a class="help-item" href="tel:19696">
+          <div class="help-num">19696</div>
+          <div class="help-name">Telefono Azzurro</div>
+          <div class="help-desc" data-lang="it">Per ragazzi fino a 18 anni e per gli adulti che se ne occupano. Gratuito, 24 ore su 24.</div>
+          <div class="help-desc" data-lang="en">For young people up to 18 and the adults who care for them. Free, 24 hours a day.</div>
+        </a>
+        <a class="help-item" href="tel:+390223272327">
+          <div class="help-num">02 2327 2327</div>
+          <div class="help-name">Telefono Amico Italia</div>
+          <div class="help-desc" data-lang="it">Ascolto 24 ore su 24. WhatsApp 324 011 7252, tutti i giorni 18–21.</div>
+          <div class="help-desc" data-lang="en">Listening line, 24 hours a day. WhatsApp 324 011 7252, daily 6–9 pm.</div>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STUDENTI E FAMIGLIE -->
+<section id="studenti-famiglie" class="links-section">
+  <div class="container">
+    <p class="section-label" data-lang="it">Per gli studenti e le famiglie</p>
+    <p class="section-label" data-lang="en">For students and families</p>
+    <h2 data-lang="it">L'app e il supporto</h2>
+    <h2 data-lang="en">The app and support</h2>
+    <p class="section-intro" data-lang="it">L'app usata nello studio, come tratta i dati e dove trovare ascolto.</p>
+    <p class="section-intro" data-lang="en">The app used in the study, how it handles data, and where to find support.</p>
+    <div class="docs-grid">
+      <a class="doc-card" href="https://sites.google.com/view/salviadk/home-page" target="_blank" rel="noopener">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></div>
+        <div class="doc-info">
+          <strong>Salvia DK</strong>
+          <span data-lang="it">L'app usata per la raccolta dati: brevi questionari sull'umore e sulle attività quotidiane.</span>
+          <span data-lang="en">The app used for data collection: short questionnaires on mood and daily activities.</span>
+          <span class="doc-url">sites.google.com/view/salviadk</span>
+        </div>
+        <span class="doc-tag opt">App</span>
+      </a>
+      <a class="doc-card" href="https://sites.google.com/view/salviadk/privacy" target="_blank" rel="noopener">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Salvia DK – Informativa privacy</strong>
+          <strong data-lang="en">Salvia DK – Privacy notice</strong>
+          <span data-lang="it">Quali dati raccoglie l'app e come vengono trattati.</span>
+          <span data-lang="en">What data the app collects and how it is handled.</span>
+          <span class="doc-url">sites.google.com/view/salviadk/privacy</span>
+        </div>
+        <span class="doc-tag opt">Privacy</span>
+      </a>
+      <a class="doc-card" href="https://azzurro.it/ragazzi-13-18/" target="_blank" rel="noopener">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Telefono Azzurro – Ragazzi 13–18</strong>
+          <strong data-lang="en">Telefono Azzurro – Teens 13–18</strong>
+          <span data-lang="it">Informazioni e aiuto pensati per i ragazzi, con chat e linea d'ascolto.</span>
+          <span data-lang="en">Information and help for teenagers, with chat and a listening line.</span>
+          <span class="doc-url">azzurro.it</span>
+        </div>
+        <span class="doc-tag opt" data-lang="it">Sito</span>
+        <span class="doc-tag opt" data-lang="en">Website</span>
+      </a>
+      <!-- Altri link per studenti e famiglie: aggiungere qui (es. servizi ASL Roma per adolescenti) -->
+    </div>
+  </div>
+</section>
+
+<!-- SCUOLE -->
+<section id="scuole" class="links-section alt">
+  <div class="container">
+    <p class="section-label" data-lang="it">Per dirigenti e docenti</p>
+    <p class="section-label" data-lang="en">For principals and teachers</p>
+    <h2 data-lang="it">Scuole</h2>
+    <h2 data-lang="en">Schools</h2>
+    <p class="section-intro" data-lang="it">Guida all'iscrizione FSL, piattaforma di Ateneo e modulistica.</p>
+    <p class="section-intro" data-lang="en">FSL enrolment guide, University platform and forms.</p>
+    <div class="docs-grid">
+      <a class="doc-card" href="fsl-2026-2027.html">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Guida FSL 2026–2027</strong>
+          <strong data-lang="en">FSL 2026–2027 guide</strong>
+          <span data-lang="it">Come candidare gli studenti al percorso FSL EcoPsy Lab. Iscrizioni entro il 30 settembre 2026.</span>
+          <span data-lang="en">How to enrol students in the EcoPsy Lab FSL programme. Deadline: 30 September 2026.</span>
+        </div>
+        <span class="doc-tag opt" data-lang="it">Guida</span>
+        <span class="doc-tag opt" data-lang="en">Guide</span>
+      </a>
+      <a class="doc-card" href="https://pcto.uniroma2.it" target="_blank" rel="noopener">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Piattaforma PCTO – Tor Vergata</strong>
+          <strong data-lang="en">PCTO platform – Tor Vergata</strong>
+          <span data-lang="it">Accesso per i referenti scolastici e iscrizione degli studenti.</span>
+          <span data-lang="en">Login for school coordinators and student enrolment.</span>
+          <span class="doc-url">pcto.uniroma2.it</span>
+        </div>
+        <span class="doc-tag opt" data-lang="it">Sito</span>
+        <span class="doc-tag opt" data-lang="en">Website</span>
+      </a>
+      <a class="doc-card" href="assets/EMA_Scuole.pdf" download>
+        <div class="doc-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 16l-4-4h2.5V4h3v8H16l-4 4z" fill="currentColor"/><path d="M4 20h16v-2H4v2z" fill="currentColor"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Guida completa all'EMA</strong>
+          <strong data-lang="en">Complete EMA guide</strong>
+          <span data-lang="it">Il metodo EMA, il disegno dello studio e cosa chiediamo alle scuole.</span>
+          <span data-lang="en">The EMA method, study design, and what we ask of schools.</span>
+        </div>
+        <span class="doc-tag opt">PDF</span>
+      </a>
+      <a class="doc-card" href="docs/Allegato1_Registrazione_Scuola_FSL.pdf" download>
+        <div class="doc-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 16l-4-4h2.5V4h3v8H16l-4 4z" fill="currentColor"/><path d="M4 20h16v-2H4v2z" fill="currentColor"/></svg></div>
+        <div class="doc-info">
+          <strong>Allegato 1 — Registrazione Scuola / Tutor</strong>
+          <span data-lang="it">Da compilare e firmare per registrare una nuova scuola sulla piattaforma.</span>
+          <span data-lang="en">Fill and sign to register a new school on the platform.</span>
+        </div>
+        <span class="doc-tag opt">PDF</span>
+      </a>
+      <a class="doc-card" href="docs/Modello_Convenzione_FSL_TorVergata.doc" download>
+        <div class="doc-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 16l-4-4h2.5V4h3v8H16l-4 4z" fill="currentColor"/><path d="M4 20h16v-2H4v2z" fill="currentColor"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Modello Convenzione FSL – Tor Vergata</strong>
+          <strong data-lang="en">FSL Convention Template – Tor Vergata</strong>
+          <span data-lang="it">Per scuole prive di convenzione valida con l'Ateneo.</span>
+          <span data-lang="en">For schools without a valid agreement with the University.</span>
+        </div>
+        <span class="doc-tag opt">DOC</span>
+      </a>
+      <a class="doc-card" href="docs/Vademecum_Docente_Parte1.pdf" download>
+        <div class="doc-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 16l-4-4h2.5V4h3v8H16l-4 4z" fill="currentColor"/><path d="M4 20h16v-2H4v2z" fill="currentColor"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Vademecum Docente – Parte 1</strong>
+          <strong data-lang="en">Teacher Guide – Part 1</strong>
+          <span data-lang="it">Guida alla piattaforma pcto.uniroma2.it.</span>
+          <span data-lang="en">Guide to the pcto.uniroma2.it platform.</span>
+        </div>
+        <span class="doc-tag opt">PDF</span>
+      </a>
+      <a class="doc-card" href="docs/Vademecum_Docente_Parte2.pdf" download>
+        <div class="doc-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 16l-4-4h2.5V4h3v8H16l-4 4z" fill="currentColor"/><path d="M4 20h16v-2H4v2z" fill="currentColor"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Vademecum Docente – Parte 2</strong>
+          <strong data-lang="en">Teacher Guide – Part 2</strong>
+          <span data-lang="it">Gestione presenze, valutazioni e generazione attestati.</span>
+          <span data-lang="en">Attendance, assessments and certificates.</span>
+        </div>
+        <span class="doc-tag opt">PDF</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- RICERCA E PARTNER -->
+<section id="ricerca" class="links-section">
+  <div class="container">
+    <p class="section-label" data-lang="it">Ricerca</p>
+    <p class="section-label" data-lang="en">Research</p>
+    <h2 data-lang="it">Partner e collaborazioni</h2>
+    <h2 data-lang="en">Partners and collaborations</h2>
+    <p class="section-intro" data-lang="it">Gli enti che promuovono, finanziano e collaborano con EcoPsy.</p>
+    <p class="section-intro" data-lang="en">The institutions that run, fund and collaborate with EcoPsy.</p>
+    <div class="docs-grid">
+      <a class="doc-card" href="https://web.uniroma2.it" target="_blank" rel="noopener">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Università di Roma Tor Vergata</strong>
+          <strong data-lang="en">University of Rome Tor Vergata</strong>
+          <span data-lang="it">Sede del progetto, Dipartimento di Medicina dei Sistemi.</span>
+          <span data-lang="en">Host institution, Department of Systems Medicine.</span>
+          <span class="doc-url">web.uniroma2.it</span>
+        </div>
+        <span class="doc-tag opt">Partner</span>
+      </a>
+      <a class="doc-card" href="https://comppsy.it" target="_blank" rel="noopener">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></div>
+        <div class="doc-info">
+          <strong>COMPPSY</strong>
+          <span data-lang="it">Rete di psichiatria computazionale che collabora con EcoPsy.</span>
+          <span data-lang="en">Computational psychiatry network collaborating with EcoPsy.</span>
+          <span class="doc-url">comppsy.it</span>
+        </div>
+        <span class="doc-tag opt">Partner</span>
+      </a>
+      <a class="doc-card" href="https://research.uniroma1.it/laboratorio/163885" target="_blank" rel="noopener">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></div>
+        <div class="doc-info">
+          <strong>Sapienza – ERRLAB</strong>
+          <span data-lang="it">Dipartimento di Psicologia Dinamica, Clinica e Salute.</span>
+          <span data-lang="en">Department of Dynamic and Clinical Psychology, and Health Studies.</span>
+          <span class="doc-url">research.uniroma1.it</span>
+        </div>
+        <span class="doc-tag opt">Partner</span>
+      </a>
+      <a class="doc-card" href="https://www.mur.gov.it" target="_blank" rel="noopener">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">MUR – Ministero dell'Università e della Ricerca</strong>
+          <strong data-lang="en">MUR – Italian Ministry of University and Research</strong>
+          <span data-lang="it">Finanzia EcoPsy tramite il Fondo Italiano per la Scienza (FIS).</span>
+          <span data-lang="en">Funds EcoPsy through the Italian Fund for Science (FIS).</span>
+          <span class="doc-url">mur.gov.it</span>
+        </div>
+        <span class="doc-tag opt" data-lang="it">Finanziatore</span>
+        <span class="doc-tag opt" data-lang="en">Funder</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FONTI -->
+<section id="fonti" class="links-section alt">
+  <div class="container">
+    <p class="section-label" data-lang="it">Approfondimenti</p>
+    <p class="section-label" data-lang="en">Further reading</p>
+    <h2 data-lang="it">Fonti scientifiche</h2>
+    <h2 data-lang="en">Scientific sources</h2>
+    <p class="section-intro" data-lang="it">Gli studi e i dati citati nelle pagine del progetto.</p>
+    <p class="section-intro" data-lang="en">The studies and data cited on the project pages.</p>
+    <div class="docs-grid">
+      <a class="doc-card" href="https://www.who.int/news-room/fact-sheets/detail/adolescent-mental-health" target="_blank" rel="noopener">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">OMS – Salute mentale degli adolescenti</strong>
+          <strong data-lang="en">WHO – Adolescent mental health</strong>
+          <span data-lang="it">Scheda informativa dell'Organizzazione Mondiale della Sanità (in inglese).</span>
+          <span data-lang="en">World Health Organization fact sheet.</span>
+          <span class="doc-url">who.int</span>
+        </div>
+        <span class="doc-tag opt" data-lang="it">Dati</span>
+        <span class="doc-tag opt" data-lang="en">Data</span>
+      </a>
+      <a class="doc-card" href="https://doi.org/10.1001/jamapediatrics.2021.2482" target="_blank" rel="noopener">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></div>
+        <div class="doc-info">
+          <strong>Racine et al., JAMA Pediatrics 2021</strong>
+          <span data-lang="it">Meta-analisi sui sintomi depressivi e ansiosi in bambini e adolescenti durante il COVID-19.</span>
+          <span data-lang="en">Meta-analysis of depressive and anxiety symptoms in children and adolescents during COVID-19.</span>
+          <span class="doc-url">doi.org</span>
+        </div>
+        <span class="doc-tag opt" data-lang="it">Articolo</span>
+        <span class="doc-tag opt" data-lang="en">Article</span>
+      </a>
+      <a class="doc-card" href="https://pubmed.ncbi.nlm.nih.gov/15939837/" target="_blank" rel="noopener">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></div>
+        <div class="doc-info">
+          <strong>Kessler et al., Arch Gen Psychiatry 2005</strong>
+          <span data-lang="it">Prevalenza ed età d'esordio dei disturbi mentali (National Comorbidity Survey Replication).</span>
+          <span data-lang="en">Lifetime prevalence and age of onset of mental disorders (National Comorbidity Survey Replication).</span>
+          <span class="doc-url">pubmed.ncbi.nlm.nih.gov</span>
+        </div>
+        <span class="doc-tag opt" data-lang="it">Articolo</span>
+        <span class="doc-tag opt" data-lang="en">Article</span>
+      </a>
+    </div>
+    <p class="links-updated" style="margin-top:32px;" data-lang="it">Ultimo aggiornamento: settembre 2026</p>
+    <p class="links-updated" style="margin-top:32px;" data-lang="en">Last updated: September 2026</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo-text">Eco<span style="color:#6fe0a0">Psy</span></div>
+        <p data-lang="it">Primo studio epidemiologico longitudinale sul benessere mentale degli adolescenti nell'area metropolitana di Roma. Finanziato da FIS – MUR (3 anni).</p>
+        <p data-lang="en">First large-scale longitudinal study on adolescent mental well-being in Rome. Funded by FIS – MUR (3 years).</p>
+        <div class="footer-logos">
+          <img src="assets/logo_mur_vec.png" alt="MUR" />
+          <img src="assets/logo_torvergata.png" alt="Tor Vergata" />
+          <img src="assets/logo_fis_vec.png" alt="FIS" />
+        </div>
+      </div>
+      <div>
+        <h4 data-lang="it">Pagine</h4><h4 data-lang="en">Pages</h4>
+        <ul>
+          <li><a href="progetto.html" data-lang="it">Il Progetto</a><a href="progetto.html" data-lang="en">The Project</a></li>
+          <li><a href="metodologia.html" data-lang="it">Metodologia</a><a href="metodologia.html" data-lang="en">Methodology</a></li>
+          <li><a href="team.html">Team</a></li>
+          <li><a href="partecipa.html" data-lang="it">Partecipa</a><a href="partecipa.html" data-lang="en">Join</a></li>
+          <li><a href="news.html">News</a></li>
+          <li><a href="link-utili.html" data-lang="it">Link utili</a><a href="link-utili.html" data-lang="en">Useful links</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 data-lang="it">Contatti</h4><h4 data-lang="en">Contact</h4>
+        <ul>
+          <li>Dr. Rodolfo Rossi</li>
+          <li><a href="mailto:segreteria@ecopsy.eu">segreteria@ecopsy.eu</a></li>
+          <li style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.4)" data-lang="it">Dipartimento di Medicina dei Sistemi<br />Università di Roma Tor Vergata<br />via Montpellier 1, 00133 Roma</li>
+          <li style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.4)" data-lang="en">Department of Systems Medicine<br />University of Rome Tor Vergata<br />via Montpellier 1, 00133 Roma</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 EcoPsy – Università di Roma Tor Vergata</span>
+      <span data-lang="it">Progetto finanziato da FIS – Fondo Italiano per la Scienza, MUR</span>
+      <span data-lang="en">Project funded by FIS – Italian Fund for Science, MUR</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function toggleMenu(btn) {
+    const nav = document.querySelector("nav");
+    nav.classList.toggle("open");
+    btn.setAttribute("aria-expanded", nav.classList.contains("open"));
+  }
+  function toggleLang(btn) {
+    const isEN = document.body.classList.toggle('lang-en');
+    btn.textContent = isEN ? 'IT' : 'EN';
+    document.documentElement.lang = isEN ? 'en' : 'it';
+    document.querySelector("nav").classList.remove("open");
+  }
+  document.querySelectorAll('nav a').forEach(a => a.addEventListener('click', () => {
+    document.querySelector('nav').classList.remove('open');
+  }));
+</script>
+</body>
+</html>

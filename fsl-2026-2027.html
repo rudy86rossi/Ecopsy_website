@@ -9,17 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <style>
-    /* ── Sub-nav ── */
-    .sub-nav { background: var(--green-pale); border-bottom: 1px solid var(--border); }
-    .sub-nav-inner { display: flex; gap: 0; overflow-x: auto; }
-    .sub-nav a {
-      display: block; padding: 12px 20px; white-space: nowrap; text-decoration: none;
-      font-family: var(--font-head); font-size: .82rem; font-weight: 600;
-      color: var(--text-muted); border-bottom: 3px solid transparent;
-      transition: color .15s, border-color .15s;
-    }
-    .sub-nav a:hover { color: var(--green-dark); text-decoration: none; }
-    .sub-nav a.active { color: var(--green-dark); border-bottom-color: var(--green-mid); font-weight: 700; }
 
     /* ── Decision flowchart ── */
     .decision-wrap { max-width: 820px; margin: 0 auto 56px; }
@@ -68,26 +57,6 @@
     }
     .path-merge strong { color: var(--green-dark); }
 
-    /* ── Docs grid ── */
-    .docs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 8px; }
-    .doc-card {
-      display: flex; align-items: center; gap: 16px;
-      padding: 18px 20px; background: var(--white);
-      border: 1px solid var(--border); border-radius: var(--radius);
-      box-shadow: var(--shadow); text-decoration: none;
-      transition: border-color .15s, box-shadow .15s;
-    }
-    .doc-card:hover { border-color: var(--green-mid); box-shadow: 0 6px 20px rgba(26,74,46,.12); text-decoration: none; }
-    .doc-icon {
-      flex-shrink: 0; width: 40px; height: 40px; border-radius: 8px;
-      background: var(--green-pale); display: flex; align-items: center; justify-content: center; color: var(--green-dark);
-    }
-    .doc-info { flex: 1; }
-    .doc-info strong { font-family: var(--font-head); font-size: .88rem; font-weight: 700; color: var(--green-dark); display: block; margin-bottom: 2px; }
-    .doc-info span { font-size: .78rem; color: var(--text-muted); }
-    .doc-tag { font-size: .68rem; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; background: #fee2e2; color: #b91c1c; flex-shrink: 0; }
-    .doc-tag.opt { background: var(--green-pale); color: var(--green-dark); }
-
     /* ── Contacts ── */
     .contacts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
     .contact-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 28px; box-shadow: var(--shadow); }
@@ -97,7 +66,6 @@
     .contact-card .tel { font-size: .82rem; color: var(--text-muted); margin-top: 4px; }
 
     @media (max-width: 900px) {
-      .docs-grid { grid-template-columns: 1fr; }
       .contacts-grid { grid-template-columns: 1fr; }
     }
   </style>
@@ -120,6 +88,8 @@
       <a href="partecipa.html" class="active" data-lang="it">Partecipa</a>
       <a href="partecipa.html" class="active" data-lang="en">Join</a>
       <a href="news.html">News</a>
+      <a href="link-utili.html" data-lang="it">Link utili</a>
+      <a href="link-utili.html" data-lang="en">Useful links</a>
       <button class="lang-btn" onclick="toggleLang(this)">EN</button>
     </nav>
   </div>
@@ -295,6 +265,10 @@
         <span class="doc-tag opt" data-lang="en">Reference</span>
       </a>
     </div>
+    <p class="more-link">
+      <a href="link-utili.html#scuole" data-lang="it">Altri link utili per le scuole →</a>
+      <a href="link-utili.html#scuole" data-lang="en">More useful links for schools →</a>
+    </p>
   </div>
 </section>
 
@@ -348,6 +322,7 @@
           <li><a href="team.html">Team</a></li>
           <li><a href="partecipa.html" data-lang="it">Partecipa</a><a href="partecipa.html" data-lang="en">Join</a></li>
           <li><a href="news.html">News</a></li>
+          <li><a href="link-utili.html" data-lang="it">Link utili</a><a href="link-utili.html" data-lang="en">Useful links</a></li>
         </ul>
       </div>
       <div>
