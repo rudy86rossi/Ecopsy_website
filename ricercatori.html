@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Per ricercatori – EcoPsy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .sub-nav { position: sticky; top: 68px; z-index: 90; }
+    .links-section { padding: 56px 0; scroll-margin-top: 120px; }
+    .links-section .section-intro { margin-bottom: 28px; }
+
+    /* ── Survey call-out ── */
+    .survey-box {
+      background: var(--green-dark); border-radius: var(--radius);
+      padding: 36px 40px; color: var(--white);
+      display: flex; align-items: center; justify-content: space-between; gap: 28px;
+    }
+    .survey-box .sb-label {
+      font-family: var(--font-head); font-size: .72rem; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase; color: #6fe0a0; margin-bottom: 8px;
+    }
+    .survey-box h2 { color: var(--white); font-size: 1.35rem; margin-bottom: 8px; }
+    .survey-box p { font-size: .9rem; color: rgba(255,255,255,.75); line-height: 1.65; max-width: 620px; }
+    .survey-box .sb-meta {
+      font-size: .78rem; color: rgba(255,255,255,.55); margin-top: 12px;
+      display: flex; gap: 18px; flex-wrap: wrap;
+    }
+    .survey-box a.btn-survey {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #6fe0a0; color: var(--green-dark);
+      font-family: var(--font-head); font-weight: 700; font-size: .9rem;
+      padding: 15px 28px; border-radius: 8px; text-decoration: none;
+      white-space: nowrap; transition: background .15s, transform .15s;
+    }
+    .survey-box a.btn-survey:hover { background: var(--white); transform: translateY(-2px); }
+
+    /* ── Reference list ── */
+    .ref-list { display: grid; gap: 12px; }
+    .ref-item {
+      display: flex; gap: 16px; align-items: flex-start;
+      padding: 18px 20px; background: var(--white);
+      border: 1px solid var(--border); border-radius: 10px;
+      text-decoration: none; transition: border-color .15s, box-shadow .15s;
+    }
+    .ref-item:hover { border-color: var(--green-mid); box-shadow: 0 6px 20px rgba(26,74,46,.12); text-decoration: none; }
+    .ref-num {
+      font-family: var(--font-head); font-size: .78rem; font-weight: 800;
+      color: var(--green-light); flex-shrink: 0; padding-top: 2px; min-width: 24px;
+    }
+    .ref-body { flex: 1; }
+    .ref-body strong {
+      font-family: var(--font-head); font-size: .88rem; font-weight: 700;
+      color: var(--green-dark); display: block; margin-bottom: 3px;
+    }
+    .ref-body .ref-title { font-size: .82rem; color: var(--text); display: block; line-height: 1.55; }
+    .ref-body .ref-cited { font-size: .76rem; color: var(--text-muted); display: block; margin-top: 5px; }
+    .ref-doi {
+      font-family: var(--font-body); font-size: .72rem; color: var(--green-mid);
+      flex-shrink: 0; align-self: center; white-space: nowrap;
+    }
+
+    .links-updated { font-size: .8rem; color: var(--text-muted); }
+
+    @media (max-width: 900px) {
+      .survey-box { flex-direction: column; align-items: flex-start; padding: 28px 24px; }
+      .ref-doi { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="container header-inner">
+    <a href="index.html" style="text-decoration:none"><img src="assets/logo_ecopsy.png" alt="EcoPsy" style="height:40px;" /></a>
+    <button class="menu-toggle" onclick="toggleMenu(this)" aria-label="Menu">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="4" width="22" height="2.2" rx="1.1" fill="currentColor"/><rect y="9.9" width="22" height="2.2" rx="1.1" fill="currentColor"/><rect y="15.8" width="22" height="2.2" rx="1.1" fill="currentColor"/></svg>
+    </button>
+    <nav>
+      <a href="progetto.html" data-lang="it">Il Progetto</a>
+      <a href="progetto.html" data-lang="en">The Project</a>
+      <a href="metodologia.html" data-lang="it">Metodologia</a>
+      <a href="metodologia.html" data-lang="en">Methodology</a>
+      <a href="team.html">Team</a>
+      <a href="partecipa.html" data-lang="it">Partecipa</a>
+      <a href="partecipa.html" data-lang="en">Join</a>
+      <a href="ricercatori.html" class="active" data-lang="it">Ricercatori</a>
+      <a href="ricercatori.html" class="active" data-lang="en">Researchers</a>
+      <a href="news.html">News</a>
+      <a href="link-utili.html" data-lang="it">Link utili</a>
+      <a href="link-utili.html" data-lang="en">Useful links</a>
+      <button class="lang-btn" onclick="toggleLang(this)">EN</button>
+    </nav>
+  </div>
+</header>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="container">
+    <p class="section-label" data-lang="it">Per ricercatori</p>
+    <p class="section-label" data-lang="en">For researchers</p>
+    <h1 data-lang="it">Ricerca e collaborazioni</h1>
+    <h1 data-lang="en">Research and collaborations</h1>
+    <p data-lang="it">L'indagine aperta a psicologi, psichiatri e ricercatori, il protocollo dello studio, le fonti scientifiche e i contatti per collaborare.</p>
+    <p data-lang="en">The survey open to psychologists, psychiatrists and researchers, the study protocol, scientific sources and how to collaborate.</p>
+  </div>
+</div>
+
+<!-- SUB-NAV -->
+<div class="sub-nav">
+  <div class="container sub-nav-inner">
+    <a href="#indagine"><span data-lang="it">Indagine</span><span data-lang="en">Survey</span></a>
+    <a href="#metodo"><span data-lang="it">Metodo e protocollo</span><span data-lang="en">Method and protocol</span></a>
+    <a href="#fonti"><span data-lang="it">Fonti</span><span data-lang="en">Sources</span></a>
+    <a href="#partner"><span data-lang="it">Partner e reti</span><span data-lang="en">Partners and networks</span></a>
+    <a href="#collabora"><span data-lang="it">Collabora</span><span data-lang="en">Collaborate</span></a>
+  </div>
+</div>
+
+<!-- INDAGINE -->
+<section id="indagine" class="links-section" style="padding-bottom: 24px;">
+  <div class="container">
+    <div class="survey-box">
+      <div>
+        <div class="sb-label" data-lang="it">Partecipazione aperta</div>
+        <div class="sb-label" data-lang="en">Open participation</div>
+        <h2 data-lang="it">Indagine esplorativa EcoPsy</h2>
+        <h2 data-lang="en">EcoPsy exploratory survey</h2>
+        <p data-lang="it">Quali costrutti psicologici e fattori di contesto contano di più per la salute mentale degli adolescenti? Raccogliamo il parere di psicologi, psichiatri e ricercatori per orientare la selezione degli strumenti e le prossime fasi dello studio.</p>
+        <p data-lang="en">Which psychological constructs and contextual factors matter most for adolescent mental health? We are collecting the views of psychologists, psychiatrists and researchers to guide instrument selection and the next phases of the study.</p>
+        <div class="sb-meta">
+          <span data-lang="it">≈ 5 minuti</span>
+          <span data-lang="en">≈ 5 minutes</span>
+          <span data-lang="it">Anonima</span>
+          <span data-lang="en">Anonymous</span>
+          <span data-lang="it">In italiano</span>
+          <span data-lang="en">In Italian</span>
+        </div>
+      </div>
+      <a href="https://forms.gle/6gPWDSaFR98iircz6" target="_blank" rel="noopener" class="btn-survey">
+        <span data-lang="it">Compila il modulo →</span><span data-lang="en">Fill in the form →</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- METODO E PROTOCOLLO -->
+<section id="metodo" class="links-section">
+  <div class="container">
+    <p class="section-label" data-lang="it">Disegno dello studio</p>
+    <p class="section-label" data-lang="en">Study design</p>
+    <h2 data-lang="it">Metodo e protocollo</h2>
+    <h2 data-lang="en">Method and protocol</h2>
+    <p class="section-intro" data-lang="it">Il disegno EMA-Burst, i parametri di campionamento, lo strumento di raccolta dati e le garanzie etiche.</p>
+    <p class="section-intro" data-lang="en">The EMA-Burst design, sampling parameters, the data collection tool and ethical safeguards.</p>
+    <div class="docs-grid">
+      <a class="doc-card" href="metodologia.html">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Metodologia EMA</strong>
+          <strong data-lang="en">EMA methodology</strong>
+          <span data-lang="it">Limiti degli strumenti tradizionali, disegno EMA-Burst, parametri configurabili e criticità dichiarate.</span>
+          <span data-lang="en">Limitations of traditional tools, EMA-Burst design, configurable parameters and declared challenges.</span>
+        </div>
+        <span class="doc-tag opt" data-lang="it">Pagina</span>
+        <span class="doc-tag opt" data-lang="en">Page</span>
+      </a>
+      <a class="doc-card" href="assets/EMA_Scuole.pdf" download>
+        <div class="doc-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 16l-4-4h2.5V4h3v8H16l-4 4z" fill="currentColor"/><path d="M4 20h16v-2H4v2z" fill="currentColor"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Guida completa all'EMA</strong>
+          <strong data-lang="en">Complete EMA guide</strong>
+          <span data-lang="it">Documento di riferimento sul metodo EMA e sul disegno dello studio.</span>
+          <span data-lang="en">Reference document on the EMA method and the study design.</span>
+        </div>
+        <span class="doc-tag opt">PDF</span>
+      </a>
+      <a class="doc-card" href="progetto.html">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Il progetto: obiettivi e fasi</strong>
+          <strong data-lang="en">The project: aims and phases</strong>
+          <span data-lang="it">Domande di ricerca, modalità di raccolta dati, determinanti socio-ecologici e cronoprogramma triennale.</span>
+          <span data-lang="en">Research questions, data collection modes, socio-ecological determinants and the three-year timeline.</span>
+        </div>
+        <span class="doc-tag opt" data-lang="it">Pagina</span>
+        <span class="doc-tag opt" data-lang="en">Page</span>
+      </a>
+      <a class="doc-card" href="https://sites.google.com/view/salviadk/home-page" target="_blank" rel="noopener">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></div>
+        <div class="doc-info">
+          <strong>Salvia DK</strong>
+          <span data-lang="it">La piattaforma usata per la raccolta dati EMA: prompt, questionari brevi e dati passivi.</span>
+          <span data-lang="en">The platform used for EMA data collection: prompts, short questionnaires and passive data.</span>
+          <span class="doc-url">sites.google.com/view/salviadk</span>
+        </div>
+        <span class="doc-tag opt" data-lang="it">Strumento</span>
+        <span class="doc-tag opt" data-lang="en">Tool</span>
+      </a>
+      <a class="doc-card" href="https://sites.google.com/view/salviadk/privacy" target="_blank" rel="noopener">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Salvia DK – Informativa privacy</strong>
+          <strong data-lang="en">Salvia DK – Privacy notice</strong>
+          <span data-lang="it">Dati raccolti, base giuridica e modalità di trattamento (GDPR).</span>
+          <span data-lang="en">Data collected, legal basis and processing arrangements (GDPR).</span>
+          <span class="doc-url">sites.google.com/view/salviadk/privacy</span>
+        </div>
+        <span class="doc-tag opt">Privacy</span>
+      </a>
+      <a class="doc-card" href="partecipa.html#garanzie">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Etica e consenso informato</strong>
+          <strong data-lang="en">Ethics and informed consent</strong>
+          <span data-lang="it">Protocollo approvato dal Comitato Etico di Ateneo (febbraio 2026), doppio consenso e diritto di ritiro.</span>
+          <span data-lang="en">Protocol approved by the University Ethics Committee (February 2026), dual consent and right to withdraw.</span>
+        </div>
+        <span class="doc-tag opt" data-lang="it">Pagina</span>
+        <span class="doc-tag opt" data-lang="en">Page</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FONTI -->
+<section id="fonti" class="links-section alt">
+  <div class="container">
+    <p class="section-label" data-lang="it">Letteratura</p>
+    <p class="section-label" data-lang="en">Literature</p>
+    <h2 data-lang="it">Fonti scientifiche</h2>
+    <h2 data-lang="en">Scientific sources</h2>
+    <p class="section-intro" data-lang="it">Gli studi e i dati citati nelle pagine del progetto, con il riferimento alla sezione in cui compaiono.</p>
+    <p class="section-intro" data-lang="en">The studies and data cited across the project pages, with the section where each appears.</p>
+    <div class="ref-list">
+      <a class="ref-item" href="https://www.who.int/news-room/fact-sheets/detail/adolescent-mental-health" target="_blank" rel="noopener">
+        <div class="ref-num">01</div>
+        <div class="ref-body">
+          <strong data-lang="it">OMS – Salute mentale degli adolescenti (2023)</strong>
+          <strong data-lang="en">WHO – Adolescent mental health (2023)</strong>
+          <span class="ref-title" data-lang="it">Scheda informativa dell'Organizzazione Mondiale della Sanità: prevalenza, carico di malattia e fattori di rischio nell'adolescenza.</span>
+          <span class="ref-title" data-lang="en">World Health Organization fact sheet: prevalence, disease burden and risk factors in adolescence.</span>
+          <span class="ref-cited" data-lang="it">Citato in: Il Progetto — 1 adolescente su 7; depressione 4ª causa di disabilità.</span>
+          <span class="ref-cited" data-lang="en">Cited in: The Project — 1 in 7 adolescents; depression 4th leading cause of disability.</span>
+        </div>
+        <span class="ref-doi">who.int</span>
+      </a>
+      <a class="ref-item" href="https://doi.org/10.1001/jamapediatrics.2021.2482" target="_blank" rel="noopener">
+        <div class="ref-num">02</div>
+        <div class="ref-body">
+          <strong>Racine et al., JAMA Pediatrics 2021</strong>
+          <span class="ref-title" data-lang="it">Meta-analisi sulla prevalenza globale di sintomi depressivi e ansiosi in bambini e adolescenti durante il COVID-19.</span>
+          <span class="ref-title" data-lang="en">Meta-analysis of the global prevalence of depressive and anxiety symptoms in children and adolescents during COVID-19.</span>
+          <span class="ref-cited" data-lang="it">Citato in: Link utili — Fonti scientifiche.</span>
+          <span class="ref-cited" data-lang="en">Cited in: Useful links — Scientific sources.</span>
+        </div>
+        <span class="ref-doi">10.1001/jamapediatrics.2021.2482</span>
+      </a>
+      <a class="ref-item" href="https://pubmed.ncbi.nlm.nih.gov/15939837/" target="_blank" rel="noopener">
+        <div class="ref-num">03</div>
+        <div class="ref-body">
+          <strong>Kessler et al., Arch Gen Psychiatry 2005</strong>
+          <span class="ref-title" data-lang="it">Prevalenza lifetime ed età d'esordio dei disturbi mentali nella National Comorbidity Survey Replication.</span>
+          <span class="ref-title" data-lang="en">Lifetime prevalence and age of onset of mental disorders in the National Comorbidity Survey Replication.</span>
+          <span class="ref-cited" data-lang="it">Citato in: Il Progetto — 75% dei disturbi esordisce prima dei 25 anni.</span>
+          <span class="ref-cited" data-lang="en">Cited in: The Project — 75% of disorders begin before age 25.</span>
+        </div>
+        <span class="ref-doi">PMID 15939837</span>
+      </a>
+    </div>
+    <p class="links-updated" style="margin-top:28px;" data-lang="it">Ultimo aggiornamento: settembre 2026</p>
+    <p class="links-updated" style="margin-top:28px;" data-lang="en">Last updated: September 2026</p>
+  </div>
+</section>
+
+<!-- PARTNER E RETI -->
+<section id="partner" class="links-section">
+  <div class="container">
+    <p class="section-label" data-lang="it">Istituzioni</p>
+    <p class="section-label" data-lang="en">Institutions</p>
+    <h2 data-lang="it">Partner e reti</h2>
+    <h2 data-lang="en">Partners and networks</h2>
+    <p class="section-intro" data-lang="it">Gli enti che promuovono, finanziano e collaborano scientificamente con EcoPsy.</p>
+    <p class="section-intro" data-lang="en">The institutions that run, fund and scientifically collaborate with EcoPsy.</p>
+    <div class="docs-grid">
+      <a class="doc-card" href="https://web.uniroma2.it" target="_blank" rel="noopener">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Università di Roma Tor Vergata</strong>
+          <strong data-lang="en">University of Rome Tor Vergata</strong>
+          <span data-lang="it">Sede del progetto, Dipartimento di Medicina dei Sistemi.</span>
+          <span data-lang="en">Host institution, Department of Systems Medicine.</span>
+          <span class="doc-url">web.uniroma2.it</span>
+        </div>
+        <span class="doc-tag opt" data-lang="it">Capofila</span>
+        <span class="doc-tag opt" data-lang="en">Lead</span>
+      </a>
+      <a class="doc-card" href="https://research.uniroma1.it/laboratorio/163885" target="_blank" rel="noopener">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></div>
+        <div class="doc-info">
+          <strong>Sapienza – ERRLAB</strong>
+          <span data-lang="it">Dipartimento di Psicologia Dinamica, Clinica e Salute. Convenzione scientifica firmata nel 2026, referente Prof.ssa Anna Maria Speranza.</span>
+          <span data-lang="en">Department of Dynamic and Clinical Psychology, and Health Studies. Scientific agreement signed in 2026, contact Prof. Anna Maria Speranza.</span>
+          <span class="doc-url">research.uniroma1.it</span>
+        </div>
+        <span class="doc-tag opt">Partner</span>
+      </a>
+      <a class="doc-card" href="https://comppsy.it" target="_blank" rel="noopener">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></div>
+        <div class="doc-info">
+          <strong>COMPPSY</strong>
+          <span data-lang="it">Società Italiana di Psichiatria Computazionale: rete di ricerca che collabora con EcoPsy.</span>
+          <span data-lang="en">Italian Society of Computational Psychiatry: research network collaborating with EcoPsy.</span>
+          <span class="doc-url">comppsy.it</span>
+        </div>
+        <span class="doc-tag opt" data-lang="it">Rete</span>
+        <span class="doc-tag opt" data-lang="en">Network</span>
+      </a>
+      <a class="doc-card" href="https://www.mur.gov.it" target="_blank" rel="noopener">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">MUR – Fondo Italiano per la Scienza</strong>
+          <strong data-lang="en">MUR – Italian Fund for Science</strong>
+          <span data-lang="it">Finanzia EcoPsy tramite il FIS per un triennio.</span>
+          <span data-lang="en">Funds EcoPsy through FIS over three years.</span>
+          <span class="doc-url">mur.gov.it</span>
+        </div>
+        <span class="doc-tag opt" data-lang="it">Finanziatore</span>
+        <span class="doc-tag opt" data-lang="en">Funder</span>
+      </a>
+      <a class="doc-card" href="team.html">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Team e Comitato Tecnico-Scientifico</strong>
+          <strong data-lang="en">Team and Scientific Advisory Committee</strong>
+          <span data-lang="it">Principal Investigator, co-PI, ricercatori e istituzioni collaboranti.</span>
+          <span data-lang="en">Principal Investigator, co-PI, researchers and collaborating institutions.</span>
+        </div>
+        <span class="doc-tag opt" data-lang="it">Pagina</span>
+        <span class="doc-tag opt" data-lang="en">Page</span>
+      </a>
+      <a class="doc-card" href="news.html">
+        <div class="doc-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></div>
+        <div class="doc-info">
+          <strong data-lang="it">Avanzamento del progetto</strong>
+          <strong data-lang="en">Project progress</strong>
+          <span data-lang="it">Milestone, iter etico, accordi di collaborazione e sviluppo dell'app EMA.</span>
+          <span data-lang="en">Milestones, ethics process, collaboration agreements and EMA app development.</span>
+        </div>
+        <span class="doc-tag opt">News</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- COLLABORA -->
+<section id="collabora" class="links-section alt">
+  <div class="container">
+    <div class="contact-box">
+      <div>
+        <h3 data-lang="it">Proporre una collaborazione</h3>
+        <h3 data-lang="en">Propose a collaboration</h3>
+        <p data-lang="it">Per collaborazioni scientifiche, accesso ai dati o richieste sul protocollo, scrivi alla segreteria del progetto indicando l'ente di appartenenza.</p>
+        <p data-lang="en">For scientific collaborations, data access or questions about the protocol, write to the project office stating your affiliation.</p>
+      </div>
+      <a class="btn" href="mailto:segreteria@ecopsy.eu?subject=Collaborazione%20scientifica%20EcoPsy">segreteria@ecopsy.eu</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo-text">Eco<span style="color:#6fe0a0">Psy</span></div>
+        <p data-lang="it">Primo studio epidemiologico longitudinale sul benessere mentale degli adolescenti nell'area metropolitana di Roma. Finanziato da FIS – MUR (3 anni).</p>
+        <p data-lang="en">First large-scale longitudinal study on adolescent mental well-being in Rome. Funded by FIS – MUR (3 years).</p>
+        <div class="footer-logos">
+          <img src="assets/logo_mur_vec.png" alt="MUR" />
+          <img src="assets/logo_torvergata.png" alt="Tor Vergata" />
+          <img src="assets/logo_fis_vec.png" alt="FIS" />
+        </div>
+      </div>
+      <div>
+        <h4 data-lang="it">Pagine</h4><h4 data-lang="en">Pages</h4>
+        <ul>
+          <li><a href="progetto.html" data-lang="it">Il Progetto</a><a href="progetto.html" data-lang="en">The Project</a></li>
+          <li><a href="metodologia.html" data-lang="it">Metodologia</a><a href="metodologia.html" data-lang="en">Methodology</a></li>
+          <li><a href="team.html">Team</a></li>
+          <li><a href="partecipa.html" data-lang="it">Partecipa</a><a href="partecipa.html" data-lang="en">Join</a></li>
+          <li><a href="ricercatori.html" data-lang="it">Ricercatori</a><a href="ricercatori.html" data-lang="en">Researchers</a></li>
+          <li><a href="news.html">News</a></li>
+          <li><a href="link-utili.html" data-lang="it">Link utili</a><a href="link-utili.html" data-lang="en">Useful links</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 data-lang="it">Contatti</h4><h4 data-lang="en">Contact</h4>
+        <ul>
+          <li>Dr. Rodolfo Rossi</li>
+          <li><a href="mailto:segreteria@ecopsy.eu">segreteria@ecopsy.eu</a></li>
+          <li style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.4)" data-lang="it">Dipartimento di Medicina dei Sistemi<br />Università di Roma Tor Vergata<br />via Montpellier 1, 00133 Roma</li>
+          <li style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.4)" data-lang="en">Department of Systems Medicine<br />University of Rome Tor Vergata<br />via Montpellier 1, 00133 Roma</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 EcoPsy – Università di Roma Tor Vergata</span>
+      <span data-lang="it">Progetto finanziato da FIS – Fondo Italiano per la Scienza, MUR</span>
+      <span data-lang="en">Project funded by FIS – Italian Fund for Science, MUR</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function toggleMenu(btn) {
+    const nav = document.querySelector("nav");
+    nav.classList.toggle("open");
+    btn.setAttribute("aria-expanded", nav.classList.contains("open"));
+  }
+  function toggleLang(btn) {
+    const isEN = document.body.classList.toggle('lang-en');
+    btn.textContent = isEN ? 'IT' : 'EN';
+    document.documentElement.lang = isEN ? 'en' : 'it';
+    document.querySelector("nav").classList.remove("open");
+  }
+  document.querySelectorAll('nav a').forEach(a => a.addEventListener('click', () => {
+    document.querySelector('nav').classList.remove('open');
+  }));
+</script>
+</body>
+</html>
