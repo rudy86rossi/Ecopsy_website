@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Regia sessione – EcoPsy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { background: var(--green-pale); }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 28px 20px 64px; }
+    .eyebrow {
+      font-family: var(--font-head); font-size: .72rem; font-weight: 700;
+      letter-spacing: 1.4px; text-transform: uppercase; color: var(--green-mid);
+    }
+    h1 { font-size: 1.5rem; color: var(--green-dark); margin: 6px 0 20px; }
+
+    .card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: 20px; margin-bottom: 16px;
+    }
+    .card h2 {
+      font-size: .72rem; font-weight: 700; letter-spacing: 1.2px;
+      text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px;
+    }
+
+    .now { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .pill {
+      font-family: var(--font-head); font-weight: 800; font-size: 1.1rem;
+      background: var(--green-dark); color: var(--white);
+      padding: 7px 16px; border-radius: 999px;
+    }
+    .nums { font-size: .9rem; color: var(--text-muted); }
+    .nums b { color: var(--green-dark); font-size: 1.15rem; font-family: var(--font-head); }
+
+    .steps { display: grid; gap: 10px; }
+    button.step {
+      display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+      font-family: var(--font-head); font-size: .98rem; font-weight: 700;
+      padding: 15px 18px; border: 2px solid var(--border); border-radius: 10px;
+      background: var(--white); color: var(--text); cursor: pointer;
+      transition: border-color .15s ease, background .15s ease;
+    }
+    button.step:hover:not(:disabled) { border-color: var(--green-light); }
+    button.step.next { border-color: var(--green-mid); background: var(--green-pale); color: var(--green-dark); }
+    button.step:disabled { opacity: .42; cursor: not-allowed; }
+    button.step .n {
+      flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+      display: grid; place-items: center; font-size: .82rem;
+      background: var(--green-dark); color: var(--white);
+    }
+    button.step .sub { display: block; font-family: var(--font-body); font-weight: 400; font-size: .8rem; color: var(--text-muted); margin-top: 2px; }
+
+    .danger { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+    button.reset {
+      font-family: var(--font-head); font-weight: 700; font-size: .85rem;
+      background: none; border: 1px solid #d8b5b1; color: #a3352c;
+      padding: 9px 16px; border-radius: 8px; cursor: pointer;
+    }
+    button.reset:hover { background: #fdf3f2; }
+
+    .status { font-size: .88rem; margin-top: 14px; min-height: 1.3em; }
+    .status.err { color: #a3352c; }
+    .status.ok  { color: var(--green-mid); }
+
+    ol.themes { padding-left: 20px; }
+    ol.themes li { margin-bottom: 8px; font-size: .92rem; }
+    ol.themes .label { font-family: var(--font-head); font-weight: 700; color: var(--green-dark); }
+    ol.themes .desc { color: var(--text-muted); font-size: .85rem; }
+
+    .links { font-size: .85rem; color: var(--text-muted); line-height: 2; }
+    .links code { background: var(--green-pale); padding: 2px 7px; border-radius: 5px; font-size: .82rem; }
+
+    .locked { text-align: center; padding: 40px 20px; }
+    .locked p { color: var(--text-muted); font-size: .92rem; margin-bottom: 16px; }
+    .locked input {
+      width: 100%; max-width: 320px; font-family: var(--font-body); font-size: 1rem;
+      padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px;
+    }
+    .locked button {
+      margin-top: 12px; font-family: var(--font-head); font-weight: 700; font-size: .95rem;
+      padding: 12px 26px; border: none; border-radius: 10px;
+      background: var(--green-mid); color: var(--white); cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">EcoPsy · regia</div>
+    <h1 id="title">Sessione live</h1>
+    <div id="app"></div>
+  </div>
+
+  <script src="evento-config.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    var URL_EXEC = window.EVENTO_EXEC_URL;
+    var app = document.getElementById('app');
+    var titleEl = document.getElementById('title');
+
+    /* The key arrives in the address bar (evento-regia.html#k=...) and is kept
+       for the session only. It is never written into this file: anything in the
+       published JavaScript is public, and the phase controls have to be the one
+       thing the room cannot press. The server checks it on every call. */
+    var key = (function () {
+      var m = /[#&]k=([^&]+)/.exec(location.hash);
+      if (m) {
+        var k = decodeURIComponent(m[1]);
+        try { sessionStorage.setItem('ecopsy-key', k); } catch (e) {}
+        history.replaceState(null, '', location.pathname + location.search);
+        return k;
+      }
+      try { return sessionStorage.getItem('ecopsy-key') || ''; } catch (e) { return ''; }
+    })();
+
+    function getState() {
+      return fetch(URL_EXEC + '?t=' + Date.now()).then(function (r) { return r.json(); });
+    }
+    function post(body) {
+      body.key = key;
+      return fetch(URL_EXEC, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(body)
+      }).then(function (r) { return r.json(); });
+    }
+
+    function el(tag, cls, text) {
+      var n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text !== undefined) n.textContent = text;
+      return n;
+    }
+
+    var PHASE_LABEL = {
+      collecting: 'Raccolta aperta',
+      analysing:  'Analisi in corso',
+      themes:     'Temi pronti',
+      voting:     'Votazione aperta',
+      results:    'Risultati'
+    };
+
+    var STEPS = [
+      { n: 1, to: 'collecting', label: 'Apri la raccolta',        sub: 'I partecipanti possono scrivere', from: ['results', 'themes', 'voting', 'analysing'] },
+      { n: 2, act: 'analyze',   label: 'Chiudi e analizza',       sub: 'Estrae i temi dalle risposte',     from: ['collecting'] },
+      { n: 3, to: 'voting',     label: 'Apri la votazione',       sub: 'I temi diventano votabili',        from: ['themes', 'results'] },
+      { n: 4, to: 'results',    label: 'Chiudi e mostra i voti',  sub: 'La classifica compare sullo schermo', from: ['voting'] }
+    ];
+
+    var busy = false, state = null;
+
+    /* Created once and re-attached on each render: rebuilding it would erase the
+       confirmation of the action that just ran. */
+    var status = el('div', 'status');
+    status.setAttribute('role', 'status');
+
+    function render(s) {
+      state = s;
+      titleEl.textContent = s.title || 'Sessione live';
+      app.textContent = '';
+
+      /* — current phase — */
+      var head = el('div', 'card');
+      head.appendChild(el('h2', null, 'Adesso'));
+      var now = el('div', 'now');
+      now.appendChild(el('span', 'pill', PHASE_LABEL[s.phase] || s.phase));
+      var nums = el('div', 'nums');
+      nums.appendChild(el('b', null, String(s.responses)));
+      nums.appendChild(document.createTextNode(s.responses === 1 ? ' risposta · ' : ' risposte · '));
+      nums.appendChild(el('b', null, String(s.ballots)));
+      nums.appendChild(document.createTextNode(s.ballots === 1 ? ' voto' : ' voti'));
+      now.appendChild(nums);
+      head.appendChild(now);
+      app.appendChild(head);
+
+      /* — the four buttons, in order — */
+      var ctrl = el('div', 'card');
+      ctrl.appendChild(el('h2', null, 'Comandi'));
+      var steps = el('div', 'steps');
+
+      STEPS.forEach(function (st) {
+        var b = el('button', 'step');
+        b.type = 'button';
+        b.appendChild(el('span', 'n', String(st.n)));
+        var body = el('div');
+        body.appendChild(document.createTextNode(st.label));
+        body.appendChild(el('span', 'sub', st.sub));
+        b.appendChild(body);
+
+        var available = st.from.indexOf(s.phase) !== -1;
+        if (available) b.classList.add('next');
+        b.disabled = busy || !available;
+
+        b.addEventListener('click', function () {
+          if (st.act === 'analyze' && !confirm('Chiudere la raccolta e analizzare ' + s.responses + ' risposte?')) return;
+          run(st, status, b);
+        });
+        steps.appendChild(b);
+      });
+
+      ctrl.appendChild(steps);
+      ctrl.appendChild(status);
+
+      var danger = el('div', 'danger');
+      var rb = el('button', 'reset', 'Azzera la sessione');
+      rb.type = 'button';
+      rb.addEventListener('click', function () {
+        if (!confirm('Cancella risposte, temi e voti. Procedere?')) return;
+        busy = true;
+        post({ action: 'reset', confirm: 'RESET' }).then(function (res) {
+          busy = false;
+          say(status, res.ok ? 'Sessione azzerata.' : (res.error || 'Non riuscito.'), res.ok);
+          tick();
+        });
+      });
+      danger.appendChild(rb);
+      ctrl.appendChild(danger);
+      app.appendChild(ctrl);
+
+      /* — themes, editable in the sheet — */
+      if (s.themes.length) {
+        var tc = el('div', 'card');
+        tc.appendChild(el('h2', null, 'Temi (' + s.themes.length + ')'));
+        var ol = el('ol', 'themes');
+        s.themes.forEach(function (t) {
+          var li = el('li');
+          li.appendChild(el('span', 'label', t.label));
+          if (t.description) li.appendChild(el('div', 'desc', t.description));
+          ol.appendChild(li);
+        });
+        tc.appendChild(ol);
+        tc.appendChild(el('p', 'links', 'Correggili nel foglio Temi: la pagina di voto legge quello, non il modello.'));
+        app.appendChild(tc);
+      }
+
+      /* — results — */
+      if (s.phase === 'results' && s.results) {
+        var rc = el('div', 'card');
+        rc.appendChild(el('h2', null, 'Classifica'));
+        var ol2 = el('ol', 'themes');
+        s.results.forEach(function (r) {
+          var li = el('li');
+          li.appendChild(el('span', 'label', r.label));
+          li.appendChild(el('div', 'desc', r.points + ' punti · ' + r.firsts + ' primi posti'));
+          ol2.appendChild(li);
+        });
+        rc.appendChild(ol2);
+        app.appendChild(rc);
+      }
+
+      /* — the two links to open elsewhere — */
+      var lc = el('div', 'card');
+      lc.appendChild(el('h2', null, 'Schermi'));
+      var links = el('div', 'links');
+      var base = location.origin + location.pathname.replace(/evento-regia\.html$/, 'evento.html');
+      links.appendChild(document.createTextNode('Proiettore: '));
+      links.appendChild(el('code', null, base + '?screen=1'));
+      links.appendChild(el('br'));
+      links.appendChild(document.createTextNode('Partecipanti: '));
+      links.appendChild(el('code', null, base));
+      lc.appendChild(links);
+      app.appendChild(lc);
+    }
+
+    function run(st, status, btn) {
+      busy = true;
+      btn.disabled = true;
+      say(status, st.act === 'analyze' ? 'Analisi in corso, può richiedere qualche secondo…' : 'Eseguo…');
+
+      var call = st.act === 'analyze'
+        ? post({ action: 'analyze' })
+        : post({ action: 'phase', to: st.to });
+
+      call.then(function (res) {
+        busy = false;
+        if (res.ok) {
+          say(status, st.act === 'analyze' ? (res.themes.length + ' temi estratti. Controllali qui sotto.') : 'Fatto.', true);
+        } else {
+          say(status, (res.error || 'Non riuscito.') + (res.fallback ? ' — ' + res.fallback : ''), false);
+        }
+        tick();
+      }).catch(function () {
+        busy = false;
+        say(status, 'Nessuna risposta dal server. Controlla la connessione e riprova.', false);
+        tick();
+      });
+    }
+
+    function say(node, msg, ok) {
+      node.className = 'status' + (ok === true ? ' ok' : ok === false ? ' err' : '');
+      node.textContent = msg;
+    }
+
+    function tick() {
+      getState().then(function (s) { if (s.ok) render(s); }).catch(function () {});
+    }
+
+    function askKey() {
+      var box = el('div', 'card locked');
+      box.appendChild(el('p', null, 'Questa pagina richiede la chiave facilitatore. La trovi nel foglio: menu EcoPsy → Mostra chiave e link.'));
+      var input = el('input');
+      input.type = 'password';
+      input.setAttribute('aria-label', 'Chiave facilitatore');
+      input.placeholder = 'chiave';
+      var b = el('button', null, 'Entra');
+      b.type = 'button';
+      function go() {
+        if (!input.value.trim()) return;
+        key = input.value.trim();
+        try { sessionStorage.setItem('ecopsy-key', key); } catch (e) {}
+        start();
+      }
+      b.addEventListener('click', go);
+      input.addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); });
+      box.appendChild(input);
+      box.appendChild(el('br'));
+      box.appendChild(b);
+      app.appendChild(box);
+      input.focus();
+    }
+
+    function start() {
+      app.textContent = '';
+      tick();
+      setInterval(function () { if (!busy) tick(); }, 5000);
+    }
+
+    if (!URL_EXEC || URL_EXEC.indexOf('INCOLLA') === 0) {
+      app.appendChild(el('div', 'card', 'Configura evento-config.js con l’URL /exec del web app.'));
+    } else if (!key) {
+      askKey();
+    } else {
+      start();
+    }
+  })();
+  </script>
+</body>
+</html>

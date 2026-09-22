@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Sessione live – EcoPsy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { background: var(--green-pale); }
+
+    .wrap { max-width: 640px; margin: 0 auto; padding: 28px 20px 64px; }
+    .eyebrow {
+      font-family: var(--font-head); font-size: .72rem; font-weight: 700;
+      letter-spacing: 1.4px; text-transform: uppercase; color: var(--green-mid);
+    }
+    h1 { font-size: 1.5rem; color: var(--green-dark); line-height: 1.2; margin: 6px 0 20px; }
+
+    .card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: 22px 20px; margin-bottom: 16px;
+    }
+    .question { font-size: 1.05rem; font-weight: 600; color: var(--green-dark); margin-bottom: 14px; }
+
+    textarea {
+      width: 100%; min-height: 150px; resize: vertical;
+      font-family: var(--font-body); font-size: 1rem; line-height: 1.6;
+      padding: 14px; border: 1px solid var(--border); border-radius: 10px;
+      background: var(--white); color: var(--text);
+    }
+    textarea:focus { outline: 2px solid var(--green-light); outline-offset: 1px; border-color: transparent; }
+    .count { font-size: .78rem; color: var(--text-muted); text-align: right; margin-top: 6px; }
+
+    button.act {
+      display: block; width: 100%; margin-top: 14px;
+      font-family: var(--font-head); font-size: 1rem; font-weight: 700;
+      padding: 15px 20px; border: none; border-radius: 10px; cursor: pointer;
+      background: var(--green-mid); color: var(--white);
+      transition: background .15s ease;
+    }
+    button.act:hover:not(:disabled) { background: var(--green-dark); }
+    button.act:disabled { background: #b9c9bf; cursor: not-allowed; }
+
+    /* ── Ranking: tap to rank, never drag ── */
+    .theme {
+      display: flex; gap: 14px; align-items: flex-start; width: 100%; text-align: left;
+      background: var(--white); border: 2px solid var(--border); border-radius: 10px;
+      padding: 14px 16px; margin-bottom: 10px; cursor: pointer;
+      font-family: var(--font-body); font-size: 1rem; color: var(--text);
+    }
+    .theme:hover { border-color: var(--green-light); }
+    .theme[aria-pressed="true"] { border-color: var(--green-mid); background: var(--green-pale); }
+    .theme .badge {
+      flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
+      display: grid; place-items: center;
+      font-family: var(--font-head); font-weight: 800; font-size: .9rem;
+      background: var(--border); color: var(--text-muted);
+    }
+    .theme[aria-pressed="true"] .badge { background: var(--green-mid); color: var(--white); }
+    .theme .label { font-family: var(--font-head); font-weight: 700; color: var(--green-dark); }
+    .theme .desc { font-size: .85rem; color: var(--text-muted); line-height: 1.5; margin-top: 3px; }
+
+    .hint { font-size: .85rem; color: var(--text-muted); margin-bottom: 14px; }
+    .status { font-size: .85rem; margin-top: 12px; min-height: 1.3em; }
+    .status.err { color: #a3352c; }
+    .status.ok  { color: var(--green-mid); }
+
+    .done { text-align: center; padding: 30px 10px; }
+    .done .tick { font-size: 2.4rem; line-height: 1; color: var(--green-mid); }
+    .done h2 { font-size: 1.15rem; color: var(--green-dark); margin: 10px 0 6px; }
+    .done p { font-size: .9rem; color: var(--text-muted); }
+
+    .res { margin-bottom: 14px; }
+    .res .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+    .res .label { font-family: var(--font-head); font-weight: 700; color: var(--green-dark); }
+    .res .pts { font-size: .8rem; color: var(--text-muted); white-space: nowrap; }
+    .bar { height: 9px; border-radius: 5px; background: var(--border); margin-top: 7px; overflow: hidden; }
+    .bar i { display: block; height: 100%; background: var(--green-mid); border-radius: 5px; }
+
+    /* ── Word cloud ── */
+    .cloud { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; justify-content: center; }
+    .cloud span { font-family: var(--font-head); font-weight: 700; line-height: 1.25; }
+
+    /* ── Projector (?screen=1) ── */
+    body.screen { background: var(--green-dark); color: var(--white); }
+    body.screen .wrap { max-width: 1500px; padding: 40px 48px; min-height: 100vh; display: flex; flex-direction: column; }
+    body.screen .eyebrow { color: #8fe0b0; font-size: 1rem; letter-spacing: 2px; }
+    body.screen h1 { color: var(--white); font-size: 2.6rem; margin: 10px 0 28px; }
+    body.screen .card { background: transparent; border: none; box-shadow: none; padding: 0; }
+    body.screen .stage { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+    body.screen .cloud span { color: #bff0d3; transition: font-size .6s ease, color .6s ease; }
+    body.screen .meta { font-size: 1.1rem; color: rgba(255,255,255,.65); margin-top: 28px; }
+    body.screen .joinurl {
+      font-family: var(--font-head); font-weight: 800; font-size: 1.8rem;
+      color: #6fe0a0; word-break: break-all;
+    }
+    body.screen .theme { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.18); color: var(--white); cursor: default; }
+    body.screen .theme .label { color: var(--white); font-size: 1.5rem; }
+    body.screen .theme .desc { color: rgba(255,255,255,.7); font-size: 1rem; }
+    body.screen .res .label { color: var(--white); font-size: 1.6rem; }
+    body.screen .res .pts { color: rgba(255,255,255,.65); font-size: 1.1rem; }
+    body.screen .bar { height: 16px; background: rgba(255,255,255,.14); }
+    body.screen .bar i { background: #6fe0a0; }
+    body.screen .waiting { font-size: 2rem; color: rgba(255,255,255,.75); text-align: center; }
+
+    @media (max-width: 520px) {
+      h1 { font-size: 1.3rem; }
+      .wrap { padding: 22px 16px 56px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">EcoPsy</div>
+    <h1 id="title">Sessione live</h1>
+    <div id="stage" class="stage"></div>
+  </div>
+
+  <script src="evento-config.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    var URL_EXEC = window.EVENTO_EXEC_URL;
+    var IS_SCREEN = new URLSearchParams(location.search).has('screen');
+    var POLL_MS = IS_SCREEN ? 3000 : 5000;
+
+    var stage = document.getElementById('stage');
+    var titleEl = document.getElementById('title');
+    if (IS_SCREEN) document.body.classList.add('screen');
+
+    /* ── transport ──────────────────────────────────────────────────────
+       GET is a plain fetch with no custom headers, and POST declares
+       text/plain even though the body is JSON. Both are CORS "simple"
+       requests. Anything else triggers a preflight, and Apps Script has no
+       doOptions to answer it — the request would get a 405 and never reach
+       the script. Never mode:'no-cors': the response would be opaque and we
+       could not tell a recorded vote from a thrown error. */
+    function getState() {
+      return fetch(URL_EXEC + '?t=' + Date.now()).then(function (r) { return r.json(); });
+    }
+    function post(body) {
+      return fetch(URL_EXEC, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(body)
+      }).then(function (r) { return r.json(); });
+    }
+
+    /* Identifies this device so a re-submission replaces rather than doubles.
+       Not an identity check, and does not need to be. */
+    function voterId() {
+      try {
+        var v = localStorage.getItem('ecopsy-voter');
+        if (!v) {
+          v = 'v' + Math.random().toString(36).slice(2, 10);
+          localStorage.setItem('ecopsy-voter', v);
+        }
+        return v;
+      } catch (err) {
+        if (!window._vid) window._vid = 'v' + Math.random().toString(36).slice(2, 10);
+        return window._vid;
+      }
+    }
+    function submittedKey(phase) { return 'ecopsy-' + phase + '-done'; }
+    function markDone(phase) { try { sessionStorage.setItem(submittedKey(phase), '1'); } catch (e) {} }
+    function isDone(phase) { try { return sessionStorage.getItem(submittedKey(phase)) === '1'; } catch (e) { return false; } }
+
+    function el(tag, cls, text) {
+      var n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text !== undefined) n.textContent = text;
+      return n;
+    }
+
+    /* ── views ─────────────────────────────────────────────────────────── */
+
+    var state = null, lastRev = null, picked = [];
+
+    function render(s) {
+      titleEl.textContent = s.title || 'Sessione live';
+      stage.textContent = '';
+      var view = IS_SCREEN ? screenView : phoneView;
+      view(s);
+    }
+
+    /* — phone — */
+    function phoneView(s) {
+      if (s.phase === 'collecting') return isDone('answer') ? waitCard(s, 'Risposta inviata', 'Guarda lo schermo: le parole compaiono man mano.') : answerCard(s);
+      if (s.phase === 'analysing')  return waitCard(s, 'Analisi in corso', 'Stiamo raggruppando le risposte in temi.');
+      if (s.phase === 'themes')     return themesPreview(s);
+      if (s.phase === 'voting')     return isDone('vote') ? waitCard(s, 'Voto registrato', 'Puoi cambiarlo finché la votazione è aperta.', true) : voteCard(s);
+      if (s.phase === 'results')    return resultsCard(s);
+    }
+
+    function answerCard(s) {
+      var card = el('div', 'card');
+      card.appendChild(el('div', 'question', s.question));
+
+      var ta = el('textarea');
+      ta.setAttribute('maxlength', '1000');
+      ta.setAttribute('aria-label', 'La tua risposta');
+      ta.placeholder = 'Scrivi qui…';
+      card.appendChild(ta);
+
+      var count = el('div', 'count', '0 / 1000');
+      card.appendChild(count);
+      ta.addEventListener('input', function () { count.textContent = ta.value.length + ' / 1000'; });
+
+      var btn = el('button', 'act', 'Invia');
+      var status = el('div', 'status');
+      status.setAttribute('role', 'status');
+      card.appendChild(btn);
+      card.appendChild(status);
+
+      btn.addEventListener('click', function () {
+        var text = ta.value.trim();
+        if (!text) { status.className = 'status err'; status.textContent = 'Scrivi qualcosa prima di inviare.'; return; }
+        btn.disabled = true;
+        status.className = 'status';
+        status.textContent = 'Invio…';
+        post({ action: 'submit', voterId: voterId(), text: text })
+          .then(function (res) {
+            if (res.ok) { markDone('answer'); tick(true); }
+            else { btn.disabled = false; status.className = 'status err'; status.textContent = res.error || 'Invio non riuscito.'; }
+          })
+          .catch(function () {
+            btn.disabled = false;
+            status.className = 'status err';
+            status.textContent = 'Nessuna risposta dal server. Riprova.';
+          });
+      });
+
+      stage.appendChild(card);
+      ta.focus();
+    }
+
+    function waitCard(s, head, sub, allowChange) {
+      var card = el('div', 'card done');
+      card.appendChild(el('div', 'tick', '✓'));
+      card.appendChild(el('h2', null, head));
+      card.appendChild(el('p', null, sub));
+      if (allowChange) {
+        var b = el('button', 'act', 'Cambia il mio voto');
+        b.addEventListener('click', function () {
+          try { sessionStorage.removeItem(submittedKey('vote')); } catch (e) {}
+          lastRev = null; tick(true);
+        });
+        card.appendChild(b);
+      }
+      stage.appendChild(card);
+    }
+
+    function themesPreview(s) {
+      var card = el('div', 'card');
+      card.appendChild(el('div', 'question', 'Temi emersi'));
+      card.appendChild(el('p', 'hint', 'La votazione si apre fra un momento.'));
+      s.themes.forEach(function (t) {
+        var row = el('div', 'theme');
+        row.appendChild(el('span', 'badge', '•'));
+        var body = el('div');
+        body.appendChild(el('div', 'label', t.label));
+        if (t.description) body.appendChild(el('div', 'desc', t.description));
+        row.appendChild(body);
+        card.appendChild(row);
+      });
+      stage.appendChild(card);
+    }
+
+    function voteCard(s) {
+      picked = [];
+      var card = el('div', 'card');
+      card.appendChild(el('div', 'question', 'Quali temi vale la pena approfondire?'));
+      card.appendChild(el('p', 'hint', 'Tocca i temi in ordine di preferenza, fino a ' + s.topN +
+        '. Tocca di nuovo per togliere. Puoi sceglierne anche meno.'));
+
+      var btn = el('button', 'act', 'Invia');
+      var status = el('div', 'status');
+      status.setAttribute('role', 'status');
+
+      var buttons = s.themes.map(function (t) {
+        var row = el('button', 'theme');
+        row.type = 'button';
+        row.setAttribute('aria-pressed', 'false');
+        var badge = el('span', 'badge', '–');
+        var body = el('div');
+        body.appendChild(el('div', 'label', t.label));
+        if (t.description) body.appendChild(el('div', 'desc', t.description));
+        row.appendChild(badge);
+        row.appendChild(body);
+
+        row.addEventListener('click', function () {
+          var at = picked.indexOf(t.id);
+          if (at !== -1) picked.splice(at, 1);
+          else if (picked.length < s.topN) picked.push(t.id);
+          else { status.className = 'status'; status.textContent = 'Hai già scelto ' + s.topN + ' temi. Togline uno per cambiarli.'; return; }
+          status.textContent = '';
+          paint();
+        });
+        card.appendChild(row);
+        return { id: t.id, row: row, badge: badge };
+      });
+
+      function paint() {
+        buttons.forEach(function (b) {
+          var at = picked.indexOf(b.id);
+          b.row.setAttribute('aria-pressed', at !== -1 ? 'true' : 'false');
+          b.badge.textContent = at !== -1 ? String(at + 1) : '–';
+        });
+        btn.disabled = picked.length === 0;
+      }
+
+      btn.disabled = true;
+      card.appendChild(btn);
+      card.appendChild(status);
+
+      btn.addEventListener('click', function () {
+        btn.disabled = true;
+        status.className = 'status';
+        status.textContent = 'Invio…';
+        post({ action: 'ballot', voterId: voterId(), ranking: picked })
+          .then(function (res) {
+            if (res.ok) { markDone('vote'); lastRev = null; tick(true); }
+            else { btn.disabled = false; status.className = 'status err'; status.textContent = res.error || 'Voto non registrato.'; }
+          })
+          .catch(function () {
+            btn.disabled = false;
+            status.className = 'status err';
+            status.textContent = 'Nessuna risposta dal server. Riprova.';
+          });
+      });
+
+      stage.appendChild(card);
+    }
+
+    function resultsCard(s) {
+      var card = el('div', 'card');
+      card.appendChild(el('div', 'question', 'Risultati'));
+      card.appendChild(resultsList(s));
+      stage.appendChild(card);
+    }
+
+    /* — projector — */
+    function screenView(s) {
+      if (s.phase === 'collecting') {
+        if (!s.responses) {
+          var box = el('div');
+          box.appendChild(el('div', 'waiting', s.question));
+          var join = el('div', 'meta');
+          join.appendChild(document.createTextNode('Apri: '));
+          join.appendChild(el('span', 'joinurl', location.origin + location.pathname));
+          box.appendChild(join);
+          stage.appendChild(box);
+          return;
+        }
+        stage.appendChild(s.cloud.length ? cloud(s.cloud) : el('div', 'waiting', s.question));
+        stage.appendChild(el('div', 'meta', s.responses + (s.responses === 1 ? ' risposta' : ' risposte')));
+        return;
+      }
+      if (s.phase === 'analysing') { stage.appendChild(el('div', 'waiting', 'Analisi in corso…')); return; }
+      if (s.phase === 'themes' || s.phase === 'voting') {
+        var wrap = el('div');
+        s.themes.forEach(function (t) {
+          var row = el('div', 'theme');
+          row.appendChild(el('span', 'badge', '•'));
+          var body = el('div');
+          body.appendChild(el('div', 'label', t.label));
+          if (t.description) body.appendChild(el('div', 'desc', t.description));
+          row.appendChild(body);
+          wrap.appendChild(row);
+        });
+        stage.appendChild(wrap);
+        /* During voting the count is shown, never the tally: a bar chart that
+           moves while people vote steers everyone who votes late. */
+        stage.appendChild(el('div', 'meta', s.phase === 'voting'
+          ? s.ballots + (s.ballots === 1 ? ' voto espresso' : ' voti espressi')
+          : 'Votazione in apertura…'));
+        return;
+      }
+      if (s.phase === 'results') {
+        stage.appendChild(resultsList(s));
+        stage.appendChild(el('div', 'meta', s.ballots + (s.ballots === 1 ? ' voto' : ' voti') + ' · ' + s.responses + ' risposte'));
+      }
+    }
+
+    function resultsList(s) {
+      var wrap = el('div');
+      var rows = s.results || [];
+      if (!rows.length) { wrap.appendChild(el('p', 'hint', 'Nessun voto registrato.')); return wrap; }
+      var max = Math.max.apply(null, rows.map(function (r) { return r.points; })) || 1;
+      rows.forEach(function (r) {
+        var box = el('div', 'res');
+        var top = el('div', 'top');
+        top.appendChild(el('div', 'label', r.label));
+        top.appendChild(el('div', 'pts', r.points + ' punti · ' + r.firsts + ' primi posti'));
+        box.appendChild(top);
+        var bar = el('div', 'bar');
+        var fill = el('i');
+        fill.style.width = Math.round((r.points / max) * 100) + '%';
+        bar.appendChild(fill);
+        box.appendChild(bar);
+        wrap.appendChild(box);
+      });
+      return wrap;
+    }
+
+    /**
+     * Words flow rather than scatter: a spiral layout overlaps or overflows at
+     * unpredictable counts, and on a projector that is the one thing that must
+     * not happen. Size carries the frequency.
+     *
+     * With twenty short answers every count is often 1. Rather than pretend
+     * otherwise, the cloud then renders at one size and reads as a word list.
+     */
+    function cloud(pairs) {
+      var box = el('div', 'cloud');
+      if (!pairs.length) return box;
+      var max = pairs[0][1], min = pairs[pairs.length - 1][1];
+      var flat = max === min;
+
+      /* Spread the big words through the block instead of front-loading them. */
+      var ordered = [];
+      pairs.forEach(function (p, i) { (i % 2 ? ordered.unshift : ordered.push).call(ordered, p); });
+
+      ordered.forEach(function (p) {
+        var word = p[0], n = p[1];
+        var t = flat ? 0.45 : (n - min) / (max - min);
+        var size = (IS_SCREEN ? 1.5 : 0.85) + Math.pow(t, 0.7) * (IS_SCREEN ? 4.4 : 1.5);
+        var span = el('span', null, word);
+        span.style.fontSize = size.toFixed(2) + 'rem';
+        span.style.opacity = (0.55 + t * 0.45).toFixed(2);
+        if (!IS_SCREEN) span.style.color = t > 0.5 ? 'var(--green-dark)' : 'var(--green-mid)';
+        span.title = n + (n === 1 ? ' risposta' : ' risposte');
+        box.appendChild(span);
+      });
+      return box;
+    }
+
+    /* ── loop ──────────────────────────────────────────────────────────── */
+
+    function tick(force) {
+      getState()
+        .then(function (s) {
+          if (!s.ok) return;
+          /* The projector redraws whenever anything changed. A phone must not:
+             someone else submitting an answer moves `rev`, and a redraw would
+             wipe a half-typed answer or a half-built ranking. It follows the
+             phase (and the theme list) instead. */
+          var stamp = IS_SCREEN ? s.rev : s.phase + '|' + s.themes.length;
+          if (!force && stamp === lastRev) return;
+          lastRev = stamp;
+          state = s;
+          render(s);
+        })
+        .catch(function () { /* a dropped poll on venue wifi is not worth a banner */ });
+    }
+
+    if (!URL_EXEC || URL_EXEC.indexOf('INCOLLA') === 0) {
+      stage.appendChild(el('div', 'card', 'Configura evento-config.js con l’URL /exec del web app.'));
+    } else {
+      tick(true);
+      setInterval(tick, POLL_MS);
+    }
+  })();
+  </script>
+</body>
+</html>

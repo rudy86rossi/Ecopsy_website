@@ -89,7 +89,9 @@ non interrompa il resto.
 ## Cosa non viene pubblicato
 
 Lo script esclude i file di servizio (`.git`, `.DS_Store`, `.Rhistory`, `.claude`, `*.tmp`,
-i lock di LibreOffice), `TODO.md` e `deploy.sh` stesso.
+i lock di LibreOffice), `TODO.md` e `deploy.sh` stesso. Restano fuori anche gli appunti di
+lavoro (`PIANO-*.md`, `REVISIONE-*.md`) e la cartella `evento-live`, che contiene il codice
+Apps Script della sessione live: gira su Google, non sul server, e non deve finire online.
 
 Se aggiungi un documento che deve restare privato, mettilo nell'elenco `EXCLUDES` dentro
 `deploy.sh` prima di lanciare il deploy.
