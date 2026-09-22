@@ -89,8 +89,7 @@ non interrompa il resto.
 ## Cosa non viene pubblicato
 
 Lo script esclude i file di servizio (`.git`, `.DS_Store`, `.Rhistory`, `.claude`, `*.tmp`,
-i lock di LibreOffice), `TODO.md`, `deploy.sh` stesso e cinque vecchie versioni dei loghi
-dei finanziatori non più usate da nessuna pagina.
+i lock di LibreOffice), `TODO.md` e `deploy.sh` stesso.
 
 Se aggiungi un documento che deve restare privato, mettilo nell'elenco `EXCLUDES` dentro
 `deploy.sh` prima di lanciare il deploy.

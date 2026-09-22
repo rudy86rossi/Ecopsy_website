@@ -1,0 +1,23 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors / office
+.~lock.*#
+~$*
+*.swp
+*~
+.vscode/
+.idea/
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+
+# Temp files
+*.tmp
+
+# Local tooling
+.claude/

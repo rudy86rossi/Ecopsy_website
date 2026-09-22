@@ -24,9 +24,6 @@ EXCLUDES=(
   ".DS_Store" ".Rhistory" ".claude"
   "*.tmp" ".~lock.*#"
   "TODO.md" "deploy_instructions.md" "guida-al-deploy.md" "deploy.sh"
-  # Superseded funder-logo iterations: referenced by no page. Still in the repo.
-  "assets/hero_img.png" "assets/loghi_mur_fis.png" "assets/logo fis2.jpg"
-  "assets/logo_fis_mur.png" "assets/logo_fis.png"
 )
 
 # Options only; sftp requires the destination to be the LAST argument.
