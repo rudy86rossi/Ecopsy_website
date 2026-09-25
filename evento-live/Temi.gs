@@ -7,12 +7,12 @@
  * failure from ending the event.
  */
 
-function readThemes_() {
+function readThemes_(qid) {
   const sh = sheet_('TEMI');
   const last = sh.getLastRow();
   if (last < 2) return [];
-  return sh.getRange(2, 1, last - 1, 3).getValues()
-    .filter(function (r) { return String(r[1]).trim() !== ''; })
+  return sh.getRange(2, 1, last - 1, 4).getValues()
+    .filter(function (r) { return String(r[1]).trim() !== '' && isForQuestion_(r[3], qid); })
     .map(function (r, i) {
       return {
         id: String(r[0]).trim() || ('t' + (i + 1)),
@@ -22,15 +22,19 @@ function readThemes_() {
     });
 }
 
-function writeThemes_(themes) {
+/** Replaces one question's themes and leaves the other rounds' rows alone. */
+function writeThemes_(qid, themes) {
   const sh = sheet_('TEMI');
   withLock_(function () {
-    if (sh.getLastRow() > 1) sh.deleteRows(2, sh.getLastRow() - 1);
-    if (!themes.length) return;
-    const rows = themes.map(function (t, i) {
-      return ['t' + (i + 1), String(t.label || '').trim(), String(t.description || '').trim()];
+    const last = sh.getLastRow();
+    const others = last < 2 ? [] : sh.getRange(2, 1, last - 1, 4).getValues()
+      .filter(function (r) { return !isForQuestion_(r[3], qid); });
+    const mine = themes.map(function (t, i) {
+      return ['t' + (i + 1), String(t.label || '').trim(), String(t.description || '').trim(), qid];
     });
-    sh.getRange(2, 1, rows.length, 3).setValues(rows);
+    const rows = others.concat(mine);
+    if (last > 1) sh.getRange(2, 1, last - 1, 4).clearContent();
+    if (rows.length) sh.getRange(2, 1, rows.length, 4).setValues(rows);
   });
   dropStateCache_();
 }

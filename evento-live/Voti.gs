@@ -1,7 +1,7 @@
 /**
  * Ballots and scoring.
  *
- * A ballot is one row: an ordered list of theme ids. Storing it that way (rather
+ * A ballot is one row: an ordered list of theme ids, tagged with its question. Storing it that way (rather
  * than one row per theme per voter) keeps lock contention near zero and makes
  * "the latest ballot from a device wins" a single comparison.
  *
@@ -10,13 +10,14 @@
  * two sometimes disagree, and that disagreement is worth showing the room.
  */
 
-function readBallots_() {
+function readBallots_(qid) {
   const sh = sheet_('VOTI');
   const last = sh.getLastRow();
   if (last < 2) return [];
-  const rows = sh.getRange(2, 1, last - 1, 3).getValues();
+  const rows = sh.getRange(2, 1, last - 1, 4).getValues();
   const byVoter = {};
   rows.forEach(function (r) {
+    if (!isForQuestion_(r[3], qid)) return;
     let ranking = [];
     try { ranking = JSON.parse(r[2]); } catch (err) { return; }
     if (!ranking.length) return;

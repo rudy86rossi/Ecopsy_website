@@ -1,38 +1,44 @@
 /**
  * Answers and the word cloud.
  *
+ * The phone asks for one short idea per box, and each box is one entry in the
+ * cloud, kept whole: "social media" stays one entry and grows when several
+ * people write it.
+ *
  * Counting is done here rather than in the browser: the projector then receives
  * a few hundred bytes instead of every raw answer, the spreadsheet never has to
  * be world-readable, and there is no CSV to parse.
  */
 
-function readAnswers_() {
+const MAX_ITEM_LEN = 80;
+
+/** Answers to one question: one row per idea, several rows per participant. */
+function readAnswers_(qid) {
   const sh = sheet_('RISPOSTE');
   const last = sh.getLastRow();
   if (last < 2) return [];
-  return sh.getRange(2, 1, last - 1, 3).getValues()
-    .filter(function (r) { return String(r[2]).trim() !== ''; })
+  return sh.getRange(2, 1, last - 1, 4).getValues()
+    .filter(function (r) { return String(r[2]).trim() !== '' && isForQuestion_(r[3], qid); })
     .map(function (r) {
       return { at: r[0], voterId: String(r[1]), text: String(r[2]).trim() };
     });
 }
 
-/** Italian and English function words. Without this the cloud reads "di, che, non, più". */
-const STOPWORDS = ('a ad affinché agli ai al alcuna alcuni alcuno all alla alle allo altri altro anche ancora ' +
-  'avere avendo avete avevo avuto basta bene c che chi ci cioè circa co coi col come con cosa cosi così cui ' +
-  'da dagli dai dal dall dalla dalle dallo degli dei del dell della delle dello dentro deve devo di dopo dove ' +
-  'dovrebbe due e ecco ed egli ella eppure era erano essa esse essendo essere essi fa fare fatto fino fra ' +
-  'gli grande ha hai hanno ho i il in inoltre insieme invece io la le lei li lo loro lui ma me medesimo mentre ' +
-  'mi mia mie miei mio modo molta molti molto ne nei nel nell nella nelle nello nessuno niente no noi non ' +
-  'nostra nostro nulla o od oggi ogni ognuno oltre oppure ora ossia ovvero per perché perchè però pero più piu ' +
-  'poco poi potere può puo qua quale quali qualche qualcosa quando quanto quasi quella quelle quelli quello ' +
-  'questa queste questi questo qui quindi sarebbe sarà sara se sé sei sembra sempre senza si sia siamo siete ' +
-  'solo sono sopra sotto sta stanno stare stato stesso su sua sue sugli sui sul sull sulla sulle sullo suo ' +
-  'tanto te tra tre troppo tu tua tue tuo tutta tutte tutti tutto un una uno va vale vi via voi vostra vostro ' +
-  'the a an and or but of to in on for with without from by as at is are was were be been being this that ' +
-  'these those it its they them their we our you your i my me not no yes very more most much many some any ' +
-  'can could should would will just also about into than then there here what which who whom how when where ' +
-  'has have had do does did so such only own same too if because while during').split(/\s+/);
+function countParticipants_(answers) {
+  const seen = {};
+  answers.forEach(function (a) { seen[a.voterId] = true; });
+  return Object.keys(seen).length;
+}
+
+/**
+ * Articles and prepositions, trimmed off the ends of an entry so "la scuola"
+ * and "scuola" count together. Only these: trimming words that carry meaning
+ * ("troppo", "poco") would merge ideas that differ.
+ */
+const STOPWORDS = ('il lo la i gli le l un uno una di a ad da in con su per tra fra ' +
+  'del dello della dei degli delle dell al allo alla ai agli alle all dal dallo dalla dai dagli dalle dall ' +
+  'nel nello nella nei negli nelle nell sul sullo sulla sui sugli sulle sull e ed o ' +
+  'the an of to and or in on for').split(/\s+/);
 
 const STOPSET = (function () {
   const s = {};
@@ -54,62 +60,96 @@ function normalizeText_(s) {
  * Fold a plural into its singular, but only for the endings that actually pair
  * in Italian: o→i, a→e, e→i. Blindly stripping the final vowel would merge
  * "caso" with "casa"; this does not, because the plural of "casa" is "case".
+ * Only one-word entries are folded; longer ones need a `synonyms` pair.
  */
 const PLURAL_OF = { o: 'i', a: 'e', e: 'i' };
 
-function buildCloud_(texts, cfg) {
-  const minLen = cfg.min_word_len;
+/** The grouping key: lower case, no accents or punctuation, no leading or trailing function words. */
+function entryKey_(text) {
+  const words = normalizeText_(text).split(' ').filter(Boolean);
+  while (words.length && STOPSET[words[0]]) words.shift();
+  while (words.length && STOPSET[words[words.length - 1]]) words.pop();
+  return words.join(' ');
+}
+
+/** What the projector shows: the participant's own spelling, accents included, same ends trimmed as the key. */
+function entryLabel_(text) {
+  const words = String(text).toLowerCase()
+    .replace(/[.,;:!?"«»()]/g, ' ')
+    .split(/\s+/).filter(Boolean);
+  const bare = function (w) { return normalizeText_(w); };
+  while (words.length && STOPSET[bare(words[0])]) words.shift();
+  while (words.length && STOPSET[bare(words[words.length - 1])]) words.pop();
+  return words.join(' ');
+}
+
+function buildCloud_(answers, cfg) {
   // Blocking "scuola" has to block "scuole" too, or the plural survives into the
   // cloud on its own. The pairing is the same one used to fold plurals below.
   const extra = {};
   String(cfg.blocklist || '').split(',').forEach(function (w) {
-    const k = normalizeText_(w);
+    const k = entryKey_(w);
     if (!k) return;
     extra[k] = true;
+    if (k.indexOf(' ') !== -1) return;
     const last = k.slice(-1), stem = k.slice(0, -1);
     if (PLURAL_OF[last]) extra[stem + PLURAL_OF[last]] = true;
     if (last === 'i') { extra[stem + 'o'] = true; extra[stem + 'e'] = true; }
     if (last === 'e') { extra[stem + 'a'] = true; extra[stem + 'i'] = true; }
   });
 
-  const rename = {};
+  const rename = {}, renamedLabel = {};
   String(cfg.synonyms || '').split(',').forEach(function (pair) {
     const bits = pair.split('=');
     if (bits.length === 2) {
-      const from = normalizeText_(bits[0]);
-      const to = normalizeText_(bits[1]);
-      if (from && to) rename[from] = to;
+      const from = entryKey_(bits[0]);
+      const to = entryKey_(bits[1]);
+      if (from && to) { rename[from] = to; renamedLabel[to] = entryLabel_(bits[1]); }
     }
   });
 
-  const counts = {};
-  texts.forEach(function (t) {
-    const seen = {};
-    normalizeText_(t).split(' ').forEach(function (w) {
-      if (rename[w]) w = rename[w];
-      if (w.length < minLen) return;
-      if (STOPSET[w] || extra[w]) return;
-      if (/^\d+$/.test(w)) return;
-      // Count a word once per answer, so one long answer cannot own the cloud.
-      if (seen[w]) return;
-      seen[w] = true;
-      counts[w] = (counts[w] || 0) + 1;
-    });
+  const entries = [];
+  answers.forEach(function (a) {
+    const raw = entryKey_(a.text);
+    const k = rename[raw] || raw;
+    if (!k || extra[k] || /^\d+$/.test(k)) return;
+    entries.push({ voterId: a.voterId, key: k, label: rename[raw] ? renamedLabel[k] : entryLabel_(a.text) });
   });
 
-  Object.keys(counts).forEach(function (w) {
-    if (counts[w] === undefined) return;  // already folded into its singular
+  // Fold one-word plurals into whichever form more people used. Counted before
+  // folding only to choose the direction.
+  const raw = {};
+  entries.forEach(function (e) { raw[e.key] = (raw[e.key] || 0) + 1; });
+  const fold = {};
+  Object.keys(raw).forEach(function (w) {
+    if (w.indexOf(' ') !== -1) return;
     const plural = PLURAL_OF[w.slice(-1)] ? w.slice(0, -1) + PLURAL_OF[w.slice(-1)] : null;
-    if (plural && counts[plural] !== undefined) {
-      const keep = counts[w] >= counts[plural] ? w : plural;
-      const drop = keep === w ? plural : w;
-      counts[keep] += counts[drop];
-      delete counts[drop];
+    if (plural && raw[plural] !== undefined && !fold[w] && !fold[plural]) {
+      if (raw[w] >= raw[plural]) fold[plural] = w; else fold[w] = plural;
     }
+  });
+
+  const counts = {};   // key -> participants who wrote it
+  const labels = {};   // key -> { label: times written }
+  const seen = {};     // voterId|key, so one person writing the same idea twice counts once
+  entries.forEach(function (e) {
+    const k = fold[e.key] || e.key;
+    labels[k] = labels[k] || {};
+    labels[k][e.label] = (labels[k][e.label] || 0) + 1;
+    if (seen[e.voterId + '|' + k]) return;
+    seen[e.voterId + '|' + k] = true;
+    counts[k] = (counts[k] || 0) + 1;
   });
 
   return Object.keys(counts)
-    .map(function (w) { return [w, counts[w]]; })
+    .map(function (k) {
+      // The spelling most people used; on a tie, the shorter one.
+      const forms = labels[k];
+      const label = Object.keys(forms).sort(function (x, y) {
+        return forms[y] - forms[x] || x.length - y.length;
+      })[0];
+      return [label, counts[k]];
+    })
     .sort(function (a, b) { return b[1] - a[1] || a[0].localeCompare(b[0]); })
     .slice(0, cfg.max_cloud_words);
 }

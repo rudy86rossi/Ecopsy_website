@@ -38,6 +38,7 @@ function doPost(e) {
       case 'submit':  return json_(actionSubmit_(body));
       case 'ballot':  return json_(actionBallot_(body));
       case 'phase':   return json_(actionPhase_(body));
+      case 'question': return json_(actionQuestion_(body));
       case 'analyze': return json_(actionAnalyze_(body));
       case 'reset':   return json_(actionReset_(body));
       default:        return json_({ ok: false, error: 'azione sconosciuta' });
@@ -69,22 +70,28 @@ function state_() {
   if (cached) return JSON.parse(cached);
 
   const cfg = getConfig();
-  const answers = readAnswers_();
-  const themes = readThemes_();
-  const ballots = readBallots_();
+  const qid = cfg.question.id;
+  const answers = readAnswers_(qid);
+  const themes = readThemes_(qid);
+  const ballots = readBallots_(qid);
 
   const out = {
     ok: true,
     phase: cfg.phase,
     title: cfg.title,
-    question: cfg.question,
+    question: cfg.question.text,
+    questionId: qid,
+    round: { n: cfg.questionIndex + 1, of: cfg.questions.length },
+    questions: cfg.questions,
+    answerFields: cfg.answer_fields,
     topN: cfg.top_n,
-    responses: answers.length,
+    responses: countParticipants_(answers),
+    entries: answers.length,
     ballots: ballots.length,
-    cloud: buildCloud_(answers.map(function (a) { return a.text; }), cfg),
+    cloud: buildCloud_(answers, cfg),
     themes: themes,
     results: cfg.phase === 'results' ? scoreBallots_(ballots, themes, cfg) : null,
-    rev: [cfg.phase, answers.length, themes.length, ballots.length].join('-'),
+    rev: [qid, cfg.phase, answers.length, themes.length, ballots.length].join('-'),
     serverTime: Date.now()
   };
 
@@ -104,16 +111,26 @@ function actionSubmit_(body) {
   const cfg = getConfig();
   if (cfg.phase !== 'collecting') return { ok: false, error: 'la raccolta è chiusa' };
 
-  const text = String(body.text || '').trim();
-  if (!text) return { ok: false, error: 'risposta vuota' };
-  if (text.length > 1000) return { ok: false, error: 'risposta troppo lunga' };
+  // One idea per box. Each becomes its own row, and its own entry in the cloud.
+  const items = (Array.isArray(body.items) ? body.items : [body.text])
+    .map(function (t) { return String(t || '').replace(/\s+/g, ' ').trim(); })
+    .filter(function (t) { return t !== ''; })
+    .slice(0, cfg.answer_fields);
+  if (!items.length) return { ok: false, error: 'risposta vuota' };
+  if (items.some(function (t) { return t.length > MAX_ITEM_LEN; })) {
+    return { ok: false, error: 'risposta troppo lunga (massimo ' + MAX_ITEM_LEN + ' caratteri per idea)' };
+  }
   const voterId = cleanId_(body.voterId);
+  const qid = cfg.question.id;
+  const now = new Date();
 
   withLock_(function () {
-    sheet_('RISPOSTE').appendRow([new Date(), voterId, text]);
+    const sh = sheet_('RISPOSTE');
+    const rows = items.map(function (t) { return [now, voterId, t, qid]; });
+    sh.getRange(sh.getLastRow() + 1, 1, rows.length, 4).setValues(rows);
   });
   dropStateCache_();
-  log_('submit', voterId, 'ok');
+  log_('submit', voterId + ' ' + qid + ' ×' + items.length, 'ok');
   return { ok: true };
 }
 
@@ -121,8 +138,9 @@ function actionBallot_(body) {
   const cfg = getConfig();
   if (cfg.phase !== 'voting') return { ok: false, error: 'la votazione non è aperta' };
 
+  const qid = cfg.question.id;
   const valid = {};
-  readThemes_().forEach(function (t) { valid[t.id] = true; });
+  readThemes_(qid).forEach(function (t) { valid[t.id] = true; });
 
   const seen = {};
   const ranking = (body.ranking || [])
@@ -137,16 +155,16 @@ function actionBallot_(body) {
   if (!ranking.length) return { ok: false, error: 'nessun tema selezionato' };
   const voterId = cleanId_(body.voterId);
 
-  // One ballot per device: a re-submission replaces, it does not add.
+  // One ballot per device and question: a re-submission replaces, it does not add.
   withLock_(function () {
     const sh = sheet_('VOTI');
     const last = sh.getLastRow();
-    const row = [new Date(), voterId, JSON.stringify(ranking)];
+    const row = [new Date(), voterId, JSON.stringify(ranking), qid];
     if (last >= 2) {
-      const ids = sh.getRange(2, 2, last - 1, 1).getValues();
-      for (let i = 0; i < ids.length; i++) {
-        if (String(ids[i][0]) === voterId) {
-          sh.getRange(i + 2, 1, 1, 3).setValues([row]);
+      const rows = sh.getRange(1, 1, last, 4).getValues();
+      for (let i = 1; i < rows.length; i++) {
+        if (String(rows[i][1]) === voterId && isForQuestion_(rows[i][3], qid)) {
+          sh.getRange(i + 1, 1, 1, 4).setValues([row]);
           return;
         }
       }
@@ -169,6 +187,19 @@ function actionPhase_(body) {
   return { ok: true, phase: to };
 }
 
+/** Moves the room to another question: `to` is its id, or "next". */
+function actionQuestion_(body) {
+  requireKey_(body.key);
+  const cfg = getConfig();
+  let to = String(body.to || '');
+  if (to === 'next') {
+    const nxt = cfg.questions[cfg.questionIndex + 1];
+    if (!nxt) return { ok: false, error: 'questa è l’ultima domanda' };
+    to = nxt.id;
+  }
+  return goToQuestion_(to);
+}
+
 function actionAnalyze_(body) {
   requireKey_(body.key);
   return runAnalyze_();
@@ -177,14 +208,15 @@ function actionAnalyze_(body) {
 /** Shared by the web app and the spreadsheet menu. */
 function runAnalyze_() {
   const cfg = getConfig();
-  const answers = readAnswers_();
+  const qid = cfg.question.id;
+  const answers = readAnswers_(qid);
   if (!answers.length) return { ok: false, error: 'nessuna risposta da analizzare' };
 
   setConfig('phase', 'analysing');
   const started = Date.now();
   try {
     const themes = extractThemes_(cfg, answers);
-    writeThemes_(themes);
+    writeThemes_(qid, themes);
     setConfig('phase', 'themes');
     log_('analyze', themes.length + ' temi in ' + (Date.now() - started) + 'ms', 'ok');
     return { ok: true, themes: themes };
@@ -201,15 +233,22 @@ function runAnalyze_() {
 function actionReset_(body) {
   requireKey_(body.key);
   if (body.confirm !== 'RESET') return { ok: false, error: 'conferma mancante' };
+  resetSession_('web');
+  return { ok: true };
+}
+
+/** Empties every round and goes back to the first question. Domande is kept. */
+function resetSession_(from) {
   withLock_(function () {
     ['RISPOSTE', 'TEMI', 'VOTI'].forEach(function (k) {
       const sh = sheet_(k);
       if (sh.getLastRow() > 1) sh.deleteRows(2, sh.getLastRow() - 1);
     });
   });
+  const first = readQuestions_()[0];
+  if (first) setConfig('current_question', first.id);
   setConfig('phase', 'collecting');
-  log_('reset', '', 'ok');
-  return { ok: true };
+  log_('reset', from, 'ok');
 }
 
 /* ── helpers ───────────────────────────────────────────────────────────── */

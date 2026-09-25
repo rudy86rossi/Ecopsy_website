@@ -67,6 +67,16 @@
     .status.err { color: #a3352c; }
     .status.ok  { color: var(--green-mid); }
 
+    .curq { font-size: .95rem; color: var(--green-dark); margin-top: 12px; line-height: 1.5; }
+    .curq .round { font-size: .78rem; font-weight: 600; color: var(--green-mid); display: block; }
+    ol.qs { padding-left: 20px; }
+    ol.qs li { margin-bottom: 10px; font-size: .92rem; }
+    ol.qs li.cur { font-weight: 700; color: var(--green-dark); }
+    ol.qs button {
+      margin-left: 8px; font-family: var(--font-head); font-weight: 700; font-size: .78rem;
+      padding: 3px 10px; border: 1px solid var(--border); border-radius: 7px;
+      background: var(--white); color: var(--green-mid); cursor: pointer;
+    }
     ol.themes { padding-left: 20px; }
     ol.themes li { margin-bottom: 8px; font-size: .92rem; }
     ol.themes .label { font-family: var(--font-head); font-weight: 700; color: var(--green-dark); }
@@ -150,7 +160,8 @@
       { n: 1, to: 'collecting', label: 'Apri la raccolta',        sub: 'I partecipanti possono scrivere', from: ['results', 'themes', 'voting', 'analysing'] },
       { n: 2, act: 'analyze',   label: 'Chiudi e analizza',       sub: 'Estrae i temi dalle risposte',     from: ['collecting'] },
       { n: 3, to: 'voting',     label: 'Apri la votazione',       sub: 'I temi diventano votabili',        from: ['themes', 'results'] },
-      { n: 4, to: 'results',    label: 'Chiudi e mostra i voti',  sub: 'La classifica compare sullo schermo', from: ['voting'] }
+      { n: 4, to: 'results',    label: 'Chiudi e mostra i voti',  sub: 'La classifica compare sullo schermo', from: ['voting'] },
+      { n: 5, act: 'next',      label: 'Domanda successiva',      sub: 'Nuovo giro: si riparte dalla raccolta', from: ['results'] }
     ];
 
     var busy = false, state = null;
@@ -172,11 +183,15 @@
       now.appendChild(el('span', 'pill', PHASE_LABEL[s.phase] || s.phase));
       var nums = el('div', 'nums');
       nums.appendChild(el('b', null, String(s.responses)));
-      nums.appendChild(document.createTextNode(s.responses === 1 ? ' risposta · ' : ' risposte · '));
+      nums.appendChild(document.createTextNode(s.responses === 1 ? ' partecipante · ' : ' partecipanti · '));
       nums.appendChild(el('b', null, String(s.ballots)));
       nums.appendChild(document.createTextNode(s.ballots === 1 ? ' voto' : ' voti'));
       now.appendChild(nums);
       head.appendChild(now);
+      var curq = el('div', 'curq');
+      if (s.round) curq.appendChild(el('span', 'round', 'Domanda ' + s.round.n + ' di ' + s.round.of));
+      curq.appendChild(document.createTextNode(s.question || ''));
+      head.appendChild(curq);
       app.appendChild(head);
 
       /* — the four buttons, in order — */
@@ -193,12 +208,13 @@
         body.appendChild(el('span', 'sub', st.sub));
         b.appendChild(body);
 
-        var available = st.from.indexOf(s.phase) !== -1;
+        var isLast = !s.round || s.round.n >= s.round.of;
+        var available = st.from.indexOf(s.phase) !== -1 && !(st.act === 'next' && isLast);
         if (available) b.classList.add('next');
         b.disabled = busy || !available;
 
         b.addEventListener('click', function () {
-          if (st.act === 'analyze' && !confirm('Chiudere la raccolta e analizzare ' + s.responses + ' risposte?')) return;
+          if (st.act === 'analyze' && !confirm('Chiudere la raccolta e analizzare le risposte di ' + s.responses + ' partecipanti?')) return;
           run(st, status, b);
         });
         steps.appendChild(b);
@@ -211,7 +227,7 @@
       var rb = el('button', 'reset', 'Azzera la sessione');
       rb.type = 'button';
       rb.addEventListener('click', function () {
-        if (!confirm('Cancella risposte, temi e voti. Procedere?')) return;
+        if (!confirm('Cancella risposte, temi e voti di tutte le domande e torna alla prima. Procedere?')) return;
         busy = true;
         post({ action: 'reset', confirm: 'RESET' }).then(function (res) {
           busy = false;
@@ -222,6 +238,30 @@
       danger.appendChild(rb);
       ctrl.appendChild(danger);
       app.appendChild(ctrl);
+
+      /* — the rounds, from the Domande tab; any of them can be put on screen — */
+      if (s.questions && s.questions.length > 1) {
+        var qc = el('div', 'card');
+        qc.appendChild(el('h2', null, 'Domande'));
+        var qol = el('ol', 'qs');
+        s.questions.forEach(function (q) {
+          var li = el('li', q.id === s.questionId ? 'cur' : null, q.text);
+          if (q.id !== s.questionId) {
+            var go = el('button', null, 'Vai');
+            go.type = 'button';
+            go.disabled = busy;
+            go.addEventListener('click', function () {
+              if (!confirm('Passare a questa domanda? La raccolta si riapre. Risposte, temi e voti di ogni domanda restano nel foglio.')) return;
+              run({ act: 'question', to: q.id }, status, go);
+            });
+            li.appendChild(go);
+          }
+          qol.appendChild(li);
+        });
+        qc.appendChild(qol);
+        qc.appendChild(el('p', 'links', 'Aggiungi o modifica le domande nel foglio Domande.'));
+        app.appendChild(qc);
+      }
 
       /* — themes, editable in the sheet — */
       if (s.themes.length) {
@@ -273,9 +313,10 @@
       btn.disabled = true;
       say(status, st.act === 'analyze' ? 'Analisi in corso, può richiedere qualche secondo…' : 'Eseguo…');
 
-      var call = st.act === 'analyze'
-        ? post({ action: 'analyze' })
-        : post({ action: 'phase', to: st.to });
+      var call = st.act === 'analyze'  ? post({ action: 'analyze' })
+               : st.act === 'next'     ? post({ action: 'question', to: 'next' })
+               : st.act === 'question' ? post({ action: 'question', to: st.to })
+               : post({ action: 'phase', to: st.to });
 
       call.then(function (res) {
         busy = false;

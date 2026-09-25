@@ -26,14 +26,14 @@
     }
     .question { font-size: 1.05rem; font-weight: 600; color: var(--green-dark); margin-bottom: 14px; }
 
-    textarea {
-      width: 100%; min-height: 150px; resize: vertical;
-      font-family: var(--font-body); font-size: 1rem; line-height: 1.6;
-      padding: 14px; border: 1px solid var(--border); border-radius: 10px;
+    .round { font-size: .78rem; font-weight: 600; color: var(--green-mid); margin-bottom: 6px; }
+    input.idea {
+      display: block; width: 100%; margin-bottom: 10px;
+      font-family: var(--font-body); font-size: 1rem;
+      padding: 13px 14px; border: 1px solid var(--border); border-radius: 10px;
       background: var(--white); color: var(--text);
     }
-    textarea:focus { outline: 2px solid var(--green-light); outline-offset: 1px; border-color: transparent; }
-    .count { font-size: .78rem; color: var(--text-muted); text-align: right; margin-top: 6px; }
+    input.idea:focus { outline: 2px solid var(--green-light); outline-offset: 1px; border-color: transparent; }
 
     button.act {
       display: block; width: 100%; margin-top: 14px;
@@ -83,7 +83,7 @@
 
     /* ── Word cloud ── */
     .cloud { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; justify-content: center; }
-    .cloud span { font-family: var(--font-head); font-weight: 700; line-height: 1.25; }
+    .cloud span { font-family: var(--font-head); font-weight: 700; line-height: 1.25; white-space: nowrap; }
 
     /* ── Projector (?screen=1) ── */
     body.screen { background: var(--green-dark); color: var(--white); }
@@ -106,6 +106,20 @@
     body.screen .bar { height: 16px; background: rgba(255,255,255,.14); }
     body.screen .bar i { background: #6fe0a0; }
     body.screen .waiting { font-size: 2rem; color: rgba(255,255,255,.75); text-align: center; }
+    body.screen .qline { font-size: 1.5rem; color: rgba(255,255,255,.85); margin-bottom: 28px; }
+    body.screen.hasqr .wrap { padding-right: 250px; }
+    body.screen .round { color: #8fe0b0; font-size: 1rem; }
+
+    /* ── QR code: large on the opening screen, then in a corner for latecomers ── */
+    .qr svg { display: block; width: 100%; height: auto; }
+    .join { display: flex; gap: 48px; align-items: center; justify-content: center; flex-wrap: wrap; }
+    .join .qr { width: min(38vh, 420px); background: #fff; padding: 14px; border-radius: 14px; }
+    .join .waiting { flex: 1 1 420px; text-align: left; }
+    .qrcorner {
+      position: fixed; right: 28px; bottom: 28px; width: 170px;
+      background: #fff; padding: 10px 10px 6px; border-radius: 12px; text-align: center;
+    }
+    .qrcorner .cap { font-family: var(--font-head); font-weight: 700; font-size: .85rem; color: var(--green-dark); margin-top: 4px; }
 
     @media (max-width: 520px) {
       h1 { font-size: 1.3rem; }
@@ -121,6 +135,7 @@
   </div>
 
   <script src="evento-config.js"></script>
+  <script src="evento-qrcode.min.js"></script>
   <script>
   (function () {
     'use strict';
@@ -166,9 +181,23 @@
         return window._vid;
       }
     }
-    function submittedKey(phase) { return 'ecopsy-' + phase + '-done'; }
+    /* Per question: moving to the next round must show the answer boxes again. */
+    function submittedKey(phase) { return 'ecopsy-' + (state ? state.questionId : '') + '-' + phase + '-done'; }
     function markDone(phase) { try { sessionStorage.setItem(submittedKey(phase), '1'); } catch (e) {} }
     function isDone(phase) { try { return sessionStorage.getItem(submittedKey(phase)) === '1'; } catch (e) { return false; } }
+
+    /* Where participants join: this page without ?screen. */
+    var JOIN_URL = location.origin + location.pathname;
+
+    function qrNode(cls) {
+      var box = el('div', cls);
+      if (!window.qrcode) return box;
+      var qr = window.qrcode(0, 'M');
+      qr.addData(JOIN_URL);
+      qr.make();
+      box.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+      return box;
+    }
 
     function el(tag, cls, text) {
       var n = document.createElement(tag);
@@ -197,19 +226,37 @@
       if (s.phase === 'results')    return resultsCard(s);
     }
 
+    function roundLabel(s) {
+      return s.round && s.round.of > 1 ? 'Domanda ' + s.round.n + ' di ' + s.round.of : '';
+    }
+
+    /* One short idea per box: each box is one entry in the word cloud, kept
+       whole, so "social media" stays together. */
     function answerCard(s) {
       var card = el('div', 'card');
+      if (roundLabel(s)) card.appendChild(el('div', 'round', roundLabel(s)));
       card.appendChild(el('div', 'question', s.question));
+      var n = s.answerFields || 1;
+      if (n > 1) card.appendChild(el('p', 'hint', 'Un’idea per casella, in poche parole. Puoi riempirne anche solo una.'));
 
-      var ta = el('textarea');
-      ta.setAttribute('maxlength', '1000');
-      ta.setAttribute('aria-label', 'La tua risposta');
-      ta.placeholder = 'Scrivi qui…';
-      card.appendChild(ta);
-
-      var count = el('div', 'count', '0 / 1000');
-      card.appendChild(count);
-      ta.addEventListener('input', function () { count.textContent = ta.value.length + ' / 1000'; });
+      var inputs = [];
+      for (var i = 0; i < n; i++) {
+        var inp = el('input', 'idea');
+        inp.type = 'text';
+        inp.setAttribute('maxlength', '80');
+        inp.setAttribute('enterkeyhint', i < n - 1 ? 'next' : 'send');
+        inp.setAttribute('aria-label', n > 1 ? 'Idea ' + (i + 1) : 'La tua risposta');
+        inp.placeholder = n > 1 ? 'Idea ' + (i + 1) + (i ? ' (facoltativa)' : '') : 'Scrivi qui…';
+        card.appendChild(inp);
+        inputs.push(inp);
+      }
+      inputs.forEach(function (inp, i) {
+        inp.addEventListener('keydown', function (e) {
+          if (e.key !== 'Enter') return;
+          e.preventDefault();
+          if (i < inputs.length - 1) inputs[i + 1].focus(); else btn.click();
+        });
+      });
 
       var btn = el('button', 'act', 'Invia');
       var status = el('div', 'status');
@@ -218,12 +265,12 @@
       card.appendChild(status);
 
       btn.addEventListener('click', function () {
-        var text = ta.value.trim();
-        if (!text) { status.className = 'status err'; status.textContent = 'Scrivi qualcosa prima di inviare.'; return; }
+        var items = inputs.map(function (x) { return x.value.trim(); }).filter(Boolean);
+        if (!items.length) { status.className = 'status err'; status.textContent = 'Scrivi qualcosa prima di inviare.'; return; }
         btn.disabled = true;
         status.className = 'status';
         status.textContent = 'Invio…';
-        post({ action: 'submit', voterId: voterId(), text: text })
+        post({ action: 'submit', voterId: voterId(), items: items })
           .then(function (res) {
             if (res.ok) { markDone('answer'); tick(true); }
             else { btn.disabled = false; status.className = 'status err'; status.textContent = res.error || 'Invio non riuscito.'; }
@@ -236,7 +283,7 @@
       });
 
       stage.appendChild(card);
-      ta.focus();
+      inputs[0].focus();
     }
 
     function waitCard(s, head, sub, allowChange) {
@@ -345,20 +392,42 @@
     }
 
     /* — projector — */
+    /* Created once: the corner QR stays put while the stage redraws. */
+    var corner = null;
+    function showCorner(on) {
+      if (on && !corner) {
+        corner = qrNode('qrcorner qr');
+        corner.appendChild(el('div', 'cap', 'Partecipa'));
+        document.body.appendChild(corner);
+      }
+      if (corner) corner.style.display = on ? '' : 'none';
+      document.body.classList.toggle('hasqr', on);
+    }
+
     function screenView(s) {
+      /* The opening screen of each round: the question, and a QR large enough
+         to scan from the back of the room. */
+      var opening = s.phase === 'collecting' && !s.responses;
+      showCorner(!opening && s.phase !== 'results');
+
+      if (roundLabel(s)) stage.appendChild(el('div', 'round', roundLabel(s)));
+      if (opening) {
+        var join = el('div', 'join');
+        join.appendChild(qrNode('qr'));
+        var side = el('div', 'waiting');
+        side.appendChild(document.createTextNode(s.question));
+        var url = el('div', 'meta');
+        url.appendChild(document.createTextNode('Inquadra il codice o apri '));
+        url.appendChild(el('span', 'joinurl', JOIN_URL.replace(/^https?:\/\//, '')));
+        side.appendChild(url);
+        join.appendChild(side);
+        stage.appendChild(join);
+        return;
+      }
+      stage.appendChild(el('div', 'qline', s.question));
       if (s.phase === 'collecting') {
-        if (!s.responses) {
-          var box = el('div');
-          box.appendChild(el('div', 'waiting', s.question));
-          var join = el('div', 'meta');
-          join.appendChild(document.createTextNode('Apri: '));
-          join.appendChild(el('span', 'joinurl', location.origin + location.pathname));
-          box.appendChild(join);
-          stage.appendChild(box);
-          return;
-        }
-        stage.appendChild(s.cloud.length ? cloud(s.cloud) : el('div', 'waiting', s.question));
-        stage.appendChild(el('div', 'meta', s.responses + (s.responses === 1 ? ' risposta' : ' risposte')));
+        stage.appendChild(s.cloud.length ? cloud(s.cloud) : el('div', 'waiting', 'Le risposte stanno arrivando…'));
+        stage.appendChild(el('div', 'meta', s.responses + (s.responses === 1 ? ' partecipante' : ' partecipanti')));
         return;
       }
       if (s.phase === 'analysing') { stage.appendChild(el('div', 'waiting', 'Analisi in corso…')); return; }
@@ -383,7 +452,7 @@
       }
       if (s.phase === 'results') {
         stage.appendChild(resultsList(s));
-        stage.appendChild(el('div', 'meta', s.ballots + (s.ballots === 1 ? ' voto' : ' voti') + ' · ' + s.responses + ' risposte'));
+        stage.appendChild(el('div', 'meta', s.ballots + (s.ballots === 1 ? ' voto' : ' voti') + ' · ' + s.responses + ' partecipanti'));
       }
     }
 
@@ -434,7 +503,7 @@
         span.style.fontSize = size.toFixed(2) + 'rem';
         span.style.opacity = (0.55 + t * 0.45).toFixed(2);
         if (!IS_SCREEN) span.style.color = t > 0.5 ? 'var(--green-dark)' : 'var(--green-mid)';
-        span.title = n + (n === 1 ? ' risposta' : ' risposte');
+        span.title = n + (n === 1 ? ' persona' : ' persone');
         box.appendChild(span);
       });
       return box;
@@ -450,7 +519,7 @@
              someone else submitting an answer moves `rev`, and a redraw would
              wipe a half-typed answer or a half-built ranking. It follows the
              phase (and the theme list) instead. */
-          var stamp = IS_SCREEN ? s.rev : s.phase + '|' + s.themes.length;
+          var stamp = IS_SCREEN ? s.rev : s.questionId + '|' + s.phase + '|' + s.themes.length;
           if (!force && stamp === lastRev) return;
           lastRev = stamp;
           state = s;
