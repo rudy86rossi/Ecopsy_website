@@ -20,7 +20,7 @@ function readAnswers_(qid) {
   return sh.getRange(2, 1, last - 1, 4).getValues()
     .filter(function (r) { return String(r[2]).trim() !== '' && isForQuestion_(r[3], qid); })
     .map(function (r) {
-      return { at: r[0], voterId: String(r[1]), text: String(r[2]).trim() };
+      return { at: r[0], voterId: String(r[1]), text: cellText_(r[2]) };
     });
 }
 

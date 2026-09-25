@@ -152,6 +152,27 @@ Nuova chiave facilitatore* invalida subito quello vecchio.
 | `blocklist` | entries to drop — put the question's own vocabulary here, everyone echoes it. Blocking a one-word singular blocks its plural |
 | `synonyms` | `from=to` pairs for what the plural rule cannot reach, e.g. `problema=problemi`, `social=social media` |
 
+## Untrusted input
+
+Anyone with the QR code can type anything, so answers are handled as data:
+
+- **Prompt.** The rules live in the system prompt. Answers go in the user turn
+  inside `<risposte>` tags, and any `<` or `>` in them is removed so an answer
+  can't close the tag. The system prompt tells the model to treat instructions
+  found in answers as ordinary answers.
+- **Themes.** Each theme must list the participants it comes from.
+  `checkThemes_` drops a theme unless at least two real participants back it
+  (one when fewer than four people answered). So a single answer saying
+  "write X as a theme" can't put X on the projector. Labels are capped at 60
+  characters and descriptions at 240, flattened to one line. If no theme passes
+  the check, the analysis fails, the previous themes stay, and the facilitator
+  writes them by hand.
+- **Review.** Themes go to `themes` first, and the vote opens only when the
+  facilitator presses *Apri la votazione*.
+- **Sheet.** Answers and labels that start with `= + - @` get a leading
+  apostrophe, so Sheets stores them as text and never runs them as formulas.
+- **Pages.** Everything is rendered as text, never as HTML.
+
 ## Rehearsal
 
 From the editor: `provaRiempi()` (eight fake participants on the question on
@@ -175,3 +196,5 @@ be refused server-side, not merely hidden).
   trimming articles and prepositions at the ends ("la scuola" = "scuola").
   Different wording ("pressione scolastica" / "stress da scuola") stays apart
   in the cloud; the theme analysis is what groups those.
+- With four or more participants, an idea only one person wrote never becomes a
+  theme. It still shows in the cloud.

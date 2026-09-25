@@ -16,8 +16,8 @@ function readThemes_(qid) {
     .map(function (r, i) {
       return {
         id: String(r[0]).trim() || ('t' + (i + 1)),
-        label: String(r[1]).trim(),
-        description: String(r[2]).trim()
+        label: cellText_(r[1]),
+        description: cellText_(r[2])
       };
     });
 }
@@ -30,7 +30,7 @@ function writeThemes_(qid, themes) {
     const others = last < 2 ? [] : sh.getRange(2, 1, last - 1, 4).getValues()
       .filter(function (r) { return !isForQuestion_(r[3], qid); });
     const mine = themes.map(function (t, i) {
-      return ['t' + (i + 1), String(t.label || '').trim(), String(t.description || '').trim(), qid];
+      return ['t' + (i + 1), safeCell_(String(t.label || '').trim()), safeCell_(String(t.description || '').trim()), qid];
     });
     const rows = others.concat(mine);
     if (last > 1) sh.getRange(2, 1, last - 1, 4).clearContent();

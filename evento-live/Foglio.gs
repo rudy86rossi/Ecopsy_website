@@ -203,6 +203,21 @@ function stampQuestion_(qid) {
   });
 }
 
+/**
+ * Participant and model text going into a cell. A value starting with = + - @
+ * would be parsed as a formula, and a formula like =IMPORTXML can send the
+ * sheet's contents to any server. The leading apostrophe makes Sheets store it
+ * as plain text; cellText_ undoes it on the way out.
+ */
+function safeCell_(s) {
+  s = String(s);
+  return /^[=+\-@]/.test(s) ? "'" + s : s;
+}
+
+function cellText_(v) {
+  return String(v).replace(/^'(?=[=+\-@])/, '').trim();
+}
+
 /** Does a row belong to the question on screen? Empty counts as yes. */
 function isForQuestion_(cell, qid) {
   const v = String(cell).trim();

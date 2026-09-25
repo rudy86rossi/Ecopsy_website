@@ -126,7 +126,7 @@ function actionSubmit_(body) {
 
   withLock_(function () {
     const sh = sheet_('RISPOSTE');
-    const rows = items.map(function (t) { return [now, voterId, t, qid]; });
+    const rows = items.map(function (t) { return [now, voterId, safeCell_(t), qid]; });
     sh.getRange(sh.getLastRow() + 1, 1, rows.length, 4).setValues(rows);
   });
   dropStateCache_();

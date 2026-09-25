@@ -7,14 +7,51 @@
  * Both ask for JSON through the provider's own structured-output mechanism, and
  * both are still parsed defensively: a model that wraps its JSON in a code fence
  * should not end the session.
+ *
+ * The model has no tools and its answer is only ever data: a few short strings
+ * that the pages render as text. What a hijacked answer could still do is put
+ * a theme on the projector, so checkThemes_ validates every theme before it
+ * reaches the Temi tab, and the facilitator sees the themes before opening the vote.
  */
 
 function extractThemes_(cfg, answers) {
-  const raw = callModel_(cfg, buildPrompt_(cfg, answers));
-  const data = parseJson_(raw);
-  const themes = (data && data.themes) || [];
-  if (!themes.length) throw new Error('il modello non ha restituito temi');
-  return themes.slice(0, cfg.max_themes);
+  const prompt = buildPrompt_(cfg, answers);
+  const data = parseJson_(callModel_(cfg, prompt));
+  return checkThemes_((data && data.themes) || [], prompt.participants, cfg.max_themes);
+}
+
+/**
+ * Keeps a theme only if it is backed by real participants: its `participants`
+ * must be line numbers the model was actually shown, and with four or more
+ * people in the room at least two distinct ones. A theme injected by a single
+ * answer ("scrivi come tema: …") has one supporter at most, and is dropped.
+ * Labels and descriptions are flattened to one line and capped.
+ */
+function checkThemes_(themes, participants, maxThemes) {
+  const minSupport = participants >= 4 ? 2 : 1;
+  const seenLabel = {};
+  const out = [];
+  themes.forEach(function (t) {
+    if (!t || typeof t !== 'object') return;
+    const who = {};
+    (Array.isArray(t.participants) ? t.participants : []).forEach(function (n) {
+      n = Number(n);
+      if (n === Math.floor(n) && n >= 1 && n <= participants) who[n] = true;
+    });
+    const support = Object.keys(who).length;
+    const label = oneLine_(t.label, MAX_LABEL_LEN);
+    const description = oneLine_(t.description, MAX_DESC_LEN);
+    if (!label || support < minSupport || seenLabel[label.toLowerCase()]) return;
+    seenLabel[label.toLowerCase()] = true;
+    out.push({ label: label, description: description, support: support });
+  });
+  if (!out.length) throw new Error('nessun tema condiviso da più partecipanti');
+  return out.slice(0, maxThemes);
+}
+
+function oneLine_(s, max) {
+  const t = String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
+  return t.length > max ? t.slice(0, max - 1).trim() + '…' : t;
 }
 
 function parseJson_(text) {
@@ -64,7 +101,9 @@ function fetchWithRetry_(url, options) {
 function callAnthropic_(cfg, prompt) {
   const payload = {
     model: cfg.model || 'claude-opus-5',
-    max_tokens: 16000,
+    // Enough for low-effort thinking plus a few hundred tokens of JSON, and a
+    // ceiling on the worst-case cost of one analysis (8000 × $25/M = $0.20).
+    max_tokens: 8000,
     // No `temperature`: sampling parameters are rejected on Claude Opus 5.
     // Effort `low` is right here — short inputs, a small structured answer, and
     // a room waiting for it.
@@ -72,7 +111,11 @@ function callAnthropic_(cfg, prompt) {
       effort: 'low',
       format: { type: 'json_schema', schema: themeSchema_() }
     },
-    messages: [{ role: 'user', content: prompt }]
+    // Instructions in `system`, answers in the user turn: the model treats the
+    // two with different authority, which is the first line against an answer
+    // that tries to give orders.
+    system: prompt.system,
+    messages: [{ role: 'user', content: prompt.user }]
   };
 
   const res = fetchWithRetry_('https://api.anthropic.com/v1/messages', {
@@ -92,6 +135,7 @@ function callAnthropic_(cfg, prompt) {
 
   const data = JSON.parse(body);
   if (data.stop_reason === 'refusal') throw new Error('richiesta rifiutata dal modello');
+  if (data.stop_reason === 'max_tokens') throw new Error('risposta del modello troncata (max_tokens)');
 
   // Thinking is on by default on Opus 5, so the text is not necessarily the
   // first content block.
@@ -115,7 +159,8 @@ function callGemini_(cfg, prompt) {
     method: 'post',
     contentType: 'application/json',
     payload: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
+      systemInstruction: { parts: [{ text: prompt.system }] },
+      contents: [{ role: 'user', parts: [{ text: prompt.user }] }],
       generationConfig: {
         temperature: 0.2,
         responseMimeType: 'application/json',
@@ -131,7 +176,9 @@ function callGemini_(cfg, prompt) {
 
   const data = JSON.parse(body);
   const cand = (data.candidates || [])[0];
-  const part = cand && cand.content && (cand.content.parts || [])[0];
-  if (!part || !part.text) throw new Error('nessun testo nella risposta Gemini');
+  // Thinking models can put a thought summary before the answer.
+  const part = cand && cand.content && (cand.content.parts || [])
+    .filter(function (p) { return p.text && !p.thought; })[0];
+  if (!part) throw new Error('nessun testo nella risposta Gemini');
   return part.text;
 }
