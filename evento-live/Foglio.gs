@@ -30,7 +30,7 @@ const DEFAULT_CONFIG = [
   ['title',            'Sessione EcoPsy', 'Shown at the top of every screen'],
   ['provider',         'anthropic',   'anthropic | gemini'],
   ['model',            'claude-opus-5', 'claude-opus-5 | a gemini id from provaModelli()'],
-  ['max_themes',       '6',           'Hard cap. Above 7 the ranking UI collapses on a phone'],
+  ['max_themes',       '5',           'At most 5 themes; higher values are treated as 5'],
   ['top_n',            '3',           'How many themes each participant ranks'],
   ['answer_fields',    '3',           'How many short boxes the phone shows: one idea per box'],
   ['max_cloud_words',  '60',          'Entries returned to the projector'],
@@ -139,7 +139,7 @@ function getConfig() {
   const rows = readConfigRows_(sheet_('CONFIG'));
   const out = {};
   rows.forEach(function (r) { out[r.key] = String(r.value).trim(); });
-  out.max_themes      = Math.min(8, Number(out.max_themes) || 6);
+  out.max_themes      = Math.min(5, Number(out.max_themes) || 5);
   out.top_n           = Math.max(1, Number(out.top_n) || 3);
   out.answer_fields   = Math.min(6, Math.max(1, Number(out.answer_fields) || 3));
   out.max_cloud_words = Number(out.max_cloud_words) || 60;

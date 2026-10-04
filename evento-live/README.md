@@ -145,7 +145,7 @@ Nuova chiave facilitatore* invalida subito quello vecchio.
 | `current_question` | id of the question on screen; set it from the menu or the page |
 | `title` | shown on every screen |
 | `provider`, `model` | `anthropic` + `claude-opus-5`, or `gemini` + `gemini-2.5-flash` |
-| `max_themes` | hard cap, 6. Above 7 the ranking UI collapses on a phone |
+| `max_themes` | how many themes the analysis returns, at most 5 (higher values are treated as 5) |
 | `top_n` | how many themes each participant ranks (Borda: 3/2/1) |
 | `answer_fields` | how many idea boxes the phone shows (1–6) |
 | `max_cloud_words` | how many entries the projector shows |
