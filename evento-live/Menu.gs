@@ -26,19 +26,43 @@ function onOpen() {
  * the JavaScript published on the site. The page itself is public: without the
  * key it shows a lock screen and every command it sends is refused here.
  *
- * Two UUIDs, 244 random bits: far beyond guessing, however many tries.
+ * The key is the person's name and three digits (rodolfo-482), short enough to
+ * type in the room. A thousand combinations are guessable, so requireKey_ stops
+ * accepting keys for a while after a run of wrong ones.
  */
-function newKey_() {
-  return (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, '');
+function newKey_(persona, old) {
+  let key;
+  do {
+    key = persona + '-' + ('00' + Math.floor(Math.random() * 1000)).slice(-3);
+  } while (key === old);
+  return key;
+}
+
+/** The name in this person's page addresses (operatore_<nome>.html). Asked for once and remembered. */
+function persona_(ui, props) {
+  let persona = props.getProperty('PERSONA');
+  if (persona) return persona;
+  const res = ui.prompt('Nome della persona',
+    'Il nome usato negli indirizzi delle sue pagine, ad esempio rodolfo per operatore_rodolfo.html.',
+    ui.ButtonSet.OK_CANCEL);
+  persona = (res.getResponseText() || '').trim().toLowerCase();
+  if (res.getSelectedButton() !== ui.Button.OK || !/^[a-z]+$/.test(persona)) {
+    ui.alert('Serve un nome di sole lettere minuscole, uguale a quello negli indirizzi delle pagine.');
+    return '';
+  }
+  props.setProperty('PERSONA', persona);
+  return persona;
 }
 
 function mostraChiave() {
   const ui = SpreadsheetApp.getUi();
   const props = PropertiesService.getScriptProperties();
+  const persona = persona_(ui, props);
+  if (!persona) return;
   let key = props.getProperty('FACILITATOR_KEY');
-  // Keys from the first version were 16 characters; replace them on sight.
-  if (!key || key.length < 32) {
-    key = newKey_();
+  // Long keys from earlier versions, or a key for another name: replace them on sight.
+  if (!key || !new RegExp('^' + persona + '-\\d{3}$').test(key)) {
+    key = newKey_(persona, key);
     props.setProperty('FACILITATOR_KEY', key);
   }
 
@@ -61,7 +85,8 @@ function mostraChiave() {
   ui.alert(
     'Chiave facilitatore\n\n' + key +
     '\n\nURL del web app\n\n' + url +
-    '\n\nPagina facilitatore: <sito>/evento-regia.html#k=' + key +
+    '\n\nPagina facilitatore: <sito>/operatore_' + persona + '.html#k=' + key +
+    '\n(oppure apri operatore_' + persona + '.html e scrivi la chiave)' +
     '\n\nRidistribuendo, usa sempre "Gestisci distribuzioni → matita → Nuova versione":' +
     ' una nuova distribuzione cambia l’URL e le pagine pubblicate smettono di funzionare.'
   );
@@ -74,7 +99,10 @@ function nuovaChiave() {
     'Il link del facilitatore attuale smette di funzionare subito. Dovrai riaprire la pagina con il nuovo link.',
     ui.ButtonSet.YES_NO);
   if (answer !== ui.Button.YES) return;
-  PropertiesService.getScriptProperties().setProperty('FACILITATOR_KEY', newKey_());
+  const props = PropertiesService.getScriptProperties();
+  const persona = persona_(ui, props);
+  if (!persona) return;
+  props.setProperty('FACILITATOR_KEY', newKey_(persona, props.getProperty('FACILITATOR_KEY')));
   log_('key', 'rotated', 'ok');
   mostraChiave();
 }

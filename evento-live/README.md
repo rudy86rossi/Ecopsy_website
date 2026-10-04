@@ -7,6 +7,19 @@ The files here are the reference copy. Paste them into the Apps Script editor
 (no `clasp` — seven files that change a handful of times a year do not justify a
 second OAuth login and an npm toolchain).
 
+## One sheet per person
+
+Each facilitator (today `rodolfo`, `roberta`, `placeholder`) has their own spreadsheet,
+script, `/exec` URL and facilitator key, so several sessions can run at the same time
+without seeing each other's answers, themes or votes. Repeat the setup below once per
+person, then paste their `/exec` URL next to their name in `evento-config.js`.
+
+Adding a person: one more spreadsheet, one more line in `evento-config.js`, and three
+more pages — copy the three files of an existing person and change `data-persona`.
+
+The same code goes into every copy: after changing a `.gs` file, paste it into each
+person's project and publish a new version in each.
+
 ## Setup, in order
 
 1. Create a spreadsheet — **Estensioni → Apps Script** creates the bound project.
@@ -23,7 +36,8 @@ second OAuth login and an npm toolchain).
    just *Chiunque*; *Chiunque con un Account Google* forces a login. Record the
    `/exec` URL.
 6. Reload the spreadsheet → the **EcoPsy** menu appears → *Mostra chiave e link*.
-   It generates `FACILITATOR_KEY`, and asks once for the `/exec` URL so it can
+   It asks once for the person's name (the one in their page addresses, e.g.
+   `rodolfo`), generates `FACILITATOR_KEY` as `<nome>-NNN`, and asks once for the `/exec` URL so it can
    show the facilitator link. Paste the URL from step 5: the editor also carries a
    *head deployment* with its own id, and only the versioned one reaches anonymous
    visitors.
@@ -121,20 +135,28 @@ Nel sito, fuori da questa cartella:
 
 | file | chi lo apre |
 |---|---|
-| `evento-config.js` | nessuno — contiene solo l’URL `/exec`, da incollare una volta |
+| `evento-config.js` | nessuno — collega ogni nome all’URL `/exec` del suo foglio |
 | `evento-qrcode.min.js` | nessuno — genera il QR sul proiettore (qrcode-generator 1.4.4, MIT) |
-| `evento.html` | i partecipanti dal telefono |
-| `evento.html?screen=1` | il proiettore |
-| `evento-regia.html#k=<chiave>` | il facilitatore |
+| `evento.js`, `evento.css` | nessuno — codice comune a proiettore e telefono |
+| `evento-regia.js`, `evento-regia.css` | nessuno — codice della regia |
+| `voto_studente_<nome>.html` | i partecipanti dal telefono |
+| `proiettore_<nome>.html` | il proiettore |
+| `operatore_<nome>.html#k=<chiave>` | il facilitatore |
+
+Ogni persona ha le sue tre pagine; `data-persona` nel `<body>` dice a quale foglio
+parlano. Il QR sul proiettore porta alla pagina `voto_studente_` della stessa persona.
 
 Una sola pagina per i partecipanti: cambia da sola al cambio di fase e di
 domanda, quindi un solo link (e un solo QR) per tutta la sessione. Non sono
 collegate al menu del sito e portano `noindex`.
 
 La pagina di regia è pubblica, ma senza chiave mostra solo la richiesta della
-chiave, e il server rifiuta ogni comando senza chiave valida. La chiave è di 64
-caratteri e sparisce dalla barra degli indirizzi appena la pagina si apre: non
-proiettare il link né condividerlo in chat. Se qualcuno lo ha visto, *EcoPsy →
+chiave, e il server rifiuta ogni comando senza chiave valida. La chiave è il nome
+della persona più tre cifre (`rodolfo-482`), da scrivere nella pagina o da aprire
+come link: sparisce dalla barra degli indirizzi appena la pagina si apre. Tre cifre
+si indovinano, quindi dopo 10 chiavi sbagliate il server rifiuta ogni chiave per
+10 minuti (nel frattempo il menu EcoPsy nel foglio funziona). Non proiettare il
+link né condividerlo in chat. Se qualcuno lo ha visto, *EcoPsy →
 Nuova chiave facilitatore* invalida subito quello vecchio.
 
 ## Config tab

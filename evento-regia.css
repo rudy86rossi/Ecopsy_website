@@ -1,0 +1,86 @@
+body { background: var(--green-pale); }
+.wrap { max-width: 720px; margin: 0 auto; padding: 28px 20px 64px; }
+.eyebrow {
+  font-family: var(--font-head); font-size: .72rem; font-weight: 700;
+  letter-spacing: 1.4px; text-transform: uppercase; color: var(--green-mid);
+}
+h1 { font-size: 1.5rem; color: var(--green-dark); margin: 6px 0 20px; }
+
+.card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 20px; margin-bottom: 16px;
+}
+.card h2 {
+  font-size: .72rem; font-weight: 700; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px;
+}
+
+.now { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.pill {
+  font-family: var(--font-head); font-weight: 800; font-size: 1.1rem;
+  background: var(--green-dark); color: var(--white);
+  padding: 7px 16px; border-radius: 999px;
+}
+.nums { font-size: .9rem; color: var(--text-muted); }
+.nums b { color: var(--green-dark); font-size: 1.15rem; font-family: var(--font-head); }
+
+.steps { display: grid; gap: 10px; }
+button.step {
+  display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+  font-family: var(--font-head); font-size: .98rem; font-weight: 700;
+  padding: 15px 18px; border: 2px solid var(--border); border-radius: 10px;
+  background: var(--white); color: var(--text); cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+button.step:hover:not(:disabled) { border-color: var(--green-light); }
+button.step.next { border-color: var(--green-mid); background: var(--green-pale); color: var(--green-dark); }
+button.step:disabled { opacity: .42; cursor: not-allowed; }
+button.step .n {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center; font-size: .82rem;
+  background: var(--green-dark); color: var(--white);
+}
+button.step .sub { display: block; font-family: var(--font-body); font-weight: 400; font-size: .8rem; color: var(--text-muted); margin-top: 2px; }
+
+.danger { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+button.reset {
+  font-family: var(--font-head); font-weight: 700; font-size: .85rem;
+  background: none; border: 1px solid #d8b5b1; color: #a3352c;
+  padding: 9px 16px; border-radius: 8px; cursor: pointer;
+}
+button.reset:hover { background: #fdf3f2; }
+
+.status { font-size: .88rem; margin-top: 14px; min-height: 1.3em; }
+.status.err { color: #a3352c; }
+.status.ok  { color: var(--green-mid); }
+
+.curq { font-size: .95rem; color: var(--green-dark); margin-top: 12px; line-height: 1.5; }
+.curq .round { font-size: .78rem; font-weight: 600; color: var(--green-mid); display: block; }
+ol.qs { padding-left: 20px; }
+ol.qs li { margin-bottom: 10px; font-size: .92rem; }
+ol.qs li.cur { font-weight: 700; color: var(--green-dark); }
+ol.qs button {
+  margin-left: 8px; font-family: var(--font-head); font-weight: 700; font-size: .78rem;
+  padding: 3px 10px; border: 1px solid var(--border); border-radius: 7px;
+  background: var(--white); color: var(--green-mid); cursor: pointer;
+}
+ol.themes { padding-left: 20px; }
+ol.themes li { margin-bottom: 8px; font-size: .92rem; }
+ol.themes .label { font-family: var(--font-head); font-weight: 700; color: var(--green-dark); }
+ol.themes .desc { color: var(--text-muted); font-size: .85rem; }
+
+.links { font-size: .85rem; color: var(--text-muted); line-height: 2; }
+.links code { background: var(--green-pale); padding: 2px 7px; border-radius: 5px; font-size: .82rem; }
+
+.locked { text-align: center; padding: 40px 20px; }
+.locked p { color: var(--text-muted); font-size: .92rem; margin-bottom: 16px; }
+.locked input {
+  width: 100%; max-width: 320px; font-family: var(--font-body); font-size: 1rem;
+  padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px;
+}
+.locked button {
+  margin-top: 12px; font-family: var(--font-head); font-weight: 700; font-size: .95rem;
+  padding: 12px 26px; border: none; border-radius: 10px;
+  background: var(--green-mid); color: var(--white); cursor: pointer;
+}

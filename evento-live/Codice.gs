@@ -253,10 +253,28 @@ function resetSession_(from) {
 
 /* ── helpers ───────────────────────────────────────────────────────────── */
 
+/*
+ * Keys are short (rodolfo-482), so wrong guesses are counted: after
+ * KEY_MAX_FAILS of them, every key is refused until KEY_LOCK_SECONDS pass with
+ * no new wrong one. That puts a thousand combinations hours away. The lock
+ * blocks the right key too, otherwise it would not slow a guesser down; the
+ * EcoPsy menu in the sheet keeps working meanwhile.
+ */
+const KEY_MAX_FAILS = 10;
+const KEY_LOCK_SECONDS = 600;
+
 function requireKey_(key) {
   const expected = PropertiesService.getScriptProperties().getProperty('FACILITATOR_KEY');
   if (!expected) throw new Error('FACILITATOR_KEY non impostata (menu EcoPsy → Mostra chiave)');
-  if (String(key || '') !== expected) throw new Error('chiave non valida');
+  const cache = CacheService.getScriptCache();
+  const fails = Number(cache.get('key-fails')) || 0;
+  if (fails >= KEY_MAX_FAILS) {
+    throw new Error('troppi tentativi con una chiave sbagliata: riprova fra 10 minuti, o usa il menu EcoPsy nel foglio');
+  }
+  if (String(key || '').trim().toLowerCase() !== expected.toLowerCase()) {
+    cache.put('key-fails', String(fails + 1), KEY_LOCK_SECONDS);
+    throw new Error('chiave non valida');
+  }
 }
 
 function cleanId_(v) {

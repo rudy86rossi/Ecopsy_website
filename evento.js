@@ -1,0 +1,403 @@
+(function () {
+  'use strict';
+
+  /* Each person has three pages (proiettore_<nome>, voto_studente_<nome>,
+     operatore_<nome>) and their own sheet. The page says whose it is and what
+     it shows in <body data-persona data-ruolo>; evento-config.js maps the
+     person to their web app URL. */
+  var PERSONA = document.body.dataset.persona || '';
+  var URL_EXEC = (window.EVENTO_PERSONE || {})[PERSONA];
+  var IS_SCREEN = document.body.dataset.ruolo === 'proiettore';
+  var POLL_MS = IS_SCREEN ? 3000 : 5000;
+
+  var stage = document.getElementById('stage');
+  var titleEl = document.getElementById('title');
+  if (IS_SCREEN) document.body.classList.add('screen');
+
+  /* ── transport ──────────────────────────────────────────────────────
+     GET is a plain fetch with no custom headers, and POST declares
+     text/plain even though the body is JSON. Both are CORS "simple"
+     requests. Anything else triggers a preflight, and Apps Script has no
+     doOptions to answer it — the request would get a 405 and never reach
+     the script. Never mode:'no-cors': the response would be opaque and we
+     could not tell a recorded vote from a thrown error. */
+  function getState() {
+    return fetch(URL_EXEC + '?t=' + Date.now()).then(function (r) { return r.json(); });
+  }
+  function post(body) {
+    return fetch(URL_EXEC, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(body)
+    }).then(function (r) { return r.json(); });
+  }
+
+  /* Identifies this device so a re-submission replaces rather than doubles.
+     Not an identity check, and does not need to be. */
+  function voterId() {
+    try {
+      var v = localStorage.getItem('ecopsy-voter-' + PERSONA);
+      if (!v) {
+        v = 'v' + Math.random().toString(36).slice(2, 10);
+        localStorage.setItem('ecopsy-voter-' + PERSONA, v);
+      }
+      return v;
+    } catch (err) {
+      if (!window._vid) window._vid = 'v' + Math.random().toString(36).slice(2, 10);
+      return window._vid;
+    }
+  }
+  /* Per question: moving to the next round must show the answer boxes again. */
+  function submittedKey(phase) { return 'ecopsy-' + PERSONA + '-' + (state ? state.questionId : '') + '-' + phase + '-done'; }
+  function markDone(phase) { try { sessionStorage.setItem(submittedKey(phase), '1'); } catch (e) {} }
+  function isDone(phase) { try { return sessionStorage.getItem(submittedKey(phase)) === '1'; } catch (e) { return false; } }
+
+  /* Where participants join: the same person's phone page, next to this one. */
+  var JOIN_URL = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'voto_studente_' + PERSONA + '.html';
+
+  function qrNode(cls) {
+    var box = el('div', cls);
+    if (!window.qrcode) return box;
+    var qr = window.qrcode(0, 'M');
+    qr.addData(JOIN_URL);
+    qr.make();
+    box.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+    return box;
+  }
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+
+  /* ── views ─────────────────────────────────────────────────────────── */
+
+  var state = null, lastRev = null, picked = [];
+
+  function render(s) {
+    titleEl.textContent = s.title || 'Sessione live';
+    stage.textContent = '';
+    var view = IS_SCREEN ? screenView : phoneView;
+    view(s);
+  }
+
+  /* — phone — */
+  function phoneView(s) {
+    if (s.phase === 'collecting') return isDone('answer') ? waitCard(s, 'Risposta inviata', 'Guarda lo schermo: le parole compaiono man mano.') : answerCard(s);
+    if (s.phase === 'analysing')  return waitCard(s, 'Analisi in corso', 'Stiamo raggruppando le risposte in temi.');
+    if (s.phase === 'themes')     return themesPreview(s);
+    if (s.phase === 'voting')     return isDone('vote') ? waitCard(s, 'Voto registrato', 'Puoi cambiarlo finché la votazione è aperta.', true) : voteCard(s);
+    if (s.phase === 'results')    return resultsCard(s);
+  }
+
+  function roundLabel(s) {
+    return s.round && s.round.of > 1 ? 'Domanda ' + s.round.n + ' di ' + s.round.of : '';
+  }
+
+  /* One short idea per box: each box is one entry in the word cloud, kept
+     whole, so "social media" stays together. */
+  function answerCard(s) {
+    var card = el('div', 'card');
+    if (roundLabel(s)) card.appendChild(el('div', 'round', roundLabel(s)));
+    card.appendChild(el('div', 'question', s.question));
+    var n = s.answerFields || 1;
+    if (n > 1) card.appendChild(el('p', 'hint', 'Un’idea per casella, in poche parole. Puoi riempirne anche solo una.'));
+
+    var inputs = [];
+    for (var i = 0; i < n; i++) {
+      var inp = el('input', 'idea');
+      inp.type = 'text';
+      inp.setAttribute('maxlength', '80');
+      inp.setAttribute('enterkeyhint', i < n - 1 ? 'next' : 'send');
+      inp.setAttribute('aria-label', n > 1 ? 'Idea ' + (i + 1) : 'La tua risposta');
+      inp.placeholder = n > 1 ? 'Idea ' + (i + 1) + (i ? ' (facoltativa)' : '') : 'Scrivi qui…';
+      card.appendChild(inp);
+      inputs.push(inp);
+    }
+    inputs.forEach(function (inp, i) {
+      inp.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        if (i < inputs.length - 1) inputs[i + 1].focus(); else btn.click();
+      });
+    });
+
+    var btn = el('button', 'act', 'Invia');
+    var status = el('div', 'status');
+    status.setAttribute('role', 'status');
+    card.appendChild(btn);
+    card.appendChild(status);
+
+    btn.addEventListener('click', function () {
+      var items = inputs.map(function (x) { return x.value.trim(); }).filter(Boolean);
+      if (!items.length) { status.className = 'status err'; status.textContent = 'Scrivi qualcosa prima di inviare.'; return; }
+      btn.disabled = true;
+      status.className = 'status';
+      status.textContent = 'Invio…';
+      post({ action: 'submit', voterId: voterId(), items: items })
+        .then(function (res) {
+          if (res.ok) { markDone('answer'); tick(true); }
+          else { btn.disabled = false; status.className = 'status err'; status.textContent = res.error || 'Invio non riuscito.'; }
+        })
+        .catch(function () {
+          btn.disabled = false;
+          status.className = 'status err';
+          status.textContent = 'Nessuna risposta dal server. Riprova.';
+        });
+    });
+
+    stage.appendChild(card);
+    inputs[0].focus();
+  }
+
+  function waitCard(s, head, sub, allowChange) {
+    var card = el('div', 'card done');
+    card.appendChild(el('div', 'tick', '✓'));
+    card.appendChild(el('h2', null, head));
+    card.appendChild(el('p', null, sub));
+    if (allowChange) {
+      var b = el('button', 'act', 'Cambia il mio voto');
+      b.addEventListener('click', function () {
+        try { sessionStorage.removeItem(submittedKey('vote')); } catch (e) {}
+        lastRev = null; tick(true);
+      });
+      card.appendChild(b);
+    }
+    stage.appendChild(card);
+  }
+
+  function themesPreview(s) {
+    var card = el('div', 'card');
+    card.appendChild(el('div', 'question', 'Temi emersi'));
+    card.appendChild(el('p', 'hint', 'La votazione si apre fra un momento.'));
+    s.themes.forEach(function (t) {
+      var row = el('div', 'theme');
+      row.appendChild(el('span', 'badge', '•'));
+      var body = el('div');
+      body.appendChild(el('div', 'label', t.label));
+      if (t.description) body.appendChild(el('div', 'desc', t.description));
+      row.appendChild(body);
+      card.appendChild(row);
+    });
+    stage.appendChild(card);
+  }
+
+  function voteCard(s) {
+    picked = [];
+    var card = el('div', 'card');
+    card.appendChild(el('div', 'question', 'Quali temi vale la pena approfondire?'));
+    card.appendChild(el('p', 'hint', 'Tocca i temi in ordine di preferenza, fino a ' + s.topN +
+      '. Tocca di nuovo per togliere. Puoi sceglierne anche meno.'));
+
+    var btn = el('button', 'act', 'Invia');
+    var status = el('div', 'status');
+    status.setAttribute('role', 'status');
+
+    var buttons = s.themes.map(function (t) {
+      var row = el('button', 'theme');
+      row.type = 'button';
+      row.setAttribute('aria-pressed', 'false');
+      var badge = el('span', 'badge', '–');
+      var body = el('div');
+      body.appendChild(el('div', 'label', t.label));
+      if (t.description) body.appendChild(el('div', 'desc', t.description));
+      row.appendChild(badge);
+      row.appendChild(body);
+
+      row.addEventListener('click', function () {
+        var at = picked.indexOf(t.id);
+        if (at !== -1) picked.splice(at, 1);
+        else if (picked.length < s.topN) picked.push(t.id);
+        else { status.className = 'status'; status.textContent = 'Hai già scelto ' + s.topN + ' temi. Togline uno per cambiarli.'; return; }
+        status.textContent = '';
+        paint();
+      });
+      card.appendChild(row);
+      return { id: t.id, row: row, badge: badge };
+    });
+
+    function paint() {
+      buttons.forEach(function (b) {
+        var at = picked.indexOf(b.id);
+        b.row.setAttribute('aria-pressed', at !== -1 ? 'true' : 'false');
+        b.badge.textContent = at !== -1 ? String(at + 1) : '–';
+      });
+      btn.disabled = picked.length === 0;
+    }
+
+    btn.disabled = true;
+    card.appendChild(btn);
+    card.appendChild(status);
+
+    btn.addEventListener('click', function () {
+      btn.disabled = true;
+      status.className = 'status';
+      status.textContent = 'Invio…';
+      post({ action: 'ballot', voterId: voterId(), ranking: picked })
+        .then(function (res) {
+          if (res.ok) { markDone('vote'); lastRev = null; tick(true); }
+          else { btn.disabled = false; status.className = 'status err'; status.textContent = res.error || 'Voto non registrato.'; }
+        })
+        .catch(function () {
+          btn.disabled = false;
+          status.className = 'status err';
+          status.textContent = 'Nessuna risposta dal server. Riprova.';
+        });
+    });
+
+    stage.appendChild(card);
+  }
+
+  function resultsCard(s) {
+    var card = el('div', 'card');
+    card.appendChild(el('div', 'question', 'Risultati'));
+    card.appendChild(resultsList(s));
+    stage.appendChild(card);
+  }
+
+  /* — projector — */
+  /* Created once: the corner QR stays put while the stage redraws. */
+  var corner = null;
+  function showCorner(on) {
+    if (on && !corner) {
+      corner = qrNode('qrcorner qr');
+      corner.appendChild(el('div', 'cap', 'Partecipa'));
+      document.body.appendChild(corner);
+    }
+    if (corner) corner.style.display = on ? '' : 'none';
+    document.body.classList.toggle('hasqr', on);
+  }
+
+  function screenView(s) {
+    /* The opening screen of each round: the question, and a QR large enough
+       to scan from the back of the room. */
+    var opening = s.phase === 'collecting' && !s.responses;
+    showCorner(!opening && s.phase !== 'results');
+
+    if (roundLabel(s)) stage.appendChild(el('div', 'round', roundLabel(s)));
+    if (opening) {
+      var join = el('div', 'join');
+      join.appendChild(qrNode('qr'));
+      var side = el('div', 'waiting');
+      side.appendChild(document.createTextNode(s.question));
+      var url = el('div', 'meta');
+      url.appendChild(document.createTextNode('Inquadra il codice o apri '));
+      url.appendChild(el('span', 'joinurl', JOIN_URL.replace(/^https?:\/\//, '')));
+      side.appendChild(url);
+      join.appendChild(side);
+      stage.appendChild(join);
+      return;
+    }
+    stage.appendChild(el('div', 'qline', s.question));
+    if (s.phase === 'collecting') {
+      stage.appendChild(s.cloud.length ? cloud(s.cloud) : el('div', 'waiting', 'Le risposte stanno arrivando…'));
+      stage.appendChild(el('div', 'meta', s.responses + (s.responses === 1 ? ' partecipante' : ' partecipanti')));
+      return;
+    }
+    if (s.phase === 'analysing') { stage.appendChild(el('div', 'waiting', 'Analisi in corso…')); return; }
+    if (s.phase === 'themes' || s.phase === 'voting') {
+      var wrap = el('div');
+      s.themes.forEach(function (t) {
+        var row = el('div', 'theme');
+        row.appendChild(el('span', 'badge', '•'));
+        var body = el('div');
+        body.appendChild(el('div', 'label', t.label));
+        if (t.description) body.appendChild(el('div', 'desc', t.description));
+        row.appendChild(body);
+        wrap.appendChild(row);
+      });
+      stage.appendChild(wrap);
+      /* During voting the count is shown, never the tally: a bar chart that
+         moves while people vote steers everyone who votes late. */
+      stage.appendChild(el('div', 'meta', s.phase === 'voting'
+        ? s.ballots + (s.ballots === 1 ? ' voto espresso' : ' voti espressi')
+        : 'Votazione in apertura…'));
+      return;
+    }
+    if (s.phase === 'results') {
+      stage.appendChild(resultsList(s));
+      stage.appendChild(el('div', 'meta', s.ballots + (s.ballots === 1 ? ' voto' : ' voti') + ' · ' + s.responses + ' partecipanti'));
+    }
+  }
+
+  function resultsList(s) {
+    var wrap = el('div');
+    var rows = s.results || [];
+    if (!rows.length) { wrap.appendChild(el('p', 'hint', 'Nessun voto registrato.')); return wrap; }
+    var max = Math.max.apply(null, rows.map(function (r) { return r.points; })) || 1;
+    rows.forEach(function (r) {
+      var box = el('div', 'res');
+      var top = el('div', 'top');
+      top.appendChild(el('div', 'label', r.label));
+      top.appendChild(el('div', 'pts', r.points + ' punti · ' + r.firsts + ' primi posti'));
+      box.appendChild(top);
+      var bar = el('div', 'bar');
+      var fill = el('i');
+      fill.style.width = Math.round((r.points / max) * 100) + '%';
+      bar.appendChild(fill);
+      box.appendChild(bar);
+      wrap.appendChild(box);
+    });
+    return wrap;
+  }
+
+  /**
+   * Words flow rather than scatter: a spiral layout overlaps or overflows at
+   * unpredictable counts, and on a projector that is the one thing that must
+   * not happen. Size carries the frequency.
+   *
+   * With twenty short answers every count is often 1. Rather than pretend
+   * otherwise, the cloud then renders at one size and reads as a word list.
+   */
+  function cloud(pairs) {
+    var box = el('div', 'cloud');
+    if (!pairs.length) return box;
+    var max = pairs[0][1], min = pairs[pairs.length - 1][1];
+    var flat = max === min;
+
+    /* Spread the big words through the block instead of front-loading them. */
+    var ordered = [];
+    pairs.forEach(function (p, i) { (i % 2 ? ordered.unshift : ordered.push).call(ordered, p); });
+
+    ordered.forEach(function (p) {
+      var word = p[0], n = p[1];
+      var t = flat ? 0.45 : (n - min) / (max - min);
+      var size = (IS_SCREEN ? 1.5 : 0.85) + Math.pow(t, 0.7) * (IS_SCREEN ? 4.4 : 1.5);
+      var span = el('span', null, word);
+      span.style.fontSize = size.toFixed(2) + 'rem';
+      span.style.opacity = (0.55 + t * 0.45).toFixed(2);
+      if (!IS_SCREEN) span.style.color = t > 0.5 ? 'var(--green-dark)' : 'var(--green-mid)';
+      span.title = n + (n === 1 ? ' persona' : ' persone');
+      box.appendChild(span);
+    });
+    return box;
+  }
+
+  /* ── loop ──────────────────────────────────────────────────────────── */
+
+  function tick(force) {
+    getState()
+      .then(function (s) {
+        if (!s.ok) return;
+        /* The projector redraws whenever anything changed. A phone must not:
+           someone else submitting an answer moves `rev`, and a redraw would
+           wipe a half-typed answer or a half-built ranking. It follows the
+           phase (and the theme list) instead. */
+        var stamp = IS_SCREEN ? s.rev : s.questionId + '|' + s.phase + '|' + s.themes.length;
+        if (!force && stamp === lastRev) return;
+        lastRev = stamp;
+        state = s;
+        render(s);
+      })
+      .catch(function () { /* a dropped poll on venue wifi is not worth a banner */ });
+  }
+
+  if (!URL_EXEC || URL_EXEC.indexOf('INCOLLA') === 0) {
+    stage.appendChild(el('div', 'card', 'Configura evento-config.js con l’URL /exec del web app di “' + PERSONA + '”.'));
+  } else {
+    tick(true);
+    setInterval(tick, POLL_MS);
+  }
+})();
