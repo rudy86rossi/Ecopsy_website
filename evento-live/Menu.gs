@@ -30,6 +30,9 @@ function onOpen() {
  * type in the room. A thousand combinations are guessable, so requireKey_ stops
  * accepting keys for a while after a run of wrong ones.
  */
+/** Where the site's pages live: the facilitator link in mostraChiave points here. */
+const SITE_URL = 'https://www-2026.ecopsy.uniroma2.it';
+
 function newKey_(persona, old) {
   let key;
   do {
@@ -85,10 +88,11 @@ function mostraChiave() {
   ui.alert(
     'Chiave facilitatore\n\n' + key +
     '\n\nURL del web app\n\n' + url +
-    '\n\nPagina facilitatore: <sito>/operatore_' + persona + '.html#k=' + key +
-    '\n(oppure apri operatore_' + persona + '.html e scrivi la chiave)' +
-    '\n\nRidistribuendo, usa sempre "Gestisci distribuzioni → matita → Nuova versione":' +
-    ' una nuova distribuzione cambia l’URL e le pagine pubblicate smettono di funzionare.'
+    '\n\nPagina facilitatore: ' + SITE_URL + '/operatore_' + persona + '.html#k=' + key +
+    '\n(oppure apri ' + SITE_URL + '/operatore_' + persona + '.html e scrivi la chiave)' +
+    '\n\nPer aggiornare il codice usa evento-live/pubblica-script.sh: mantiene questo URL.' +
+    ' A mano: "Gestisci distribuzioni → matita → Nuova versione". Mai "Nuova distribuzione":' +
+    ' cambia l’URL e le pagine pubblicate smettono di funzionare.'
   );
 }
 

@@ -254,11 +254,11 @@
   function askKey(why) {
     var box = el('div', 'card locked');
     if (why) box.appendChild(el('p', 'status err', why));
-    box.appendChild(el('p', null, 'Questa pagina richiede la chiave facilitatore, nella forma ' + PERSONA + '-123. La trovi nel foglio: menu EcoPsy → Mostra chiave e link.'));
+    box.appendChild(el('p', null, 'Questa pagina richiede la chiave facilitatore. La trovi nel foglio: menu EcoPsy → Mostra chiave e link.'));
     var input = el('input');
     input.type = 'password';
     input.setAttribute('aria-label', 'Chiave facilitatore');
-    input.placeholder = PERSONA + '-123';
+    input.placeholder = 'chiave';
     input.setAttribute('autocapitalize', 'off');
     input.setAttribute('autocomplete', 'off');
     var b = el('button', null, 'Entra');
