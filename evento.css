@@ -80,7 +80,15 @@ body.screen .eyebrow { color: #8fe0b0; font-size: 1rem; letter-spacing: 2px; }
 body.screen h1 { color: var(--white); font-size: 2.6rem; margin: 10px 0 28px; }
 body.screen .card { background: transparent; border: none; box-shadow: none; padding: 0; }
 body.screen .stage { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-body.screen .cloud span { color: #bff0d3; transition: font-size .6s ease, color .6s ease; }
+body.screen .cloud .w { display: inline-block; transform-origin: 0 0; transition: color .8s ease, opacity .8s ease; }
+body.screen .cloud .f { display: inline-block; animation: drift 7s ease-in-out infinite alternate; }
+@keyframes drift {
+  from { transform: translate(-.03em, -.06em); }
+  to   { transform: translate(.03em, .06em); }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.screen .cloud .f { animation: none; }
+}
 body.screen .meta { font-size: 1.1rem; color: rgba(255,255,255,.65); margin-top: 28px; }
 body.screen .joinurl {
   font-family: var(--font-head); font-weight: 800; font-size: 1.8rem;

@@ -78,6 +78,8 @@
 
   function render(s) {
     titleEl.textContent = s.title || 'Sessione live';
+    if (IS_SCREEN && updateCloud(s)) return;
+    live = null;
     stage.textContent = '';
     var view = IS_SCREEN ? screenView : phoneView;
     view(s);
@@ -292,8 +294,15 @@
     }
     stage.appendChild(el('div', 'qline', s.question));
     if (s.phase === 'collecting') {
-      stage.appendChild(s.cloud.length ? cloud(s.cloud) : el('div', 'waiting', 'Le risposte stanno arrivando…'));
-      stage.appendChild(el('div', 'meta', s.responses + (s.responses === 1 ? ' partecipante' : ' partecipanti')));
+      if (!s.cloud.length) {
+        stage.appendChild(el('div', 'waiting', 'Le risposte stanno arrivando…'));
+        stage.appendChild(el('div', 'meta', participants(s)));
+        return;
+      }
+      live = { qid: s.questionId, box: el('div', 'cloud'), meta: el('div', 'meta'), words: {} };
+      stage.appendChild(live.box);
+      stage.appendChild(live.meta);
+      updateCloud(s);
       return;
     }
     if (s.phase === 'analysing') { stage.appendChild(el('div', 'waiting', 'Analisi in corso…')); return; }
@@ -343,36 +352,104 @@
     return wrap;
   }
 
+  function participants(s) {
+    return s.responses + (s.responses === 1 ? ' partecipante' : ' partecipanti');
+  }
+
   /**
    * Words flow rather than scatter: a spiral layout overlaps or overflows at
    * unpredictable counts, and on a projector that is the one thing that must
-   * not happen. Size carries the frequency.
+   * not happen. Size and colour carry the frequency.
+   *
+   * The cloud stays on screen between polls and is updated in place, so the
+   * room sees it change: a new word pops in, a word written again swells and
+   * glows, and the words around it glide to their new places instead of
+   * jumping. Each word also drifts slowly on its own. A word keeps its place
+   * once it is in; new ones land at a random spot.
    *
    * With twenty short answers every count is often 1. Rather than pretend
    * otherwise, the cloud then renders at one size and reads as a word list.
    */
-  function cloud(pairs) {
-    var box = el('div', 'cloud');
-    if (!pairs.length) return box;
+  var live = null;   // { qid, box, meta, words: { entry: { node, inner, n } } }
+  var CALM = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  /* True when the cloud on screen was updated in place and nothing else needs drawing. */
+  function updateCloud(s) {
+    if (!live || live.qid !== s.questionId || s.phase !== 'collecting' || !s.cloud.length) return false;
+    live.meta.textContent = participants(s);
+    drawWords(s.cloud);
+    return true;
+  }
+
+  function drawWords(pairs) {
     var max = pairs[0][1], min = pairs[pairs.length - 1][1];
     var flat = max === min;
 
-    /* Spread the big words through the block instead of front-loading them. */
-    var ordered = [];
-    pairs.forEach(function (p, i) { (i % 2 ? ordered.unshift : ordered.push).call(ordered, p); });
+    /* Where every word is now, to animate from it once the layout has changed. */
+    var before = {};
+    Object.keys(live.words).forEach(function (k) { before[k] = live.words[k].node.getBoundingClientRect(); });
 
-    ordered.forEach(function (p) {
+    var keep = {}, fresh = [], grown = [];
+    pairs.forEach(function (p) {
       var word = p[0], n = p[1];
+      keep[word] = true;
+      var w = live.words[word];
+      if (!w) {
+        w = { node: el('span', 'w'), inner: el('span', 'f', word), n: 0 };
+        w.inner.style.animationDuration = (5 + Math.random() * 4).toFixed(1) + 's';
+        w.inner.style.animationDelay = (-Math.random() * 9).toFixed(1) + 's';
+        w.node.appendChild(w.inner);
+        var kids = live.box.children;
+        live.box.insertBefore(w.node, kids[Math.floor(Math.random() * (kids.length + 1))] || null);
+        live.words[word] = w;
+        fresh.push(w);
+      } else if (n > w.n) {
+        grown.push(w);
+      }
+      w.n = n;
       var t = flat ? 0.45 : (n - min) / (max - min);
-      var size = (IS_SCREEN ? 1.5 : 0.85) + Math.pow(t, 0.7) * (IS_SCREEN ? 4.4 : 1.5);
-      var span = el('span', null, word);
-      span.style.fontSize = size.toFixed(2) + 'rem';
-      span.style.opacity = (0.55 + t * 0.45).toFixed(2);
-      if (!IS_SCREEN) span.style.color = t > 0.5 ? 'var(--green-dark)' : 'var(--green-mid)';
-      span.title = n + (n === 1 ? ' persona' : ' persone');
-      box.appendChild(span);
+      w.node.style.fontSize = (1.5 + Math.pow(t, 0.7) * 4.4).toFixed(2) + 'rem';
+      w.node.style.color = t > 0.66 ? '#ffffff' : t > 0.33 ? '#6fe0a0' : '#bff0d3';
+      w.node.style.opacity = (0.6 + t * 0.4).toFixed(2);
+      w.node.title = n + (n === 1 ? ' persona' : ' persone');
     });
-    return box;
+
+    /* Entries that left the list: blocklist edited, or pushed past max_cloud_words. */
+    Object.keys(live.words).forEach(function (k) {
+      if (keep[k]) return;
+      live.words[k].node.remove();
+      delete live.words[k];
+      delete before[k];
+    });
+
+    if (CALM || !live.box.animate) return;
+
+    /* Glide: start each word where it was, at its old size, and let it settle. */
+    Object.keys(before).forEach(function (k) {
+      var w = live.words[k], a = before[k], b = w.node.getBoundingClientRect();
+      var dx = a.left - b.left, dy = a.top - b.top, sc = b.height ? a.height / b.height : 1;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(sc - 1) < 0.01) return;
+      w.node.animate([
+        { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + sc + ')' },
+        { transform: 'none' }
+      ], { duration: 900, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    });
+
+    fresh.forEach(function (w, i) {
+      w.inner.animate([
+        { transform: 'scale(.2)', opacity: 0, textShadow: '0 0 30px rgba(111,224,160,.95)' },
+        { transform: 'scale(1.18)', opacity: 1, offset: 0.55 },
+        { transform: 'scale(1)', textShadow: '0 0 0 rgba(111,224,160,0)' }
+      ], { duration: 900, delay: Math.min(i, 12) * 70, easing: 'ease-out', fill: 'backwards' });
+    });
+
+    grown.forEach(function (w) {
+      w.inner.animate([
+        { textShadow: '0 0 0 rgba(255,255,255,0)' },
+        { textShadow: '0 0 28px rgba(255,255,255,.9)', offset: 0.3 },
+        { textShadow: '0 0 0 rgba(255,255,255,0)' }
+      ], { duration: 1600, easing: 'ease-out' });
+    });
   }
 
   /* ── loop ──────────────────────────────────────────────────────────── */
