@@ -1,0 +1,4 @@
+# Only the Apps Script code goes to Google: the .gs files and the manifest.
+**/**
+!*.gs
+!appsscript.json

@@ -3,50 +3,80 @@
 Server side of the live session: collection, word cloud, theme extraction, ranking.
 The site's pages talk to it over one URL. Nothing runs on the web server.
 
-The files here are the reference copy. Paste them into the Apps Script editor
-(no `clasp` — a few files that change a handful of times a year do not justify a
-second OAuth login and an npm toolchain).
+The files here are the reference copy. `pubblica-script.sh` publishes them to every
+person's script with [clasp](https://github.com/google/clasp), Google's command line
+for Apps Script.
 
 ## One sheet per person
 
 Each facilitator (today `rodolfo`, `roberta`, `placeholder`) has their own spreadsheet,
 script, `/exec` URL and facilitator key, so several sessions can run at the same time
-without seeing each other's answers, themes or votes. Repeat the setup below once per
-person, then paste their `/exec` URL next to their name in `evento-config.js`.
+without seeing each other's answers, themes or votes.
 
-Adding a person: one more spreadsheet, one more line in `evento-config.js`, and three
-more pages — copy the three files of an existing person and change `data-persona`.
+| file | what it holds |
+|---|---|
+| `evento-live/clasp-<nome>.json` | the script ID of that person's project |
+| `evento-config.js` (site root) | the `/exec` URL of that person's web app |
+| `proiettore_` / `voto_studente_` / `operatore_<nome>.html` | that person's three pages: copy an existing person's and change `data-persona` |
 
-The same code goes into every copy: after changing a `.gs` file, paste it into each
-person's project and publish a new version in each.
+## Publishing code changes
 
-## Setup, in order
+```
+evento-live/pubblica-script.sh              # every person with a clasp-<nome>.json
+evento-live/pubblica-script.sh rodolfo      # one person
+evento-live/pubblica-script.sh --dry-run    # list what would be published, change nothing
+```
+
+For each person it uploads the `.gs` files and `appsscript.json` (`.claspignore` keeps
+everything else here), then publishes a new version on their existing web app, so the
+`/exec` URL stays the same. The version description carries the date and the git
+commit: *Gestisci distribuzioni* in the editor shows which code each sheet runs.
+Script Properties and the sheet's data are never touched.
+
+When an update adds tabs or columns, run *EcoPsy → Inizializza fogli* once in each
+sheet afterwards.
+
+One-time setup on the computer that publishes:
+
+1. Turn on **Google Apps Script API** at https://script.google.com/home/usersettings,
+   for the Google account that publishes.
+2. `npx @google/clasp login` — opens the browser; the login is saved in
+   `~/.clasprc.json`, outside the repo.
+3. That account needs editor access to every person's spreadsheet.
+
+## Adding a person
 
 1. Create a spreadsheet — **Estensioni → Apps Script** creates the bound project.
-2. Paste each `.gs` file in, and replace `appsscript.json` (visible after
-   *Impostazioni progetto → Mostra file manifest*).
-3. Run `setup()` once from the editor. It creates `Config`, `Domande`, `Risposte`,
-   `Temi`, `Voti`, the three `Archivio` tabs, `Risultati`, `Cronologia`, `Log`.
-   On an existing sheet it adds the missing tabs and columns: run it (or *EcoPsy →
-   Inizializza fogli*) after pasting a new version. The first run asks for authorisation: *Avanzate → Apri progetto
-   (non sicuro)*, then *Consenti*. The warning says the script never went through
+   Copy its ID from *Impostazioni progetto → ID*.
+2. Write `evento-live/clasp-<nome>.json`, same shape as `clasp-rodolfo.json`, with that
+   ID. Add `<nome>: 'INCOLLA_URL_EXEC'` to `evento-config.js` and create their three
+   pages.
+3. `evento-live/pubblica-script.sh <nome>`. With no URL in `evento-config.js` yet, it
+   creates the first web app deployment and prints its id: paste
+   `https://script.google.com/macros/s/<id>/exec` next to the name.
+4. In the editor, reload and run `setup()` once. It creates `Config`, `Domande`,
+   `Risposte`, `Temi`, `Voti`, the three `Archivio` tabs, `Risultati`, `Cronologia`,
+   `Log`. The first run asks for authorisation: *Avanzate → Apri progetto (non
+   sicuro)*, then *Consenti*. The warning says the script never went through
    Google's review, which an unlisted internal script never does.
-4. **Proprietà script** → add `ANTHROPIC_API_KEY` (or `GEMINI_API_KEY`, and set
+5. **Proprietà script** → add `ANTHROPIC_API_KEY` (or `GEMINI_API_KEY`, and set
    `provider` to `gemini` in the `Config` tab).
-5. **Distribuisci → Nuova distribuzione → Web app**, *Esegui come: me*,
-   *Chi ha accesso: chiunque, anche anonimo* — the Italian menu calls this option
-   just *Chiunque*; *Chiunque con un Account Google* forces a login. Record the
-   `/exec` URL.
 6. Reload the spreadsheet → the **EcoPsy** menu appears → *Mostra chiave e link*.
    It asks once for the person's name (the one in their page addresses, e.g.
-   `rodolfo`), generates `FACILITATOR_KEY` as `<nome>-NNN`, and asks once for the `/exec` URL so it can
-   show the facilitator link. Paste the URL from step 5: the editor also carries a
-   *head deployment* with its own id, and only the versioned one reaches anonymous
-   visitors.
+   `rodolfo`), generates `FACILITATOR_KEY` as `<nome>-NNN`, and asks once for the
+   `/exec` URL so it can show the facilitator link. Paste the URL from step 3.
+7. Deploy the site, so the new pages and `evento-config.js` go online.
 
-> Every later change: **Gestisci distribuzioni → matita → Versione: Nuova versione**.
-> "Nuova distribuzione" mints a *different* URL, the published pages keep calling
-> the old one, and nothing announces it.
+Without clasp, the same by hand: paste each `.gs` file into the editor, replace
+`appsscript.json` (*Impostazioni progetto → Mostra file manifest*), and publish with
+**Distribuisci → Nuova distribuzione → Web app**, *Esegui come: me*, *Chi ha accesso:
+chiunque, anche anonimo* (the Italian menu calls it just *Chiunque*; *Chiunque con un
+Account Google* forces a login).
+
+> Every later change by hand: **Gestisci distribuzioni → matita → Versione: Nuova
+> versione**. "Nuova distribuzione" mints a *different* URL, the published pages keep
+> calling the old one, and nothing announces it. The editor also carries a *head
+> deployment* with its own id: only the versioned one reaches anonymous visitors.
 
 ## Endpoints
 
