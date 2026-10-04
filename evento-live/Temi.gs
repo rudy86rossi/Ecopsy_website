@@ -22,19 +22,26 @@ function readThemes_(qid) {
     });
 }
 
-/** Replaces one question's themes and leaves the other rounds' rows alone. */
+/**
+ * Replaces one question's themes and leaves the other rounds' rows alone. The
+ * themes it replaces go to the archive: ballots already cast name them by id.
+ */
 function writeThemes_(qid, themes) {
   const sh = sheet_('TEMI');
+  const width = HEADERS.TEMI.length;
   withLock_(function () {
     const last = sh.getLastRow();
-    const others = last < 2 ? [] : sh.getRange(2, 1, last - 1, 4).getValues()
-      .filter(function (r) { return !isForQuestion_(r[3], qid); });
+    const all = last < 2 ? [] : sh.getRange(2, 1, last - 1, width).getValues();
+    const others = all.filter(function (r) { return !isForQuestion_(r[3], qid); });
+    archiveRows_('TEMI', all.filter(function (r) { return isForQuestion_(r[3], qid) && String(r[1]).trim() !== ''; }), 'nuova analisi');
+    const now = new Date();
+    const session = sessionId_();
     const mine = themes.map(function (t, i) {
-      return ['t' + (i + 1), safeCell_(String(t.label || '').trim()), safeCell_(String(t.description || '').trim()), qid];
+      return ['t' + (i + 1), safeCell_(String(t.label || '').trim()), safeCell_(String(t.description || '').trim()), qid, session, now];
     });
     const rows = others.concat(mine);
-    if (last > 1) sh.getRange(2, 1, last - 1, 4).clearContent();
-    if (rows.length) sh.getRange(2, 1, rows.length, 4).setValues(rows);
+    if (last > 1) sh.getRange(2, 1, last - 1, width).clearContent();
+    if (rows.length) sh.getRange(2, 1, rows.length, width).setValues(rows);
   });
   dropStateCache_();
 }

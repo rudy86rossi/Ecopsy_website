@@ -161,7 +161,7 @@ function menuDomandaSuccessiva() {
 function menuReset() {
   const ui = SpreadsheetApp.getUi();
   const answer = ui.alert('Azzerare la sessione?',
-    'Cancella risposte, temi e voti di tutte le domande e torna alla prima. Il foglio conserva Config, Domande e Log.',
+    'Sposta risposte, temi e voti di tutte le domande nei fogli Archivio, apre una nuova sessione e torna alla prima domanda.',
     ui.ButtonSet.YES_NO);
   if (answer !== ui.Button.YES) return;
   resetSession_('menu');
@@ -189,12 +189,13 @@ function provaRiempi() {
     ['Disuguaglianze economiche', 'Accesso ai servizi', 'la solitudine']
   ];
   const now = new Date();
+  const session = sessionId_();
   const rows = [];
   people.forEach(function (items, i) {
-    items.forEach(function (t) { rows.push([now, 'prova-' + i, t, qid]); });
+    items.forEach(function (t) { rows.push([now, 'prova-' + i, t, qid, session]); });
   });
   const sh = sheet_('RISPOSTE');
-  sh.getRange(sh.getLastRow() + 1, 1, rows.length, 4).setValues(rows);
+  sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
   dropStateCache_();
   Logger.log('inserite ' + rows.length + ' idee di ' + people.length + ' partecipanti di prova (' + qid + ')');
 }

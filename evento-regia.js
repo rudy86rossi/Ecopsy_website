@@ -122,7 +122,7 @@
     var rb = el('button', 'reset', 'Azzera la sessione');
     rb.type = 'button';
     rb.addEventListener('click', function () {
-      if (!confirm('Cancella risposte, temi e voti di tutte le domande e torna alla prima. Procedere?')) return;
+      if (!confirm('Sposta risposte, temi e voti di tutte le domande nei fogli Archivio, apre una nuova sessione e torna alla prima domanda. Procedere?')) return;
       busy = true;
       post({ action: 'reset', confirm: 'RESET' }).then(function (res) {
         busy = false;

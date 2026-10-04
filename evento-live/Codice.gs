@@ -126,8 +126,9 @@ function actionSubmit_(body) {
 
   withLock_(function () {
     const sh = sheet_('RISPOSTE');
-    const rows = items.map(function (t) { return [now, voterId, safeCell_(t), qid]; });
-    sh.getRange(sh.getLastRow() + 1, 1, rows.length, 4).setValues(rows);
+    const session = sessionId_();
+    const rows = items.map(function (t) { return [now, voterId, safeCell_(t), qid, session]; });
+    sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
   });
   dropStateCache_();
   log_('submit', voterId + ' ' + qid + ' ×' + items.length, 'ok');
@@ -155,21 +156,10 @@ function actionBallot_(body) {
   if (!ranking.length) return { ok: false, error: 'nessun tema selezionato' };
   const voterId = cleanId_(body.voterId);
 
-  // One ballot per device and question: a re-submission replaces, it does not add.
+  // Every ballot is kept, a changed vote included: readBallots_ counts only the
+  // latest one per device and question.
   withLock_(function () {
-    const sh = sheet_('VOTI');
-    const last = sh.getLastRow();
-    const row = [new Date(), voterId, JSON.stringify(ranking), qid];
-    if (last >= 2) {
-      const rows = sh.getRange(1, 1, last, 4).getValues();
-      for (let i = 1; i < rows.length; i++) {
-        if (String(rows[i][1]) === voterId && isForQuestion_(rows[i][3], qid)) {
-          sh.getRange(i + 1, 1, 1, 4).setValues([row]);
-          return;
-        }
-      }
-    }
-    sh.appendRow(row);
+    sheet_('VOTI').appendRow([new Date(), voterId, JSON.stringify(ranking), qid, sessionId_()]);
   });
   dropStateCache_();
   log_('ballot', voterId + ' ' + ranking.join('>'), 'ok');
@@ -237,13 +227,20 @@ function actionReset_(body) {
   return { ok: true };
 }
 
-/** Empties every round and goes back to the first question. Domande is kept. */
+/**
+ * Moves every round into the archive tabs, starts a new session and goes back
+ * to the first question. Domande is kept.
+ */
 function resetSession_(from) {
   withLock_(function () {
     ['RISPOSTE', 'TEMI', 'VOTI'].forEach(function (k) {
       const sh = sheet_(k);
-      if (sh.getLastRow() > 1) sh.deleteRows(2, sh.getLastRow() - 1);
+      const last = sh.getLastRow();
+      if (last < 2) return;
+      archiveRows_(k, sh.getRange(2, 1, last - 1, HEADERS[k].length).getValues(), 'azzeramento');
+      sh.deleteRows(2, last - 1);
     });
+    startSession_();
   });
   const first = readQuestions_()[0];
   if (first) setConfig('current_question', first.id);

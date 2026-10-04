@@ -4,7 +4,7 @@ Server side of the live session: collection, word cloud, theme extraction, ranki
 The site's pages talk to it over one URL. Nothing runs on the web server.
 
 The files here are the reference copy. Paste them into the Apps Script editor
-(no `clasp` — seven files that change a handful of times a year do not justify a
+(no `clasp` — a few files that change a handful of times a year do not justify a
 second OAuth login and an npm toolchain).
 
 ## One sheet per person
@@ -26,7 +26,9 @@ person's project and publish a new version in each.
 2. Paste each `.gs` file in, and replace `appsscript.json` (visible after
    *Impostazioni progetto → Mostra file manifest*).
 3. Run `setup()` once from the editor. It creates `Config`, `Domande`, `Risposte`,
-   `Temi`, `Voti`, `Log`. The first run asks for authorisation: *Avanzate → Apri progetto
+   `Temi`, `Voti`, the three `Archivio` tabs, `Risultati`, `Cronologia`, `Log`.
+   On an existing sheet it adds the missing tabs and columns: run it (or *EcoPsy →
+   Inizializza fogli*) after pasting a new version. The first run asks for authorisation: *Avanzate → Apri progetto
    (non sicuro)*, then *Consenti*. The warning says the script never went through
    Google's review, which an unlisted internal script never does.
 4. **Proprietà script** → add `ANTHROPIC_API_KEY` (or `GEMINI_API_KEY`, and set
@@ -128,6 +130,25 @@ latecomers.
 The `Temi` tab is what the voting screen reads. The model is one way to fill it;
 typing five rows by hand is another, and the session cannot tell the difference.
 That is why a failed API call is an inconvenience, not the end of the event.
+
+## Data kept for analysis
+
+Nothing the room produces is deleted. Every row has a timestamp and a `sessione`:
+the date and time the session started. Each reset starts a new one.
+
+| tab | one row per |
+|---|---|
+| `Risposte` | idea written by a participant |
+| `Temi` | theme of a question, with when it was written |
+| `Voti` | ballot sent — a changed vote adds a row; the latest per device counts |
+| `Archivio risposte` / `temi` / `voti` | row moved out of the tab above, with `archiviato` (when) and `motivo`: `azzeramento` (reset) or `nuova analisi` (themes replaced by a new analysis) |
+| `Risultati` | theme in the ranking, each time a vote is closed |
+| `Cronologia` | change of phase, from the page or the menu |
+
+For analysis, read each tab together with its archive: *File → Scarica →
+Microsoft Excel* exports every tab at once. Ballots name themes by id (`t1`,
+`t2`…): match them with `Temi` and `Archivio temi` on `questionId` and
+`sessione`, using the theme rows written before the ballot's timestamp.
 
 ## Le pagine
 

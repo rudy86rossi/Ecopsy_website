@@ -3,7 +3,8 @@
  *
  * The script is bound to one spreadsheet, which holds everything: the config a
  * facilitator can edit by hand, the questions, the answers, the themes, the
- * ballots and the log. Nothing else is persisted anywhere.
+ * ballots, their archives, the results, the timeline and the log. Nothing else
+ * is persisted anywhere (see Archivio.gs for what is kept and where).
  *
  * A session is a sequence of rounds, one per row of the Domande tab. Answers,
  * themes and ballots carry the id of the question they belong to, so earlier
@@ -16,6 +17,11 @@ const SHEETS = {
   RISPOSTE: 'Risposte',
   TEMI:     'Temi',
   VOTI:     'Voti',
+  ARCHIVIO_RISPOSTE: 'Archivio risposte',
+  ARCHIVIO_TEMI:     'Archivio temi',
+  ARCHIVIO_VOTI:     'Archivio voti',
+  RISULTATI:  'Risultati',
+  CRONOLOGIA: 'Cronologia',
   LOG:      'Log'
 };
 
@@ -44,11 +50,16 @@ const OBSOLETE_CONFIG = ['question', 'min_word_len'];
 
 const HEADERS = {
   DOMANDE:  ['id', 'domanda'],
-  RISPOSTE: ['timestamp', 'voterId', 'text', 'questionId'],
-  TEMI:     ['id', 'label', 'description', 'questionId'],
-  VOTI:     ['timestamp', 'voterId', 'ranking', 'questionId'],
+  RISPOSTE: ['timestamp', 'voterId', 'text', 'questionId', 'sessione'],
+  TEMI:     ['id', 'label', 'description', 'questionId', 'sessione', 'timestamp'],
+  VOTI:     ['timestamp', 'voterId', 'ranking', 'questionId', 'sessione'],
+  RISULTATI:  ['timestamp', 'sessione', 'questionId', 'domanda', 'posizione', 'themeId', 'label', 'punti', 'primi posti', 'schede'],
+  CRONOLOGIA: ['timestamp', 'sessione', 'questionId', 'fase'],
   LOG:      ['timestamp', 'action', 'detail', 'outcome']
 };
+['RISPOSTE', 'TEMI', 'VOTI'].forEach(function (k) {
+  HEADERS['ARCHIVIO_' + k] = HEADERS[k].concat(['archiviato', 'motivo']);
+});
 
 function ss_() {
   return SpreadsheetApp.getActive();
@@ -83,7 +94,8 @@ function setup() {
       .forEach(function (row) { cfg.deleteRow(row); });
   }
 
-  ['DOMANDE', 'RISPOSTE', 'TEMI', 'VOTI', 'LOG'].forEach(function (k) {
+  ['DOMANDE', 'RISPOSTE', 'TEMI', 'VOTI', 'ARCHIVIO_RISPOSTE', 'ARCHIVIO_TEMI', 'ARCHIVIO_VOTI',
+   'RISULTATI', 'CRONOLOGIA', 'LOG'].forEach(function (k) {
     const name = SHEETS[k];
     let sh = ss.getSheetByName(name);
     if (!sh) {
@@ -96,8 +108,9 @@ function setup() {
         sh.setColumnWidth(1, 80).setColumnWidth(2, 640);
       }
     } else if (sh.getLastColumn() < HEADERS[k].length) {
-      // A tab from the first version: add the questionId column. Its empty cells
-      // count as the question on screen (see stampQuestion_).
+      // A tab from an earlier version: add the new columns. An empty questionId
+      // counts as the question on screen (see stampQuestion_), an empty sessione
+      // as the current session (see archiveRows_).
       sh.getRange(1, 1, 1, HEADERS[k].length).setValues([HEADERS[k]]).setFontWeight('bold');
     }
   });
@@ -162,11 +175,18 @@ function setConfig(key, value) {
     if (rows[i].key === key) {
       sh.getRange(rows[i].row, 2).setValue(value);
       dropStateCache_();
+      if (key === 'phase') recordPhase_(value, currentQuestionIn_(rows));
       return;
     }
   }
   sh.getRange(sh.getLastRow() + 1, 1, 1, 2).setValues([[key, value]]);
   dropStateCache_();
+  if (key === 'phase') recordPhase_(value, currentQuestionIn_(rows));
+}
+
+function currentQuestionIn_(rows) {
+  const r = rows.filter(function (r) { return r.key === 'current_question'; })[0];
+  return r ? String(r.value).trim() : '';
 }
 
 /**
