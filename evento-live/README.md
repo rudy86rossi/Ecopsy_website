@@ -139,11 +139,32 @@ accidental double submissions; it is not an identity check and does not need to 
 
 ## Running the session
 
-The questions are the rows of the `Domande` tab (`id`, `domanda`), one round
-each. A round runs `collecting` → `analysing` → `themes` → `voting` → `results`;
-*Domanda successiva* then opens the next question's `collecting`. The facilitator
+The questions are the rows of the `Domande` tab, one round each:
+
+| column | what to write |
+|---|---|
+| `id` | short id (`q1`, `q2`…); empty means its position |
+| `domanda` | the question shown on screen |
+| `opzioni` | for a poll: the choices, separated by `\|`. Empty for an open question |
+| `multipla` | poll only: `sì` lets a participant pick several choices |
+| `esclusiva` | poll only: choices that clear all the others when picked (e.g. `No`), separated by `\|` |
+
+An open question runs `collecting` → `analysing` → `themes` → `voting` →
+`results`. A poll runs `collecting` → `results`: the projector shows the
+choices and how many have answered, and the bars (count and share of
+participants) only when the facilitator closes it. A participant can change a
+poll answer while it is open; the latest one per device counts.
+
+*Domanda successiva* opens the next question's `collecting`, from any phase but
+the analysis, so a round can stop at the cloud or the themes. The facilitator
 drives it from the page (`#k=<chiave>`) or from the **EcoPsy** menu, and can
 also jump to any question from the page's *Domande* list.
+
+Each request to the web app costs about 2.5 s of Apps Script start-up, plus
+2–3 s when it has to read the tabs. So the state the screens poll is kept in
+the script cache until something changes: every write clears it, an edit typed
+in the sheet too (`onEdit`), and each facilitator command answers with the new
+state so the next poll finds it ready.
 
 Answers, themes and ballots carry a `questionId`, so every round stays in the
 sheet. A row with an empty `questionId` — a theme typed by hand — belongs to
@@ -168,11 +189,11 @@ the date and time the session started. Each reset starts a new one.
 
 | tab | one row per |
 |---|---|
-| `Risposte` | idea written by a participant |
+| `Risposte` | idea written by a participant, or option chosen in a poll |
 | `Temi` | theme of a question, with when it was written |
 | `Voti` | ballot sent — a changed vote adds a row; the latest per device counts |
 | `Archivio risposte` / `temi` / `voti` | row moved out of the tab above, with `archiviato` (when) and `motivo`: `azzeramento` (reset) or `nuova analisi` (themes replaced by a new analysis) |
-| `Risultati` | theme in the ranking, each time a vote is closed |
+| `Risultati` | theme in the ranking, each time a vote is closed. For a poll: option, with `punti` = how many chose it and `schede` = how many answered |
 | `Cronologia` | change of phase, from the page or the menu |
 
 For analysis, read each tab together with its archive: *File → Scarica →

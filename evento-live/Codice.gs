@@ -37,10 +37,10 @@ function doPost(e) {
     switch (body.action) {
       case 'submit':  return json_(actionSubmit_(body));
       case 'ballot':  return json_(actionBallot_(body));
-      case 'phase':   return json_(actionPhase_(body));
-      case 'question': return json_(actionQuestion_(body));
-      case 'analyze': return json_(actionAnalyze_(body));
-      case 'reset':   return json_(actionReset_(body));
+      case 'phase':   return json_(withState_(actionPhase_(body)));
+      case 'question': return json_(withState_(actionQuestion_(body)));
+      case 'analyze': return json_(withState_(actionAnalyze_(body)));
+      case 'reset':   return json_(withState_(actionReset_(body)));
       default:        return json_({ ok: false, error: 'azione sconosciuta' });
     }
   } catch (err) {
@@ -61,19 +61,31 @@ function json_(obj) {
 /**
  * Everything both screens need, in one object.
  *
- * `results` is withheld until the facilitator closes the vote: a tally that
- * updates while people are still voting steers everyone who votes late.
+ * `results` and `poll.results` are withheld until the facilitator closes the
+ * round: a tally that updates while people are still answering steers everyone
+ * who answers late.
  * `rev` changes only when something changed, so the projector can skip a redraw.
+ *
+ * Every request pays about 2.5 s of Apps Script start-up, and building the
+ * state reads five tabs on top of that. So the state is kept in the cache until
+ * something writes (every write calls dropStateCache_, a hand edit too: see
+ * onEdit), and most polls cost only the start-up.
  */
+const STATE_TTL = 30;
+
 function state_() {
-  const cached = CacheService.getScriptCache().get('state');
+  const cache = CacheService.getScriptCache();
+  const cached = cache.get('state');
   if (cached) return JSON.parse(cached);
+  const gen = cache.get('state-gen');
 
   const cfg = getConfig();
-  const qid = cfg.question.id;
+  const q = cfg.question;
+  const qid = q.id;
+  const isPoll = !!q.options;
   const answers = readAnswers_(qid);
-  const themes = readThemes_(qid);
-  const ballots = readBallots_(qid);
+  const themes = isPoll ? [] : readThemes_(qid);
+  const ballots = isPoll ? [] : readBallots_(qid);
 
   const out = {
     ok: true,
@@ -85,24 +97,40 @@ function state_() {
     questions: cfg.questions,
     answerFields: cfg.answer_fields,
     topN: cfg.top_n,
+    poll: isPoll ? {
+      options: q.options,
+      multiple: q.multiple,
+      exclusive: q.exclusive,
+      results: cfg.phase === 'results' ? countPoll_(q, answers) : null
+    } : null,
     responses: countParticipants_(answers),
     entries: answers.length,
     ballots: ballots.length,
-    cloud: buildCloud_(answers, cfg),
+    cloud: isPoll ? [] : buildCloud_(answers, cfg),
     themes: themes,
-    results: cfg.phase === 'results' ? scoreBallots_(ballots, themes, cfg) : null,
-    rev: [qid, cfg.phase, answers.length, themes.length, ballots.length].join('-'),
-    serverTime: Date.now()
+    results: !isPoll && cfg.phase === 'results' ? scoreBallots_(ballots, themes, cfg) : null,
+    rev: [qid, cfg.phase, answers.length, themes.length, ballots.length].join('-')
   };
 
-  // Two seconds of cache flattens the burst when 20 phones poll at once; the
-  // projector still feels live and every write drops the key.
-  CacheService.getScriptCache().put('state', JSON.stringify(out), 2);
+  // A write that landed while this state was being read has already dropped
+  // the cache; storing this (older) state would bring it back.
+  if (cache.get('state-gen') === gen) cache.put('state', JSON.stringify(out), STATE_TTL);
   return out;
 }
 
 function dropStateCache_() {
-  CacheService.getScriptCache().remove('state');
+  const cache = CacheService.getScriptCache();
+  cache.put('state-gen', Utilities.getUuid(), 21600);
+  cache.remove('state');
+}
+
+/**
+ * A facilitator action answers with the new state: the facilitator page shows
+ * it without asking again, and the cache is warm when the projector polls.
+ */
+function withState_(res) {
+  if (res && res.ok) res.state = state_();
+  return res;
 }
 
 /* ── participant actions ───────────────────────────────────────────────── */
@@ -110,6 +138,7 @@ function dropStateCache_() {
 function actionSubmit_(body) {
   const cfg = getConfig();
   if (cfg.phase !== 'collecting') return { ok: false, error: 'la raccolta è chiusa' };
+  if (cfg.question.options) return submitPoll_(cfg, body);
 
   // One idea per box. Each becomes its own row, and its own entry in the cloud.
   const items = (Array.isArray(body.items) ? body.items : [body.text])
@@ -135,9 +164,28 @@ function actionSubmit_(body) {
   return { ok: true };
 }
 
+function submitPoll_(cfg, body) {
+  const choice = checkPollChoice_(cfg.question, body.items);
+  if (choice.error) return { ok: false, error: choice.error };
+  const voterId = cleanId_(body.voterId);
+  const qid = cfg.question.id;
+  const now = new Date();
+
+  withLock_(function () {
+    const sh = sheet_('RISPOSTE');
+    const session = sessionId_();
+    const rows = choice.items.map(function (t) { return [now, voterId, safeCell_(t), qid, session]; });
+    sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+  });
+  dropStateCache_();
+  log_('submit', voterId + ' ' + qid + ' sondaggio ×' + choice.items.length, 'ok');
+  return { ok: true };
+}
+
 function actionBallot_(body) {
   const cfg = getConfig();
   if (cfg.phase !== 'voting') return { ok: false, error: 'la votazione non è aperta' };
+  if (cfg.question.options) return { ok: false, error: 'questa domanda non ha una votazione' };
 
   const qid = cfg.question.id;
   const valid = {};
@@ -172,6 +220,9 @@ function actionPhase_(body) {
   requireKey_(body.key);
   const to = String(body.to || '');
   if (PHASES.indexOf(to) === -1) return { ok: false, error: 'fase sconosciuta' };
+  if (getConfig().question.options && to !== 'collecting' && to !== 'results') {
+    return { ok: false, error: 'un sondaggio ha solo raccolta e risultati' };
+  }
   setConfig('phase', to);
   log_('phase', to, 'ok');
   return { ok: true, phase: to };
@@ -187,7 +238,7 @@ function actionQuestion_(body) {
     if (!nxt) return { ok: false, error: 'questa è l’ultima domanda' };
     to = nxt.id;
   }
-  return goToQuestion_(to);
+  return goToQuestion_(to, cfg);
 }
 
 function actionAnalyze_(body) {
@@ -199,6 +250,7 @@ function actionAnalyze_(body) {
 function runAnalyze_() {
   const cfg = getConfig();
   const qid = cfg.question.id;
+  if (cfg.question.options) return { ok: false, error: 'un sondaggio non si analizza: chiudi e mostra i risultati' };
   const answers = readAnswers_(qid);
   if (!answers.length) return { ok: false, error: 'nessuna risposta da analizzare' };
 
@@ -243,8 +295,7 @@ function resetSession_(from) {
     startSession_();
   });
   const first = readQuestions_()[0];
-  if (first) setConfig('current_question', first.id);
-  setConfig('phase', 'collecting');
+  setConfigs_(first ? { current_question: first.id, phase: 'collecting' } : { phase: 'collecting' });
   log_('reset', from, 'ok');
 }
 

@@ -57,10 +57,15 @@ function recordPhase_(phase, qid) {
   }
 }
 
-/** The ranking as the room sees it when the vote closes, one row per theme. */
+/**
+ * The ranking as the room sees it when the vote closes, one row per theme.
+ * For a poll, one row per option: `label` is the option, `punti` how many
+ * participants picked it, `schede` how many answered.
+ */
 function recordResults_() {
   const cfg = getConfig();
   const qid = cfg.question.id;
+  if (cfg.question.options) return recordPollResults_(cfg);
   const ballots = readBallots_(qid);
   const rows = scoreBallots_(ballots, readThemes_(qid), cfg);
   if (!rows.length) return;
@@ -68,6 +73,20 @@ function recordResults_() {
   const session = sessionId_();
   const out = rows.map(function (r, i) {
     return [now, session, qid, safeCell_(cfg.question.text), i + 1, r.id, safeCell_(r.label), r.points, r.firsts, ballots.length];
+  });
+  const sh = sheet_('RISULTATI');
+  sh.getRange(sh.getLastRow() + 1, 1, out.length, out[0].length).setValues(out);
+}
+
+function recordPollResults_(cfg) {
+  const q = cfg.question;
+  const answers = readAnswers_(q.id);
+  const voters = countParticipants_(answers);
+  if (!voters) return;
+  const now = new Date();
+  const session = sessionId_();
+  const out = countPoll_(q, answers).map(function (r, i) {
+    return [now, session, q.id, safeCell_(q.text), i + 1, '', safeCell_(r.option), r.count, '', voters];
   });
   const sh = sheet_('RISULTATI');
   sh.getRange(sh.getLastRow() + 1, 1, out.length, out[0].length).setValues(out);

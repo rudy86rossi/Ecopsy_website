@@ -12,7 +12,7 @@ function onOpen() {
     .addItem('1 · Apri raccolta', 'menuApriRaccolta')
     .addItem('2 · Chiudi raccolta e analizza', 'menuAnalizza')
     .addItem('3 · Apri votazione', 'menuApriVotazione')
-    .addItem('4 · Chiudi votazione e mostra risultati', 'menuRisultati')
+    .addItem('4 · Chiudi e mostra i risultati', 'menuRisultati')
     .addItem('5 · Passa alla domanda successiva', 'menuDomandaSuccessiva')
     .addSeparator()
     .addItem('Nuova chiave facilitatore', 'nuovaChiave')
@@ -118,6 +118,10 @@ function menuApriRaccolta() {
 
 function menuAnalizza() {
   const ui = SpreadsheetApp.getUi();
+  if (getConfig().question.options) {
+    ui.alert('La domanda sullo schermo è un sondaggio: non si analizza. Usa “Chiudi e mostra i risultati”.');
+    return;
+  }
   const res = runAnalyze_();
   if (res.ok) {
     ui.alert('Temi estratti: ' + res.themes.length + '.\n\nControllali nel foglio Temi, poi apri la votazione.');
@@ -129,6 +133,10 @@ function menuAnalizza() {
 }
 
 function menuApriVotazione() {
+  if (getConfig().question.options) {
+    SpreadsheetApp.getUi().alert('La domanda sullo schermo è un sondaggio: non ha temi né votazione. Usa “Chiudi e mostra i risultati”.');
+    return;
+  }
   if (!readThemes_(getConfig().question.id).length) {
     SpreadsheetApp.getUi().alert('Nessun tema nel foglio Temi. Aggiungine almeno uno prima di aprire la votazione.');
     return;
@@ -141,6 +149,16 @@ function menuRisultati() {
   setConfig('phase', 'results');
   const cfg = getConfig();
   const qid = cfg.question.id;
+  if (cfg.question.options) {
+    const answers = readAnswers_(qid);
+    toast_('Sondaggio chiuso');
+    SpreadsheetApp.getUi().alert(
+      'Risultati (' + countParticipants_(answers) + ' partecipanti)\n\n' +
+      countPoll_(cfg.question, answers).map(function (r) {
+        return r.option + '  —  ' + r.count + ' (' + Math.round(r.share * 100) + '%)';
+      }).join('\n'));
+    return;
+  }
   const rows = scoreBallots_(readBallots_(qid), readThemes_(qid), cfg);
   toast_('Votazione chiusa');
   SpreadsheetApp.getUi().alert(
@@ -181,7 +199,9 @@ function toast_(msg) {
 /** Fills the question on screen with fake answers so the cloud and the analysis can be tried. */
 function provaRiempi() {
   setup();
-  const qid = getConfig().question.id;
+  const q = getConfig().question;
+  const qid = q.id;
+  if (q.options) return provaRiempiSondaggio_(q);
   const people = [
     ['Ansia da prestazione', 'Giudizio dei coetanei', 'Voti'],
     ['Pressione scolastica', 'I social media', 'voti'],
@@ -202,6 +222,25 @@ function provaRiempi() {
   sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
   dropStateCache_();
   Logger.log('inserite ' + rows.length + ' idee di ' + people.length + ' partecipanti di prova (' + qid + ')');
+}
+
+/** Twelve fake participants for a poll: one or two options each, never mixing an exclusive one. */
+function provaRiempiSondaggio_(q) {
+  const now = new Date();
+  const session = sessionId_();
+  const free = q.options.filter(function (o) { return q.exclusive.indexOf(o) === -1; });
+  const rows = [];
+  for (let i = 0; i < 12; i++) {
+    let items = [q.options[i % q.options.length]];
+    if (q.multiple && i % 3 === 0 && free.length > 1 && q.exclusive.indexOf(items[0]) === -1) {
+      items.push(free.filter(function (o) { return o !== items[0]; })[0]);
+    }
+    items.forEach(function (t) { rows.push([now, 'prova-' + i, t, q.id, session]); });
+  }
+  const sh = sheet_('RISPOSTE');
+  sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+  dropStateCache_();
+  Logger.log('inserite ' + rows.length + ' scelte di 12 partecipanti di prova (' + q.id + ')');
 }
 
 /** Exercises the whole read path without deploying anything. */

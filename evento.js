@@ -8,7 +8,8 @@
   var PERSONA = document.body.dataset.persona || '';
   var URL_EXEC = (window.EVENTO_PERSONE || {})[PERSONA];
   var IS_SCREEN = document.body.dataset.ruolo === 'proiettore';
-  var POLL_MS = IS_SCREEN ? 3000 : 5000;
+  /* Polls are answered from the server's cache, so the projector can ask often. */
+  var POLL_MS = IS_SCREEN ? 2000 : 5000;
 
   var stage = document.getElementById('stage');
   var titleEl = document.getElementById('title');
@@ -87,10 +88,14 @@
 
   /* — phone — */
   function phoneView(s) {
+    if (s.poll) {
+      if (s.phase === 'results') return resultsCard(s);
+      return isDone('answer') ? waitCard(s, 'Risposta inviata', 'Puoi cambiarla finché la raccolta è aperta.', 'answer') : pollCard(s);
+    }
     if (s.phase === 'collecting') return isDone('answer') ? waitCard(s, 'Risposta inviata', 'Guarda lo schermo: le parole compaiono man mano.') : answerCard(s);
     if (s.phase === 'analysing')  return waitCard(s, 'Analisi in corso', 'Stiamo raggruppando le risposte in temi.');
     if (s.phase === 'themes')     return themesPreview(s);
-    if (s.phase === 'voting')     return isDone('vote') ? waitCard(s, 'Voto registrato', 'Puoi cambiarlo finché la votazione è aperta.', true) : voteCard(s);
+    if (s.phase === 'voting')     return isDone('vote') ? waitCard(s, 'Voto registrato', 'Puoi cambiarlo finché la votazione è aperta.', 'vote') : voteCard(s);
     if (s.phase === 'results')    return resultsCard(s);
   }
 
@@ -140,7 +145,7 @@
       status.textContent = 'Invio…';
       post({ action: 'submit', voterId: voterId(), items: items })
         .then(function (res) {
-          if (res.ok) { markDone('answer'); tick(true); }
+          if (res.ok) { markDone('answer'); render(state); }
           else { btn.disabled = false; status.className = 'status err'; status.textContent = res.error || 'Invio non riuscito.'; }
         })
         .catch(function () {
@@ -154,16 +159,17 @@
     inputs[0].focus();
   }
 
-  function waitCard(s, head, sub, allowChange) {
+  /* `change` names what can still be changed: 'vote', or 'answer' for a poll. */
+  function waitCard(s, head, sub, change) {
     var card = el('div', 'card done');
     card.appendChild(el('div', 'tick', '✓'));
     card.appendChild(el('h2', null, head));
     card.appendChild(el('p', null, sub));
-    if (allowChange) {
-      var b = el('button', 'act', 'Cambia il mio voto');
+    if (change) {
+      var b = el('button', 'act', change === 'vote' ? 'Cambia il mio voto' : 'Cambia la mia risposta');
       b.addEventListener('click', function () {
-        try { sessionStorage.removeItem(submittedKey('vote')); } catch (e) {}
-        lastRev = null; tick(true);
+        try { sessionStorage.removeItem(submittedKey(change)); } catch (e) {}
+        render(state);
       });
       card.appendChild(b);
     }
@@ -239,8 +245,74 @@
       status.textContent = 'Invio…';
       post({ action: 'ballot', voterId: voterId(), ranking: picked })
         .then(function (res) {
-          if (res.ok) { markDone('vote'); lastRev = null; tick(true); }
+          if (res.ok) { markDone('vote'); render(state); }
           else { btn.disabled = false; status.className = 'status err'; status.textContent = res.error || 'Voto non registrato.'; }
+        })
+        .catch(function () {
+          btn.disabled = false;
+          status.className = 'status err';
+          status.textContent = 'Nessuna risposta dal server. Riprova.';
+        });
+    });
+
+    stage.appendChild(card);
+  }
+
+  /* A poll: tap to choose, tap again to clear. With several choices allowed,
+     an exclusive option ("No") clears the others and any other clears it. */
+  function pollCard(s) {
+    var p = s.poll;
+    picked = [];
+    var card = el('div', 'card');
+    if (roundLabel(s)) card.appendChild(el('div', 'round', roundLabel(s)));
+    card.appendChild(el('div', 'question', s.question));
+    card.appendChild(el('p', 'hint', p.multiple ? 'Puoi sceglierne più di una.' : 'Scegline una.'));
+
+    var btn = el('button', 'act', 'Invia');
+    var status = el('div', 'status');
+    status.setAttribute('role', 'status');
+
+    var buttons = p.options.map(function (o) {
+      var row = el('button', 'theme opt');
+      row.type = 'button';
+      var badge = el('span', 'badge');
+      row.appendChild(badge);
+      row.appendChild(el('div', 'label', o));
+      row.addEventListener('click', function () {
+        var at = picked.indexOf(o);
+        if (at !== -1) picked.splice(at, 1);
+        else if (!p.multiple) picked = [o];
+        else if (p.exclusive.indexOf(o) !== -1) picked = [o];
+        else {
+          picked = picked.filter(function (x) { return p.exclusive.indexOf(x) === -1; });
+          picked.push(o);
+        }
+        paint();
+      });
+      card.appendChild(row);
+      return { option: o, row: row, badge: badge };
+    });
+
+    function paint() {
+      buttons.forEach(function (b) {
+        var on = picked.indexOf(b.option) !== -1;
+        b.row.setAttribute('aria-pressed', on ? 'true' : 'false');
+        b.badge.textContent = on ? '✓' : '';
+      });
+      btn.disabled = picked.length === 0;
+    }
+    paint();
+
+    card.appendChild(btn);
+    card.appendChild(status);
+    btn.addEventListener('click', function () {
+      btn.disabled = true;
+      status.className = 'status';
+      status.textContent = 'Invio…';
+      post({ action: 'submit', voterId: voterId(), items: picked })
+        .then(function (res) {
+          if (res.ok) { markDone('answer'); render(state); }
+          else { btn.disabled = false; status.className = 'status err'; status.textContent = res.error || 'Invio non riuscito.'; }
         })
         .catch(function () {
           btn.disabled = false;
@@ -254,8 +326,8 @@
 
   function resultsCard(s) {
     var card = el('div', 'card');
-    card.appendChild(el('div', 'question', 'Risultati'));
-    card.appendChild(resultsList(s));
+    card.appendChild(el('div', 'question', s.poll ? s.question : 'Risultati'));
+    card.appendChild(s.poll ? pollResults(s) : resultsList(s));
     stage.appendChild(card);
   }
 
@@ -293,6 +365,25 @@
       return;
     }
     stage.appendChild(el('div', 'qline', s.question));
+    if (s.poll) {
+      /* While the poll is open the room sees the choices and how many have
+         answered, never a running tally: on a personal question that would
+         steer and expose the people still answering. */
+      if (s.phase === 'results') {
+        stage.appendChild(pollResults(s));
+        return;
+      }
+      var opts = el('div');
+      s.poll.options.forEach(function (o) {
+        var row = el('div', 'theme opt');
+        row.appendChild(el('span', 'badge', '•'));
+        row.appendChild(el('div', 'label', o));
+        opts.appendChild(row);
+      });
+      stage.appendChild(opts);
+      stage.appendChild(el('div', 'meta', s.responses + (s.responses === 1 ? ' risposta' : ' risposte')));
+      return;
+    }
     if (s.phase === 'collecting') {
       if (!s.cloud.length) {
         stage.appendChild(el('div', 'waiting', 'Le risposte stanno arrivando…'));
@@ -349,6 +440,30 @@
       box.appendChild(bar);
       wrap.appendChild(box);
     });
+    return wrap;
+  }
+
+  /* Shares are of the people who answered: with several choices allowed they add up to more than 100%. */
+  function pollResults(s) {
+    var wrap = el('div');
+    var rows = s.poll.results || [];
+    if (!s.responses) { wrap.appendChild(el('p', 'hint', 'Nessuna risposta registrata.')); return wrap; }
+    var max = Math.max.apply(null, rows.map(function (r) { return r.count; })) || 1;
+    rows.forEach(function (r) {
+      var box = el('div', 'res');
+      var top = el('div', 'top');
+      top.appendChild(el('div', 'label', r.option));
+      top.appendChild(el('div', 'pts', r.count + ' · ' + Math.round(r.share * 100) + '%'));
+      box.appendChild(top);
+      var bar = el('div', 'bar');
+      var fill = el('i');
+      fill.style.width = Math.round((r.count / max) * 100) + '%';
+      bar.appendChild(fill);
+      box.appendChild(bar);
+      wrap.appendChild(box);
+    });
+    wrap.appendChild(el('div', IS_SCREEN ? 'meta' : 'hint', s.responses + (s.responses === 1 ? ' risposta' : ' risposte') +
+      (s.poll.multiple ? ' · una persona può indicarne più di una' : '')));
     return wrap;
   }
 

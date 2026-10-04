@@ -51,6 +51,7 @@ button.act:disabled { background: #b9c9bf; cursor: not-allowed; }
 .theme[aria-pressed="true"] .badge { background: var(--green-mid); color: var(--white); }
 .theme .label { font-family: var(--font-head); font-weight: 700; color: var(--green-dark); }
 .theme .desc { font-size: .85rem; color: var(--text-muted); line-height: 1.5; margin-top: 3px; }
+.theme.opt { align-items: center; }
 
 .hint { font-size: .85rem; color: var(--text-muted); margin-bottom: 14px; }
 .status { font-size: .85rem; margin-top: 12px; min-height: 1.3em; }

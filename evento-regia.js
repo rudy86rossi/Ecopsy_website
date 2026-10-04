@@ -51,12 +51,21 @@
     results:    'Risultati'
   };
 
+  /* Domanda successiva is offered from every phase but the analysis, so a
+     round can stop at the cloud or the themes when time runs short. */
   var STEPS = [
     { n: 1, to: 'collecting', label: 'Apri la raccolta',        sub: 'I partecipanti possono scrivere', from: ['results', 'themes', 'voting', 'analysing'] },
     { n: 2, act: 'analyze',   label: 'Chiudi e analizza',       sub: 'Estrae i temi dalle risposte',     from: ['collecting'] },
     { n: 3, to: 'voting',     label: 'Apri la votazione',       sub: 'I temi diventano votabili',        from: ['themes', 'results'] },
     { n: 4, to: 'results',    label: 'Chiudi e mostra i voti',  sub: 'La classifica compare sullo schermo', from: ['voting'] },
-    { n: 5, act: 'next',      label: 'Domanda successiva',      sub: 'Nuovo giro: si riparte dalla raccolta', from: ['results'] }
+    { n: 5, act: 'next',      label: 'Domanda successiva',      sub: 'Nuovo giro: si riparte dalla raccolta', from: ['collecting', 'themes', 'voting', 'results'] }
+  ];
+
+  /* A poll has no analysis and no vote: collect, show the bars, move on. */
+  var POLL_STEPS = [
+    { n: 1, to: 'collecting', label: 'Apri la raccolta',        sub: 'I partecipanti possono scegliere', from: ['results'] },
+    { n: 2, to: 'results',    label: 'Chiudi e mostra i risultati', sub: 'Le barre compaiono sullo schermo', from: ['collecting'] },
+    { n: 3, act: 'next',      label: 'Domanda successiva',      sub: 'Nuovo giro: si riparte dalla raccolta', from: ['collecting', 'results'] }
   ];
 
   var busy = false, state = null, timer = null;
@@ -78,9 +87,12 @@
     now.appendChild(el('span', 'pill', PHASE_LABEL[s.phase] || s.phase));
     var nums = el('div', 'nums');
     nums.appendChild(el('b', null, String(s.responses)));
-    nums.appendChild(document.createTextNode(s.responses === 1 ? ' partecipante · ' : ' partecipanti · '));
-    nums.appendChild(el('b', null, String(s.ballots)));
-    nums.appendChild(document.createTextNode(s.ballots === 1 ? ' voto' : ' voti'));
+    nums.appendChild(document.createTextNode(s.responses === 1 ? ' partecipante' : ' partecipanti'));
+    if (!s.poll) {
+      nums.appendChild(document.createTextNode(' · '));
+      nums.appendChild(el('b', null, String(s.ballots)));
+      nums.appendChild(document.createTextNode(s.ballots === 1 ? ' voto' : ' voti'));
+    }
     now.appendChild(nums);
     head.appendChild(now);
     var curq = el('div', 'curq');
@@ -94,7 +106,7 @@
     ctrl.appendChild(el('h2', null, 'Comandi'));
     var steps = el('div', 'steps');
 
-    STEPS.forEach(function (st) {
+    (s.poll ? POLL_STEPS : STEPS).forEach(function (st) {
       var b = el('button', 'step');
       b.type = 'button';
       b.appendChild(el('span', 'n', String(st.n)));
@@ -110,6 +122,8 @@
 
       b.addEventListener('click', function () {
         if (st.act === 'analyze' && !confirm('Chiudere la raccolta e analizzare le risposte di ' + s.responses + ' partecipanti?')) return;
+        if (st.act === 'next' && s.phase !== 'results' &&
+            !confirm('Passare alla domanda successiva senza arrivare ai risultati? Le risposte di questa domanda restano nel foglio.')) return;
         run(st, status, b);
       });
       steps.appendChild(b);
@@ -128,7 +142,7 @@
         busy = false;
         if (wrongKey(res)) return;
         say(status, res.ok ? 'Sessione azzerata.' : (res.error || 'Non riuscito.'), res.ok);
-        tick();
+        if (res.state) render(res.state); else tick();
       });
     });
     danger.appendChild(rb);
@@ -176,6 +190,19 @@
     }
 
     /* — results — */
+    if (s.poll && s.poll.results) {
+      var pc = el('div', 'card');
+      pc.appendChild(el('h2', null, 'Risultati'));
+      var ol3 = el('ol', 'themes');
+      s.poll.results.forEach(function (r) {
+        var li = el('li');
+        li.appendChild(el('span', 'label', r.option));
+        li.appendChild(el('div', 'desc', r.count + ' · ' + Math.round(r.share * 100) + '%'));
+        ol3.appendChild(li);
+      });
+      pc.appendChild(ol3);
+      app.appendChild(pc);
+    }
     if (s.phase === 'results' && s.results) {
       var rc = el('div', 'card');
       rc.appendChild(el('h2', null, 'Classifica'));
@@ -222,7 +249,8 @@
         if (wrongKey(res)) return;
         say(status, (res.error || 'Non riuscito.') + (res.fallback ? ' — ' + res.fallback : ''), false);
       }
-      tick();
+      /* A successful command answers with the new state: no second request. */
+      if (res.state) render(res.state); else tick();
     }).catch(function () {
       busy = false;
       say(status, 'Nessuna risposta dal server. Controlla la connessione e riprova.', false);

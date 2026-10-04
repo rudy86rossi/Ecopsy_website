@@ -49,7 +49,7 @@ const DEFAULT_CONFIG = [
 const OBSOLETE_CONFIG = ['question', 'min_word_len'];
 
 const HEADERS = {
-  DOMANDE:  ['id', 'domanda'],
+  DOMANDE:  ['id', 'domanda', 'opzioni', 'multipla', 'esclusiva'],
   RISPOSTE: ['timestamp', 'voterId', 'text', 'questionId', 'sessione'],
   TEMI:     ['id', 'label', 'description', 'questionId', 'sessione', 'timestamp'],
   VOTI:     ['timestamp', 'voterId', 'ranking', 'questionId', 'sessione'],
@@ -61,8 +61,13 @@ const HEADERS = {
   HEADERS['ARCHIVIO_' + k] = HEADERS[k].concat(['archiviato', 'motivo']);
 });
 
+// Looked up once per execution: every Apps Script call to the spreadsheet
+// costs a round trip, and a request touches the same tabs several times.
+let SS_ = null;
+const TABS_ = {};
+
 function ss_() {
-  return SpreadsheetApp.getActive();
+  return SS_ || (SS_ = SpreadsheetApp.getActive());
 }
 
 /** Creates any missing tab and fills Config with its defaults. Safe to re-run. */
@@ -119,9 +124,15 @@ function setup() {
 }
 
 function sheet_(key) {
-  const sh = ss_().getSheetByName(SHEETS[key]);
-  if (!sh) { setup(); return ss_().getSheetByName(SHEETS[key]); }
-  return sh;
+  if (TABS_[key]) return TABS_[key];
+  let sh = ss_().getSheetByName(SHEETS[key]);
+  if (!sh) { setup(); sh = ss_().getSheetByName(SHEETS[key]); }
+  return (TABS_[key] = sh);
+}
+
+/** A hand edit in the sheet (a theme typed in Temi, a Config value) shows on the screens at once. */
+function onEdit() {
+  try { dropStateCache_(); } catch (err) { /* the cache expires on its own */ }
 }
 
 function readConfigRows_(sh) {
@@ -132,15 +143,33 @@ function readConfigRows_(sh) {
     .filter(function (r) { return r.key !== ''; });
 }
 
-/** The rounds, in sheet order. An empty id falls back to its position. */
+/**
+ * The rounds, in sheet order. An empty id falls back to its position.
+ *
+ * A row with `opzioni` (choices separated by |) is a poll: participants pick
+ * from the choices, and the round goes from collecting straight to results.
+ * `multipla` = sì lets them pick several; `esclusiva` names the choices that
+ * clear all the others when picked (e.g. "No"). Without `opzioni` the row is
+ * an open question.
+ */
 function readQuestions_() {
   const sh = sheet_('DOMANDE');
   const last = sh.getLastRow();
   if (last < 2) return [];
-  return sh.getRange(2, 1, last - 1, 2).getValues()
+  const split = function (v) {
+    return String(v).split('|').map(function (o) { return o.trim(); }).filter(Boolean);
+  };
+  return sh.getRange(2, 1, last - 1, HEADERS.DOMANDE.length).getValues()
     .filter(function (r) { return String(r[1]).trim() !== ''; })
     .map(function (r, i) {
-      return { id: String(r[0]).trim() || ('q' + (i + 1)), text: String(r[1]).trim() };
+      const q = { id: String(r[0]).trim() || ('q' + (i + 1)), text: String(r[1]).trim() };
+      const options = split(r[2]);
+      if (options.length) {
+        q.options = options;
+        q.multiple = /^(s[iì]|yes|true|x|1)$/i.test(String(r[3]).trim());
+        q.exclusive = split(r[4]).filter(function (o) { return options.indexOf(o) !== -1; });
+      }
+      return q;
     });
 }
 
@@ -169,19 +198,29 @@ function getConfig() {
 }
 
 function setConfig(key, value) {
+  const pair = {};
+  pair[key] = value;
+  setConfigs_(pair);
+}
+
+/** Several Config values with one read of the tab. A phase change goes into Cronologia. */
+function setConfigs_(values) {
   const sh = sheet_('CONFIG');
   const rows = readConfigRows_(sh);
-  for (let i = 0; i < rows.length; i++) {
-    if (rows[i].key === key) {
-      sh.getRange(rows[i].row, 2).setValue(value);
-      dropStateCache_();
-      if (key === 'phase') recordPhase_(value, currentQuestionIn_(rows));
-      return;
+  Object.keys(values).forEach(function (key) {
+    const row = rows.filter(function (r) { return r.key === key; })[0];
+    if (row) {
+      sh.getRange(row.row, 2).setValue(values[key]);
+    } else {
+      const at = sh.getLastRow() + 1;
+      sh.getRange(at, 1, 1, 2).setValues([[key, values[key]]]);
+      rows.push({ row: at, key: key, value: values[key] });
     }
-  }
-  sh.getRange(sh.getLastRow() + 1, 1, 1, 2).setValues([[key, value]]);
+  });
   dropStateCache_();
-  if (key === 'phase') recordPhase_(value, currentQuestionIn_(rows));
+  if ('phase' in values) {
+    recordPhase_(values.phase, 'current_question' in values ? values.current_question : currentQuestionIn_(rows));
+  }
 }
 
 function currentQuestionIn_(rows) {
@@ -196,13 +235,12 @@ function currentQuestionIn_(rows) {
  * no questionId; they count as the question on screen. Before moving on they
  * are stamped with the outgoing id, so they stay with the round they belong to.
  */
-function goToQuestion_(toId) {
-  const cfg = getConfig();
+function goToQuestion_(toId, cfg) {
+  cfg = cfg || getConfig();
   const target = cfg.questions.filter(function (q) { return q.id === toId; })[0];
   if (!target) return { ok: false, error: 'domanda sconosciuta' };
   if (target.id !== cfg.question.id) stampQuestion_(cfg.question.id);
-  setConfig('current_question', target.id);
-  setConfig('phase', 'collecting');
+  setConfigs_({ current_question: target.id, phase: 'collecting' });
   log_('question', target.id, 'ok');
   return { ok: true, questionId: target.id };
 }
