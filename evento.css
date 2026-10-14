@@ -21,7 +21,15 @@ input.idea {
   padding: 13px 14px; border: 1px solid var(--border); border-radius: 10px;
   background: var(--white); color: var(--text);
 }
-input.idea:focus { outline: 2px solid var(--green-light); outline-offset: 1px; border-color: transparent; }
+textarea.idea.long {
+  display: block; width: 100%; resize: none; min-height: 8.5em;
+  font-family: var(--font-body); font-size: 1rem; line-height: 1.5;
+  padding: 13px 14px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--white); color: var(--text);
+}
+textarea.idea:disabled { opacity: .55; }
+.count { font-size: .78rem; color: var(--text-muted); text-align: right; margin-top: 4px; }
+textarea.idea:focus, input.idea:focus { outline: 2px solid var(--green-light); outline-offset: 1px; border-color: transparent; }
 
 button.act {
   display: block; width: 100%; margin-top: 14px;
@@ -55,8 +63,30 @@ button.act:disabled { background: #b9c9bf; cursor: not-allowed; }
 
 .hint { font-size: .85rem; color: var(--text-muted); margin-bottom: 14px; }
 .status { font-size: .85rem; margin-top: 12px; min-height: 1.3em; }
-.status.err { color: #a3352c; }
+.status.err {
+  color: #a3352c; background: #fdf3f2; border: 1px solid #efc9c4;
+  border-radius: 10px; padding: 10px 12px; font-size: .92rem; font-weight: 600;
+}
 .status.ok  { color: var(--green-mid); }
+
+/* ── Sending and loading: something always moves ── */
+button.act.working:disabled { background: var(--green-dark); cursor: progress; }
+button.act.working::before, .spinner {
+  content: ''; display: inline-block; width: 1em; height: 1em;
+  border: 2.5px solid currentColor; border-right-color: transparent; border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+button.act.working::before { margin-right: .55em; vertical-align: -2px; }
+input.idea:disabled, .theme:disabled { opacity: .55; }
+.loading { text-align: center; padding: 34px 10px; color: var(--text-muted); }
+.loading .spinner { width: 2rem; height: 2rem; border-width: 3px; color: var(--green-mid); margin-bottom: 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.done.pop .tick { animation: pop .5s cubic-bezier(.2,1.6,.4,1) both; }
+@keyframes pop { from { transform: scale(.2); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  button.act.working::before, .spinner { animation-duration: 2.4s; }
+  .done.pop .tick { animation: none; }
+}
 
 .done { text-align: center; padding: 30px 10px; }
 .done .tick { font-size: 2.4rem; line-height: 1; color: var(--green-mid); }
@@ -102,10 +132,25 @@ body.screen .res .label { color: var(--white); font-size: 1.6rem; }
 body.screen .res .pts { color: rgba(255,255,255,.65); font-size: 1.1rem; }
 body.screen .bar { height: 16px; background: rgba(255,255,255,.14); }
 body.screen .bar i { background: #6fe0a0; }
+body.screen .loading { color: rgba(255,255,255,.75); font-size: 1.4rem; }
+body.screen .loading .spinner { color: #6fe0a0; width: 3rem; height: 3rem; }
 body.screen .waiting { font-size: 2rem; color: rgba(255,255,255,.75); text-align: center; }
 body.screen .qline { font-size: 1.5rem; color: rgba(255,255,255,.85); margin-bottom: 28px; }
 body.screen.hasqr .wrap { padding-right: 250px; }
 body.screen .round { color: #8fe0b0; font-size: 1rem; }
+
+/* ── Long answers on the projector: a count and one dot per person ── */
+body.screen .bignum {
+  font-family: var(--font-head); font-weight: 800; font-size: 5rem;
+  color: var(--white); text-align: center; line-height: 1.1;
+}
+.dots { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; max-width: 1100px; margin: 36px auto 0; }
+.dot {
+  width: 22px; height: 22px; border-radius: 50%; background: #6fe0a0;
+  animation: dotin .7s cubic-bezier(.2,1.6,.4,1) backwards;
+}
+@keyframes dotin { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
 
 /* ── QR code: large on the opening screen, then in a corner for latecomers ── */
 .qr svg { display: block; width: 100%; height: auto; }

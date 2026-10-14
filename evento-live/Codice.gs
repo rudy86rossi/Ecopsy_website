@@ -83,6 +83,7 @@ function state_() {
   const q = cfg.question;
   const qid = q.id;
   const isPoll = !!q.options;
+  const isText = q.type === 'testo';
   const answers = readAnswers_(qid);
   const themes = isPoll ? [] : readThemes_(qid);
   const ballots = isPoll ? [] : readBallots_(qid);
@@ -93,6 +94,9 @@ function state_() {
     title: cfg.title,
     question: cfg.question.text,
     questionId: qid,
+    type: q.type,
+    session: sessionId_(),
+    maxLength: isText ? MAX_TEXT_LEN : MAX_ITEM_LEN,
     round: { n: cfg.questionIndex + 1, of: cfg.questions.length },
     questions: cfg.questions,
     answerFields: cfg.answer_fields,
@@ -106,7 +110,7 @@ function state_() {
     responses: countParticipants_(answers),
     entries: answers.length,
     ballots: ballots.length,
-    cloud: isPoll ? [] : buildCloud_(answers, cfg),
+    cloud: isPoll || isText ? [] : buildCloud_(answers, cfg),
     themes: themes,
     results: !isPoll && cfg.phase === 'results' ? scoreBallots_(ballots, themes, cfg) : null,
     rev: [qid, cfg.phase, answers.length, themes.length, ballots.length].join('-')
@@ -135,61 +139,132 @@ function withState_(res) {
 
 /* ── participant actions ───────────────────────────────────────────────── */
 
-function actionSubmit_(body) {
+/**
+ * What a participant's write needs to know: the phase, the question on screen,
+ * and for a ballot the themes. Taken from the cached state when there is one,
+ * since reading Config and Domande adds over a second to a request the phone
+ * is waiting on. Every write drops that cache, so it is never behind the sheet.
+ * `themeIds` is null when the state was not cached: the ballot reads Temi.
+ */
+function participantView_() {
+  const cached = CacheService.getScriptCache().get('state');
+  if (cached) {
+    const s = JSON.parse(cached);
+    return {
+      phase: s.phase, qid: s.questionId, type: s.type, poll: s.poll,
+      answerFields: s.answerFields, topN: s.topN,
+      themeIds: s.themes.map(function (t) { return t.id; })
+    };
+  }
   const cfg = getConfig();
-  if (cfg.phase !== 'collecting') return { ok: false, error: 'la raccolta è chiusa' };
-  if (cfg.question.options) return submitPoll_(cfg, body);
+  const q = cfg.question;
+  return {
+    phase: cfg.phase, qid: q.id, type: q.type,
+    poll: q.options ? { options: q.options, multiple: q.multiple, exclusive: q.exclusive } : null,
+    answerFields: cfg.answer_fields, topN: cfg.top_n,
+    themeIds: null
+  };
+}
+
+/**
+ * The phone retries a send whose reply never arrived, and the first attempt
+ * may have been written all the same. Each send carries an id; a write with an
+ * id already seen is skipped and answered as done. Call inside withLock_.
+ */
+function sentBefore_(sendId) {
+  return !!sendId && CacheService.getScriptCache().get('sent-' + sendId) !== null;
+}
+function sendIdOf_(body) {
+  return body.sendId ? cleanId_(body.sendId) : '';
+}
+function markSent_(sendId) {
+  if (sendId) CacheService.getScriptCache().put('sent-' + sendId, '1', 600);
+}
+
+/**
+ * Rows into Risposte, once per send. One appended block, so a reader never
+ * sees half a submission. With `oncePerVoter`, a device that already answered
+ * this question writes nothing; returns false then.
+ */
+function writeAnswers_(qid, voterId, items, sendId, oncePerVoter) {
+  const now = new Date();
+  let written = true;
+  withLock_(function () {
+    if (sentBefore_(sendId)) return;
+    const sh = sheet_('RISPOSTE');
+    if (oncePerVoter && hasAnswered_(sh, qid, voterId)) { written = false; return; }
+    const session = sessionId_();
+    const rows = items.map(function (t) { return [now, voterId, safeCell_(t), qid, session]; });
+    sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+    markSent_(sendId);
+  });
+  if (written) dropStateCache_();
+  return written;
+}
+
+/** Whether this device has a row for this question in Risposte (columns voterId, text, questionId). */
+function hasAnswered_(sh, qid, voterId) {
+  const last = sh.getLastRow();
+  if (last < 2) return false;
+  return sh.getRange(2, 2, last - 1, 3).getValues().some(function (r) {
+    return String(r[0]) === voterId && isForQuestion_(r[2], qid);
+  });
+}
+
+/* Participant writes leave no Log row: the Risposte or Voti row already says
+   who, when and what, and the phone is waiting on this request. */
+
+function actionSubmit_(body) {
+  const v = participantView_();
+  if (v.phase !== 'collecting') return { ok: false, error: 'la raccolta è chiusa' };
+  if (v.poll) return submitPoll_(v, body);
+  if (v.type === 'testo') return submitText_(v, body);
 
   // One idea per box. Each becomes its own row, and its own entry in the cloud.
   const items = (Array.isArray(body.items) ? body.items : [body.text])
     .map(function (t) { return String(t || '').replace(/\s+/g, ' ').trim(); })
     .filter(function (t) { return t !== ''; })
-    .slice(0, cfg.answer_fields);
+    .slice(0, v.answerFields);
   if (!items.length) return { ok: false, error: 'risposta vuota' };
   if (items.some(function (t) { return t.length > MAX_ITEM_LEN; })) {
     return { ok: false, error: 'risposta troppo lunga (massimo ' + MAX_ITEM_LEN + ' caratteri per idea)' };
   }
-  const voterId = cleanId_(body.voterId);
-  const qid = cfg.question.id;
-  const now = new Date();
-
-  withLock_(function () {
-    const sh = sheet_('RISPOSTE');
-    const session = sessionId_();
-    const rows = items.map(function (t) { return [now, voterId, safeCell_(t), qid, session]; });
-    sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
-  });
-  dropStateCache_();
-  log_('submit', voterId + ' ' + qid + ' ×' + items.length, 'ok');
+  writeAnswers_(v.qid, cleanId_(body.voterId), items, sendIdOf_(body));
   return { ok: true };
 }
 
-function submitPoll_(cfg, body) {
-  const choice = checkPollChoice_(cfg.question, body.items);
-  if (choice.error) return { ok: false, error: choice.error };
-  const voterId = cleanId_(body.voterId);
-  const qid = cfg.question.id;
-  const now = new Date();
+/**
+ * A `testo` question: one free answer per device, sent once. A second send
+ * from the same device (another tab, a reload) is answered `already` and
+ * changes nothing: the first answer stands.
+ */
+function submitText_(v, body) {
+  const raw = Array.isArray(body.items) ? body.items[0] : body.text;
+  const text = String(raw || '').replace(/\s+/g, ' ').trim();
+  if (!text) return { ok: false, error: 'risposta vuota' };
+  if (text.length > MAX_TEXT_LEN) {
+    return { ok: false, error: 'risposta troppo lunga (massimo ' + MAX_TEXT_LEN + ' caratteri)' };
+  }
+  const written = writeAnswers_(v.qid, cleanId_(body.voterId), [text], sendIdOf_(body), true);
+  return written ? { ok: true } : { ok: true, already: true };
+}
 
-  withLock_(function () {
-    const sh = sheet_('RISPOSTE');
-    const session = sessionId_();
-    const rows = choice.items.map(function (t) { return [now, voterId, safeCell_(t), qid, session]; });
-    sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
-  });
-  dropStateCache_();
-  log_('submit', voterId + ' ' + qid + ' sondaggio ×' + choice.items.length, 'ok');
+function submitPoll_(v, body) {
+  const choice = checkPollChoice_(v.poll, body.items);
+  if (choice.error) return { ok: false, error: choice.error };
+  writeAnswers_(v.qid, cleanId_(body.voterId), choice.items, sendIdOf_(body));
   return { ok: true };
 }
 
 function actionBallot_(body) {
-  const cfg = getConfig();
-  if (cfg.phase !== 'voting') return { ok: false, error: 'la votazione non è aperta' };
-  if (cfg.question.options) return { ok: false, error: 'questa domanda non ha una votazione' };
+  const v = participantView_();
+  if (v.phase !== 'voting') return { ok: false, error: 'la votazione non è aperta' };
+  if (v.poll) return { ok: false, error: 'questa domanda non ha una votazione' };
 
-  const qid = cfg.question.id;
+  const qid = v.qid;
   const valid = {};
-  readThemes_(qid).forEach(function (t) { valid[t.id] = true; });
+  (v.themeIds || readThemes_(qid).map(function (t) { return t.id; }))
+    .forEach(function (id) { valid[id] = true; });
 
   const seen = {};
   const ranking = (body.ranking || [])
@@ -199,18 +274,20 @@ function actionBallot_(body) {
       seen[id] = true;
       return true;
     })
-    .slice(0, cfg.top_n);
+    .slice(0, v.topN);
 
   if (!ranking.length) return { ok: false, error: 'nessun tema selezionato' };
   const voterId = cleanId_(body.voterId);
+  const sendId = sendIdOf_(body);
 
   // Every ballot is kept, a changed vote included: readBallots_ counts only the
   // latest one per device and question.
   withLock_(function () {
+    if (sentBefore_(sendId)) return;
     sheet_('VOTI').appendRow([new Date(), voterId, JSON.stringify(ranking), qid, sessionId_()]);
+    markSent_(sendId);
   });
   dropStateCache_();
-  log_('ballot', voterId + ' ' + ranking.join('>'), 'ok');
   return { ok: true, ranking: ranking };
 }
 

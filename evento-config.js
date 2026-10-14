@@ -9,6 +9,7 @@
    funzionare. */
 window.EVENTO_PERSONE = {
   rodolfo:     'https://script.google.com/macros/s/AKfycbwA7IO9bUp-pTUTdcIoAblcC9Ke5Rkqktl5erZMWAjRwK7sbPmur7hsdvJuro15W-hP/exec',
-  roberta:     'INCOLLA_URL_EXEC',
-  placeholder: 'INCOLLA_URL_EXEC'
+  roberta:     'https://script.google.com/macros/s/AKfycbzDvG9nqwsdAw6_Biuo4RllBMhsua3q4sxZh2D6bMGo0tVCh_KuC1VDnAOlcWbPnsgNtg/exec',
+  amelia:      'https://script.google.com/macros/s/AKfycbx8mRJplkIB6PGUSbagLdYC1mAWBYguPVAWHv9iVAXwnZN9xXed63PDjaaH1iXIsiOUeQ/exec',
+  eleonora:    'https://script.google.com/macros/s/AKfycbxRkZ2qEDiQcVEE8Thu1GTS4m7rnv8CzCbFT69qs3qmXuedk8JjGDZ6V4SfH79WGN3Shg/exec'
 };

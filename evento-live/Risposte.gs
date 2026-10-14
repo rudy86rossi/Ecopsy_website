@@ -11,6 +11,8 @@
  */
 
 const MAX_ITEM_LEN = 80;
+/** A `testo` question: one free answer per person, a few sentences. */
+const MAX_TEXT_LEN = 500;
 
 /** Answers to one question: one row per idea, several rows per participant. */
 function readAnswers_(qid) {

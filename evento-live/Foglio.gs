@@ -49,7 +49,7 @@ const DEFAULT_CONFIG = [
 const OBSOLETE_CONFIG = ['question', 'min_word_len'];
 
 const HEADERS = {
-  DOMANDE:  ['id', 'domanda', 'opzioni', 'multipla', 'esclusiva'],
+  DOMANDE:  ['id', 'domanda', 'opzioni', 'multipla', 'esclusiva', 'tipo'],
   RISPOSTE: ['timestamp', 'voterId', 'text', 'questionId', 'sessione'],
   TEMI:     ['id', 'label', 'description', 'questionId', 'sessione', 'timestamp'],
   VOTI:     ['timestamp', 'voterId', 'ranking', 'questionId', 'sessione'],
@@ -150,7 +150,9 @@ function readConfigRows_(sh) {
  * from the choices, and the round goes from collecting straight to results.
  * `multipla` = sì lets them pick several; `esclusiva` names the choices that
  * clear all the others when picked (e.g. "No"). Without `opzioni` the row is
- * an open question.
+ * an open question: `tipo` = testo asks for one longer free answer per person
+ * (no word cloud), anything else asks for short ideas that feed the cloud.
+ * `type` is 'sondaggio', 'testo' or 'parole'.
  */
 function readQuestions_() {
   const sh = sheet_('DOMANDE');
@@ -165,9 +167,12 @@ function readQuestions_() {
       const q = { id: String(r[0]).trim() || ('q' + (i + 1)), text: String(r[1]).trim() };
       const options = split(r[2]);
       if (options.length) {
+        q.type = 'sondaggio';
         q.options = options;
         q.multiple = /^(s[iì]|yes|true|x|1)$/i.test(String(r[3]).trim());
         q.exclusive = split(r[4]).filter(function (o) { return options.indexOf(o) !== -1; });
+      } else {
+        q.type = /^test/i.test(String(r[5]).trim()) ? 'testo' : 'parole';
       }
       return q;
     });
@@ -193,7 +198,7 @@ function getConfig() {
     if (out.questions[i].id === out.current_question) { at = i; break; }
   }
   out.questionIndex = at;
-  out.question = out.questions[at] || { id: 'q1', text: '' };
+  out.question = out.questions[at] || { id: 'q1', text: '', type: 'parole' };
   return out;
 }
 

@@ -9,7 +9,7 @@ for Apps Script.
 
 ## One sheet per person
 
-Each facilitator (today `rodolfo`, `roberta`, `placeholder`) has their own spreadsheet,
+Each facilitator (`rodolfo`, `roberta`, `amelia`, `eleonora`) has their own spreadsheet,
 script, `/exec` URL and facilitator key, so several sessions can run at the same time
 without seeing each other's answers, themes or votes.
 
@@ -84,7 +84,8 @@ Account Google* forces a login).
 
 ```json
 { "ok": true, "phase": "collecting", "title": "…",
-  "question": "…", "questionId": "q1", "round": { "n": 1, "of": 3 },
+  "question": "…", "questionId": "q1", "type": "parole", "maxLength": 80,
+  "session": "2026-10-11 10:00:00", "round": { "n": 1, "of": 3 },
   "questions": [{ "id": "q1", "text": "…" }], "answerFields": 3, "topN": 3,
   "responses": 14, "entries": 35, "ballots": 0,
   "cloud": [["social media", 7], ["scuola", 5]],
@@ -103,14 +104,16 @@ something changed, so the projector can skip a redraw.
 
 | action | body | phase required |
 |---|---|---|
-| `submit` | `{voterId, items:["…","…"]}` — up to `answer_fields`, 80 characters each | `collecting` |
-| `ballot` | `{voterId, ranking:["t2","t1","t5"]}` | `voting` |
+| `submit` | `{voterId, sendId, items:["…","…"]}` — up to `answer_fields`, 80 characters each; a `testo` question takes one item of up to 500 and replies `already: true` if the device had answered | `collecting` |
+| `ballot` | `{voterId, sendId, ranking:["t2","t1","t5"]}` | `voting` |
 | `phase` | `{key, to}` | facilitator key |
 | `question` | `{key, to}` — a question id, or `"next"` | facilitator key |
 | `analyze` | `{key}` | facilitator key |
 | `reset` | `{key, confirm:"RESET"}` | facilitator key |
 
 Every reply is HTTP 200 with `{ok: true|false}`; `ok:false` carries `error`.
+`sendId` is optional: a send repeated with the same id within 10 minutes is
+skipped, so the phone can retry a request whose reply was lost.
 
 ## How the pages must call it
 
@@ -148,6 +151,7 @@ The questions are the rows of the `Domande` tab, one round each:
 | `opzioni` | for a poll: the choices, separated by `\|`. Empty for an open question |
 | `multipla` | poll only: `sì` lets a participant pick several choices |
 | `esclusiva` | poll only: choices that clear all the others when picked (e.g. `No`), separated by `\|` |
+| `tipo` | open question only: `testo` asks for one free answer per person, up to 500 characters, with no word cloud. Empty (or `parole`) asks for short ideas that feed the cloud |
 
 An open question runs `collecting` → `analysing` → `themes` → `voting` →
 `results`. A poll runs `collecting` → `results`: the projector shows the
@@ -172,7 +176,15 @@ the question on screen, and is tagged with it when the room moves on.
 *Azzera sessione* empties all rounds and goes back to the first question;
 `Domande` is kept.
 
-The phone shows `answer_fields` short boxes, one idea per box. Each box is one
+A `testo` question shows one large box on the phone. Each device can send one
+answer per question: a second send (another tab, a reload) is answered
+`already` and the first answer stands. The projector shows the count and one
+dot per participant, never the answers themselves: nothing has been read yet,
+and anyone with the QR can type anything. Analysis, themes and vote run as for
+any open question; the prompt tells the model that one answer can touch
+several themes.
+
+For a `parole` question the phone shows `answer_fields` short boxes, one idea per box. Each box is one
 entry in the cloud, kept whole ("social media" stays together), counted once
 per person. The projector opens each round with the question and a large QR
 code for the phone page; once answers arrive the QR moves to a corner for

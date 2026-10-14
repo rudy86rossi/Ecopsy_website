@@ -59,6 +59,12 @@ COPY=(-a)
 for e in "${EXCLUDES[@]}"; do COPY+=(--exclude "$e"); done
 rsync "${COPY[@]}" "$LOCAL/" "$STAGE/"
 
+# The server sends no cache headers, so browsers keep old scripts and styles
+# after a deploy. A version in each local .js/.css link makes them fetch the new ones.
+VERSION="$(date +%Y%m%d%H%M%S)"
+find "$STAGE" -name '*.html' -exec sed -i -E \
+  "s/(src|href)=\"([^\":?]+\\.(js|css))\"/\\1=\"\\2?v=$VERSION\"/g" {} +
+
 BATCH="$STAGE/.sftp-batch"
 {
   echo "cd $REMOTE"

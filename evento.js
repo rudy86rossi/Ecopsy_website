@@ -48,10 +48,16 @@
       return window._vid;
     }
   }
-  /* Per question: moving to the next round must show the answer boxes again. */
-  function submittedKey(phase) { return 'ecopsy-' + PERSONA + '-' + (state ? state.questionId : '') + '-' + phase + '-done'; }
-  function markDone(phase) { try { sessionStorage.setItem(submittedKey(phase), '1'); } catch (e) {} }
-  function isDone(phase) { try { return sessionStorage.getItem(submittedKey(phase)) === '1'; } catch (e) { return false; } }
+  /* Per session and question: moving to the next round, or a reset, must show
+     the answer boxes again. A `testo` answer can be sent only once, so its
+     marker survives a reload (localStorage); the others last for the tab. */
+  function submittedKey(phase) {
+    return 'ecopsy-' + PERSONA + '-' + (state ? state.session + '-' + state.questionId : '') + '-' + phase + '-done';
+  }
+  function store() { return state && state.type === 'testo' ? localStorage : sessionStorage; }
+  function markDone(phase) { try { store().setItem(submittedKey(phase), '1'); } catch (e) {} }
+  function isDone(phase) { try { return store().getItem(submittedKey(phase)) === '1'; } catch (e) { return false; } }
+  function clearDone(phase) { try { store().removeItem(submittedKey(phase)); } catch (e) {} }
 
   /* Where participants join: the same person's phone page, next to this one. */
   var JOIN_URL = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'voto_studente_' + PERSONA + '.html';
@@ -91,6 +97,13 @@
     if (s.poll) {
       if (s.phase === 'results') return resultsCard(s);
       return isDone('answer') ? waitCard(s, 'Risposta inviata', 'Puoi cambiarla finché la raccolta è aperta.', 'answer') : pollCard(s);
+    }
+    if (s.phase === 'collecting' && s.type === 'testo') {
+      if (!isDone('answer')) return textCard(s);
+      var first = alreadyAnswered;
+      alreadyAnswered = false;
+      return waitCard(s, first ? 'Avevi già risposto' : 'Risposta inviata',
+        first ? 'Vale la prima risposta che hai inviato a questa domanda.' : 'Grazie! Le risposte vengono raccolte e poi raggruppate in temi.');
     }
     if (s.phase === 'collecting') return isDone('answer') ? waitCard(s, 'Risposta inviata', 'Guarda lo schermo: le parole compaiono man mano.') : answerCard(s);
     if (s.phase === 'analysing')  return waitCard(s, 'Analisi in corso', 'Stiamo raggruppando le risposte in temi.');
@@ -140,35 +153,115 @@
     btn.addEventListener('click', function () {
       var items = inputs.map(function (x) { return x.value.trim(); }).filter(Boolean);
       if (!items.length) { status.className = 'status err'; status.textContent = 'Scrivi qualcosa prima di inviare.'; return; }
-      btn.disabled = true;
-      status.className = 'status';
-      status.textContent = 'Invio…';
-      post({ action: 'submit', voterId: voterId(), items: items })
-        .then(function (res) {
-          if (res.ok) { markDone('answer'); render(state); }
-          else { btn.disabled = false; status.className = 'status err'; status.textContent = res.error || 'Invio non riuscito.'; }
-        })
-        .catch(function () {
-          btn.disabled = false;
-          status.className = 'status err';
-          status.textContent = 'Nessuna risposta dal server. Riprova.';
-        });
+      send({ action: 'submit', items: items }, 'answer', btn, inputs, status);
     });
 
     stage.appendChild(card);
     inputs[0].focus();
   }
 
+  /* A `testo` question: one free answer, a few sentences, sent once. */
+  function textCard(s) {
+    var max = s.maxLength || 500;
+    var card = el('div', 'card');
+    if (roundLabel(s)) card.appendChild(el('div', 'round', roundLabel(s)));
+    card.appendChild(el('div', 'question', s.question));
+    card.appendChild(el('p', 'hint', 'Scrivi liberamente, anche più frasi. Puoi inviare una sola risposta.'));
+
+    var ta = el('textarea', 'idea long');
+    ta.setAttribute('maxlength', String(max));
+    ta.setAttribute('rows', '5');
+    ta.setAttribute('aria-label', 'La tua risposta');
+    ta.placeholder = 'Scrivi qui…';
+    var count = el('div', 'count', '0 / ' + max);
+    /* Grows with the text, so a long answer can be read back before sending. */
+    ta.addEventListener('input', function () {
+      count.textContent = ta.value.length + ' / ' + max;
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 2 + 'px';
+    });
+    card.appendChild(ta);
+    card.appendChild(count);
+
+    var btn = el('button', 'act', 'Invia');
+    var status = el('div', 'status');
+    status.setAttribute('role', 'status');
+    card.appendChild(btn);
+    card.appendChild(status);
+    btn.addEventListener('click', function () {
+      var text = ta.value.trim();
+      if (!text) { status.className = 'status err'; status.textContent = 'Scrivi qualcosa prima di inviare.'; return; }
+      send({ action: 'submit', items: [text] }, 'answer', btn, [ta], status);
+    });
+
+    stage.appendChild(card);
+    ta.focus();
+  }
+
+  /**
+   * Sends an answer or a vote, and shows at every moment that something is
+   * happening: a request takes 3–6 s, and a grey button with nothing else
+   * looks like a dead tap. The button turns into a spinner and the form locks;
+   * then either the ✓ screen, or a red message with the form unlocked and the
+   * text still in it.
+   *
+   * A send whose reply never arrived is tried once more by itself. It carries
+   * the same sendId, so if the first attempt was written after all the server
+   * skips the second.
+   */
+  var justSent = false, alreadyAnswered = false;
+
+  function send(body, what, btn, fields, status) {
+    body.voterId = voterId();
+    body.sendId = 's' + Math.random().toString(36).slice(2, 12);
+    var label = btn.textContent;
+    var slow = null;
+
+    function lock(on) {
+      btn.disabled = on;
+      btn.classList.toggle('working', on);
+      btn.textContent = on ? 'Invio in corso…' : label;
+      fields.forEach(function (f) { f.disabled = on; });
+    }
+    function say(msg, cls) { status.className = 'status' + (cls ? ' ' + cls : ''); status.textContent = msg; }
+    function fail(msg) { clearTimeout(slow); lock(false); say(msg, 'err'); }
+
+    lock(true);
+    say('');
+    slow = setTimeout(function () { say('Connessione lenta, ancora un momento…'); }, 8000);
+
+    function attempt(retry) {
+      post(body).then(function (res) {
+        clearTimeout(slow);
+        if (!res.ok) return fail('Non inviata: ' + (res.error || 'errore del server') + '.');
+        markDone(what);
+        justSent = true;
+        alreadyAnswered = !!res.already;
+        if (navigator.vibrate) { try { navigator.vibrate(40); } catch (e) {} }
+        render(state);
+      }).catch(function () {
+        if (retry) {
+          say('Connessione lenta, riprovo…');
+          setTimeout(function () { attempt(false); }, 1500);
+        } else {
+          fail('La risposta non è arrivata. Controlla la connessione e tocca di nuovo Invia.');
+        }
+      });
+    }
+    attempt(true);
+  }
+
   /* `change` names what can still be changed: 'vote', or 'answer' for a poll. */
   function waitCard(s, head, sub, change) {
-    var card = el('div', 'card done');
+    var card = el('div', 'card done' + (justSent ? ' pop' : ''));
+    justSent = false;
     card.appendChild(el('div', 'tick', '✓'));
     card.appendChild(el('h2', null, head));
     card.appendChild(el('p', null, sub));
     if (change) {
       var b = el('button', 'act', change === 'vote' ? 'Cambia il mio voto' : 'Cambia la mia risposta');
       b.addEventListener('click', function () {
-        try { sessionStorage.removeItem(submittedKey(change)); } catch (e) {}
+        clearDone(change);
         render(state);
       });
       card.appendChild(b);
@@ -240,19 +333,8 @@
     card.appendChild(status);
 
     btn.addEventListener('click', function () {
-      btn.disabled = true;
-      status.className = 'status';
-      status.textContent = 'Invio…';
-      post({ action: 'ballot', voterId: voterId(), ranking: picked })
-        .then(function (res) {
-          if (res.ok) { markDone('vote'); render(state); }
-          else { btn.disabled = false; status.className = 'status err'; status.textContent = res.error || 'Voto non registrato.'; }
-        })
-        .catch(function () {
-          btn.disabled = false;
-          status.className = 'status err';
-          status.textContent = 'Nessuna risposta dal server. Riprova.';
-        });
+      send({ action: 'ballot', ranking: picked }, 'vote', btn,
+        buttons.map(function (b) { return b.row; }), status);
     });
 
     stage.appendChild(card);
@@ -306,19 +388,8 @@
     card.appendChild(btn);
     card.appendChild(status);
     btn.addEventListener('click', function () {
-      btn.disabled = true;
-      status.className = 'status';
-      status.textContent = 'Invio…';
-      post({ action: 'submit', voterId: voterId(), items: picked })
-        .then(function (res) {
-          if (res.ok) { markDone('answer'); render(state); }
-          else { btn.disabled = false; status.className = 'status err'; status.textContent = res.error || 'Invio non riuscito.'; }
-        })
-        .catch(function () {
-          btn.disabled = false;
-          status.className = 'status err';
-          status.textContent = 'Nessuna risposta dal server. Riprova.';
-        });
+      send({ action: 'submit', items: picked }, 'answer', btn,
+        buttons.map(function (b) { return b.row; }), status);
     });
 
     stage.appendChild(card);
@@ -384,13 +455,23 @@
       stage.appendChild(el('div', 'meta', s.responses + (s.responses === 1 ? ' risposta' : ' risposte')));
       return;
     }
+    /* Long answers never go on screen while they come in: nobody has read
+       them yet, and anyone with the QR can type anything. The room sees them
+       arrive as a count and one dot per person. */
+    if (s.phase === 'collecting' && s.type === 'testo') {
+      live = { kind: 'dots', qid: s.questionId, num: el('div', 'bignum'), box: el('div', 'dots'), n: 0 };
+      stage.appendChild(live.num);
+      stage.appendChild(live.box);
+      drawDots(s.responses);
+      return;
+    }
     if (s.phase === 'collecting') {
       if (!s.cloud.length) {
         stage.appendChild(el('div', 'waiting', 'Le risposte stanno arrivando…'));
         stage.appendChild(el('div', 'meta', participants(s)));
         return;
       }
-      live = { qid: s.questionId, box: el('div', 'cloud'), meta: el('div', 'meta'), words: {} };
+      live = { kind: 'cloud', qid: s.questionId, box: el('div', 'cloud'), meta: el('div', 'meta'), words: {} };
       stage.appendChild(live.box);
       stage.appendChild(live.meta);
       updateCloud(s);
@@ -488,12 +569,26 @@
   var live = null;   // { qid, box, meta, words: { entry: { node, inner, n } } }
   var CALM = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
-  /* True when the cloud on screen was updated in place and nothing else needs drawing. */
+  /* True when the cloud (or the dots) on screen was updated in place and nothing else needs drawing. */
   function updateCloud(s) {
-    if (!live || live.qid !== s.questionId || s.phase !== 'collecting' || !s.cloud.length) return false;
+    if (!live || live.qid !== s.questionId || s.phase !== 'collecting') return false;
+    if (live.kind === 'dots') { drawDots(s.responses); return true; }
+    if (!s.cloud.length) return false;
     live.meta.textContent = participants(s);
     drawWords(s.cloud);
     return true;
+  }
+
+  var MAX_DOTS = 300;
+  function drawDots(n) {
+    live.num.textContent = n + (n === 1 ? ' risposta' : ' risposte');
+    if (n < live.n) { live.box.textContent = ''; live.n = 0; }
+    for (var i = live.n; i < Math.min(n, MAX_DOTS); i++) {
+      var d = el('span', 'dot');
+      d.style.animationDelay = Math.min(i - live.n, 20) * 60 + 'ms';
+      live.box.appendChild(d);
+    }
+    live.n = Math.max(live.n, Math.min(n, MAX_DOTS));
   }
 
   function drawWords(pairs) {
@@ -569,10 +664,20 @@
 
   /* ── loop ──────────────────────────────────────────────────────────── */
 
+  /* Shown the moment the page opens, until the first state arrives (2–5 s). */
+  var loading = null, misses = 0;
+  function showLoading() {
+    loading = el('div', 'card loading');
+    loading.appendChild(el('div', 'spinner'));
+    loading.appendChild(el('p', null, 'Collegamento…'));
+    stage.appendChild(loading);
+  }
+
   function tick(force) {
     getState()
       .then(function (s) {
         if (!s.ok) return;
+        loading = null;
         /* The projector redraws whenever anything changed. A phone must not:
            someone else submitting an answer moves `rev`, and a redraw would
            wipe a half-typed answer or a half-built ranking. It follows the
@@ -583,12 +688,17 @@
         state = s;
         render(s);
       })
-      .catch(function () { /* a dropped poll on venue wifi is not worth a banner */ });
+      .catch(function () {
+        /* A dropped poll on venue wifi is not worth a banner, unless nothing
+           has loaded yet and the page would otherwise spin in silence. */
+        if (loading && ++misses >= 2) loading.lastChild.textContent = 'Il collegamento è lento, riprovo…';
+      });
   }
 
   if (!URL_EXEC || URL_EXEC.indexOf('INCOLLA') === 0) {
     stage.appendChild(el('div', 'card', 'Configura evento-config.js con l’URL /exec del web app di “' + PERSONA + '”.'));
   } else {
+    showLoading();
     tick(true);
     setInterval(tick, POLL_MS);
   }

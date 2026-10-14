@@ -202,6 +202,7 @@ function provaRiempi() {
   const q = getConfig().question;
   const qid = q.id;
   if (q.options) return provaRiempiSondaggio_(q);
+  if (q.type === 'testo') return provaRiempiTesto_(q);
   const people = [
     ['Ansia da prestazione', 'Giudizio dei coetanei', 'Voti'],
     ['Pressione scolastica', 'I social media', 'voti'],
@@ -222,6 +223,27 @@ function provaRiempi() {
   sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
   dropStateCache_();
   Logger.log('inserite ' + rows.length + ' idee di ' + people.length + ' partecipanti di prova (' + qid + ')');
+}
+
+/** Eight fake participants for a `testo` question: one free answer each, a few sentences long. */
+function provaRiempiTesto_(q) {
+  const answers = [
+    'Riuscire a stare in pace con me stesso anche quando le cose vanno male, senza sentirmi sempre sotto esame.',
+    'Avere persone vicine con cui parlare davvero, che ti ascoltano senza giudicarti. Per me è la cosa più importante.',
+    'Dormire bene, fare sport e avere del tempo per me. Quando la scuola mi riempie tutta la giornata sto peggio.',
+    'Non dover sempre dimostrare qualcosa sui social. Il confronto continuo con gli altri mi fa sentire inadeguata.',
+    'Sapere che se sto male posso chiedere aiuto a qualcuno, a scuola o fuori, senza vergognarmi.',
+    'Sentirmi accettato per come sono dalla mia famiglia e dai miei amici.',
+    'Avere un equilibrio tra impegni e riposo, e riuscire a gestire l’ansia prima delle verifiche.',
+    'Pensare al futuro con un po’ di fiducia, anche se tutto sembra incerto.'
+  ];
+  const now = new Date();
+  const session = sessionId_();
+  const rows = answers.map(function (t, i) { return [now, 'prova-' + i, t, q.id, session]; });
+  const sh = sheet_('RISPOSTE');
+  sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+  dropStateCache_();
+  Logger.log('inserite ' + rows.length + ' risposte libere di prova (' + q.id + ')');
 }
 
 /** Twelve fake participants for a poll: one or two options each, never mixing an exclusive one. */
