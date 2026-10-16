@@ -24,7 +24,7 @@ EXCLUDES=(
   ".DS_Store" ".Rhistory" ".claude"
   "*.tmp" ".~lock.*#"
   "TODO.md" "deploy_instructions.md" "guida-al-deploy.md" "deploy.sh"
-  "PIANO-*.md" "REVISIONE-*.md" "evento-live"
+  "PIANO-*.md" "REVISIONE-*.md" "evento-live" "event data"
 )
 
 # Options only; sftp requires the destination to be the LAST argument.
