@@ -1,0 +1,320 @@
+TESTI DELLA SESSIONE LIVE — DA RIVEDERE
+=======================================
+
+Tutti i testi che compaiono sulle pagine della sessione live, raggruppati per
+schermo e per fase. Correggete direttamente qui accanto a ogni riga; poi le
+modifiche vengono riportate nel codice.
+
+Come leggere:
+  - [file:riga]  dove si trova il testo nel codice
+  - {N}          un numero inserito automaticamente
+  - {NOME}       il nome della persona che conduce (rodolfo, roberta, ...)
+  - {DOMANDA}, {TITOLO}, {TEMA}...  testo che arriva dal foglio Google
+  - "a / b"      forma singolare / plurale, scelta in base al numero
+
+Ogni persona ha tre pagine: voto_studente_{NOME}.html, proiettore_{NOME}.html,
+operatore_{NOME}.html. Sono identiche fra persone: i testi del titolo della
+scheda e del sopratitolo vanno corretti in tutte. Tutti gli altri testi stanno
+in tre file comuni: evento.js (telefono e proiettore) ed evento-regia.js (regia).
+
+Il titolo della sessione, le domande e i temi si scrivono nel foglio Google
+(schede Config, Domande, Temi), quindi non sono in questo file.
+
+
+-----------------------------------------------------------------------
+1. PAGINA PARTECIPANTI — dal telefono (voto_studente_{NOME}.html)
+-----------------------------------------------------------------------
+
+Sempre visibili
+  Titolo della scheda del browser:  Sessione live – EcoPsy          [voto_studente_{NOME}.html:7]
+  Sopratitolo:                      EcoPsy                          [voto_studente_{NOME}.html:16]
+  Titolo (se manca nel foglio):     Sessione live                   [voto_studente_{NOME}.html:17]
+
+All'apertura, finché non arriva lo stato (2-5 secondi)
+  Collegamento…                                                     [evento.js:596]
+  Dopo due tentativi falliti:  Il collegamento è lento, riprovo…    [evento.js:618]
+  (anche sul proiettore; sulla regia solo "Collegamento…")
+
+Indicatore di giro (solo se ci sono più domande)
+  Domanda {N} di {TOTALE}                                           [evento.js:103]
+
+--- Fase: raccolta risposte ---
+
+  {DOMANDA}
+  Suggerimento (se ci sono più caselle):
+    Un’idea per casella, in poche parole. Puoi riempirne anche solo una.   [evento.js:113]
+  Segnaposto nelle caselle (più caselle):
+    Idea 1
+    Idea 2 (facoltativa)
+    Idea 3 (facoltativa)  ...                                       [evento.js:122]
+  Segnaposto (una sola casella):
+    Scrivi qui…                                                     [evento.js:122]
+  Pulsante:                   Invia                                 [evento.js:134]
+  Durante l'invio (sul pulsante):  Invio in corso…                 [evento.js:172]
+  Dopo 8 secondi senza risposta:   Connessione lenta, ancora un momento…   [evento.js:180]
+  Prima del secondo tentativo:     Connessione lenta, riprovo…      [evento.js:192]
+  Errore dal server:               Non inviata: {MOTIVO}.           [evento.js:185]
+  Nessuna risposta, dopo 2 tentativi:
+    La risposta non è arrivata. Controlla la connessione e tocca di nuovo Invia.   [evento.js:195]
+  Errore, caselle vuote:      Scrivi qualcosa prima di inviare.     [evento.js:142]
+
+  Dopo l'invio:
+    ✓ Risposta inviata
+    Guarda lo schermo: le parole compaiono man mano.                [evento.js:95]
+
+--- Fase: raccolta, domanda a risposta libera (tipo = testo) ---
+
+  {DOMANDA}
+  Suggerimento:  Scrivi liberamente, anche più frasi. Puoi inviare una sola risposta.
+  Segnaposto:    Scrivi qui…
+  Sotto la casella:  {N} / 500
+  Pulsante e messaggi di invio: come sopra
+  Dopo l'invio:
+    ✓ Risposta inviata
+    Grazie! Le risposte vengono raccolte e poi raggruppate in temi.
+  Se il telefono aveva già risposto (altra scheda, pagina ricaricata):
+    ✓ Avevi già risposto
+    Vale la prima risposta che hai inviato a questa domanda.
+  Proiettore, durante la raccolta:  {N} risposta / risposte  (e un pallino per persona)
+
+--- Fase: analisi ---
+
+    ✓ Analisi in corso
+    Stiamo raggruppando le risposte in temi.                        [evento.js:96]
+
+--- Fase: temi pronti (prima del voto) ---
+
+  Temi emersi                                                       [evento.js:181]
+  La votazione si apre fra un momento.                              [evento.js:182]
+  (segue l'elenco: {TEMA} + descrizione)
+
+--- Fase: votazione ---
+
+  Quali temi vale la pena approfondire?                             [evento.js:198]
+  Tocca i temi in ordine di preferenza, fino a {N}. Tocca di nuovo per
+  togliere. Puoi sceglierne anche meno.                             [evento.js:199]
+  Se si prova a sceglierne troppi:
+    Hai già scelto {N} temi. Togline uno per cambiarli.             [evento.js:221]
+  Pulsante:                   Invia                                 [evento.js:202]
+  Durante l'invio (sul pulsante):  Invio in corso…                 [evento.js:172]
+  Dopo 8 secondi senza risposta:   Connessione lenta, ancora un momento…   [evento.js:180]
+  Prima del secondo tentativo:     Connessione lenta, riprovo…      [evento.js:192]
+  Errore dal server:               Non inviata: {MOTIVO}.           [evento.js:185]
+  Nessuna risposta, dopo 2 tentativi:
+    La risposta non è arrivata. Controlla la connessione e tocca di nuovo Invia.   [evento.js:195]
+
+  Dopo il voto:
+    ✓ Voto registrato
+    Puoi cambiarlo finché la votazione è aperta.                    [evento.js:98]
+    Pulsante: Cambia il mio voto                                    [evento.js:169]
+
+--- Fase: risultati ---
+
+  Risultati                                                         [evento.js:329]
+  Per ogni tema:  {TEMA}   {N} punti · {N} primi posti              [evento.js:434]
+  Se nessuno ha votato:  Nessun voto registrato.                    [evento.js:428]
+
+
+-----------------------------------------------------------------------
+2. PROIETTORE (proiettore_{NOME}.html)
+-----------------------------------------------------------------------
+
+Stesso titolo della scheda, sopratitolo e titolo della pagina partecipanti
+[proiettore_{NOME}.html:7, 16, 17], e stesso "Domanda {N} di {TOTALE}".
+
+--- Apertura di ogni domanda (nessuna risposta ancora) ---
+
+  (QR code grande, porta a voto_studente_{NOME}.html)
+  {DOMANDA}
+  Inquadra il codice o apri {INDIRIZZO DELLA PAGINA}                [evento.js:360]
+
+--- Raccolta risposte ---
+
+  {DOMANDA}
+  (nuvola di parole)
+  Prima della prima parola:  Le risposte stanno arrivando…          [evento.js:389]
+  Sotto la nuvola:           {N} partecipante / partecipanti        [evento.js:471]
+  Passando il mouse su una parola:  {N} persona / persone           [evento.js:529]
+  Didascalia del QR piccolo in angolo:  Partecipa                   [evento.js:340]
+
+--- Analisi ---
+
+  Analisi in corso…                                                 [evento.js:399]
+
+--- Temi pronti ---
+
+  (elenco dei temi con descrizione)
+  Votazione in apertura…                                            [evento.js:416]
+
+--- Votazione ---
+
+  (elenco dei temi con descrizione)
+  {N} voto espresso / voti espressi                                 [evento.js:415]
+
+--- Risultati ---
+
+  Per ogni tema:  {TEMA}   {N} punti · {N} primi posti              [evento.js:434]
+  Sotto:  {N} voto / voti · {N} partecipanti                        [evento.js:421]
+  Se nessuno ha votato:  Nessun voto registrato.                    [evento.js:428]
+
+
+-----------------------------------------------------------------------
+3. PAGINA DI REGIA — facilitatore (operatore_{NOME}.html)
+-----------------------------------------------------------------------
+
+  Titolo della scheda del browser:  Regia sessione – EcoPsy         [operatore_{NOME}.html:7]
+  Sopratitolo:                      EcoPsy · regia                  [operatore_{NOME}.html:16]
+  Titolo (se manca nel foglio):     Sessione live                   [operatore_{NOME}.html:17]
+
+--- Accesso (senza chiave) ---
+
+  Questa pagina richiede la chiave facilitatore. La trovi nel foglio:
+  menu EcoPsy → Mostra chiave e link.                               [evento-regia.js:415]
+  Segnaposto:  chiave                                               [evento-regia.js:419]
+  Pulsante:    Entra                                                [evento-regia.js:422]
+  Dopo una chiave sbagliata, sopra il messaggio:
+    Chiave non valida. Riprova.                                     [evento-regia.js:394]
+
+--- Riquadro in alto: cosa succede adesso ---
+
+  Domanda {N} di {TOTALE}
+  {DOMANDA}
+  Cosa sta succedendo (scritta grande):                             [evento-regia.js:53-61]
+    Il pubblico sta scrivendo          (sondaggio: Il pubblico sta scegliendo)
+    Analisi delle risposte in corso
+    Sullo schermo: i temi
+    Votazione aperta
+    Sullo schermo: la classifica       (sondaggio: Sullo schermo: i risultati)
+  Numero grande, secondo la fase:                                   [evento-regia.js:215-218]
+    {N} risposta / risposte   (raccolta; risultati di un sondaggio)
+    {N} tema / temi           (temi pronti)
+    {N} voto / voti           (votazione e classifica)
+  Pulsante piccolo (non all'ultima domanda, non ai risultati):
+    Salta alla domanda successiva                                   [evento-regia.js:157]
+  Conferma:
+    Passare alla domanda successiva senza arrivare ai risultati? Le
+    risposte di questa domanda restano nel foglio.                  [evento-regia.js:127]
+
+--- Barra in basso: Avanti e Indietro ---
+
+  Pulsante grande "AVANTI" (titolo + spiegazione sotto):            [evento-regia.js:68-95]
+    Domanda aperta
+      raccolta    Chiudi e analizza         — Le risposte vengono raggruppate in temi
+                  (nessuna risposta ancora: — Aspetta le prime risposte)
+      analisi     Analisi in corso… {N} s   — Può richiedere fino a mezzo minuto
+      temi        Apri la votazione         — I temi diventano votabili sui telefoni
+                  (nessun tema:             — Nessun tema: scrivili nel foglio Temi)
+      votazione   Chiudi e mostra i voti    — La classifica compare sullo schermo
+    Sondaggio
+      raccolta    Chiudi e mostra i risultati — Le barre compaiono sullo schermo
+    Ai risultati  Domanda {N}               — {TESTO DELLA DOMANDA SUCCESSIVA}
+    All'ultima    Sessione conclusa         — Era l’ultima domanda
+
+  Pulsante "INDIETRO" accanto:                                      [evento-regia.js:101-106]
+    Riapri la raccolta    (da analisi o temi; risultati di un sondaggio)
+    Torna ai temi         (dalla votazione)
+    Riapri la votazione   (dalla classifica)
+
+  Messaggi sopra i pulsanti dopo un comando:
+    Eseguo…                                                         [evento-regia.js:351]
+    {N} temi estratti. Controllali qui sopra.                       [evento-regia.js:364]
+    Fatto.                                                          [evento-regia.js:365]
+    Non riuscito.                                                   [evento-regia.js:368]
+    Nessuna risposta dal server. Controlla la connessione e riprova.   [evento-regia.js:375]
+
+--- Riquadro "Temi" (temi pronti e votazione) ---
+
+  Temi ({N})                                                        [evento-regia.js:224]
+  (elenco dei temi con descrizione)
+  Nota sotto:
+    Correggili nel foglio Temi: la pagina di voto legge quello, non il modello.   [evento-regia.js:233]
+
+--- Riquadro "Classifica" (fase risultati) ---
+
+  Classifica                                                        [evento-regia.js:253]
+  Per ogni tema:  {TEMA}   {N} punti · {N} primi posti
+  Se nessuno ha votato:  Nessun voto registrato.                    [evento-regia.js:254]
+
+--- Riquadro chiuso "Altri comandi" ---
+
+  Altri comandi                                                     [evento-regia.js:272]
+  Pulsanti (titolo + spiegazione sotto):                            [evento-regia.js:113-124]
+    1  Apri la raccolta          — I partecipanti possono scrivere
+    2  Chiudi e analizza         — Estrae i temi dalle risposte
+    3  Apri la votazione         — I temi diventano votabili
+    4  Chiudi e mostra i voti    — La classifica compare sullo schermo
+    5  Domanda successiva        — Nuovo giro: si riparte dalla raccolta
+  Conferma prima di "Chiudi e analizza" (solo da qui):
+    Chiudere la raccolta e analizzare le risposte di {N} partecipanti?     [evento-regia.js:285]
+
+  Domande (solo se ce n'è più di una)                               [evento-regia.js:295]
+  (elenco delle domande; accanto a ognuna tranne quella attuale:) Vai
+  Conferma:
+    Passare a questa domanda? La raccolta si riapre. Risposte, temi e
+    voti di ogni domanda restano nel foglio.                        [evento-regia.js:303]
+  Nota sotto:  Aggiungi o modifica le domande nel foglio Domande.   [evento-regia.js:311]
+
+  Schermi                                                           [evento-regia.js:314]
+  Proiettore: {INDIRIZZO}/proiettore_{NOME}.html
+  Partecipanti: {INDIRIZZO}/voto_studente_{NOME}.html
+
+  Pulsante in fondo:  Azzera la sessione                            [evento-regia.js:325]
+  Conferma:
+    Sposta risposte, temi e voti di tutte le domande nei fogli
+    Archivio, apre una nuova sessione e torna alla prima domanda.
+    Procedere?                                                      [evento-regia.js:328]
+  Dopo:  Sessione azzerata.                                         [evento-regia.js:365]
+
+
+-----------------------------------------------------------------------
+4. SONDAGGIO — domanda a scelta fissa (riga di Domande con "opzioni")
+-----------------------------------------------------------------------
+
+Le opzioni si scrivono nel foglio (colonna opzioni), quindi non sono qui.
+
+Telefono, raccolta
+  {DOMANDA}
+  Suggerimento, più scelte:   Puoi sceglierne più di una.           [evento.js:269]
+  Suggerimento, una scelta:   Scegline una.                         [evento.js:269]
+  (elenco delle opzioni da toccare)
+  Pulsante:                   Invia
+  Dopo l'invio:
+    ✓ Risposta inviata
+    Puoi cambiarla finché la raccolta è aperta.                     [evento.js:93]
+    Pulsante: Cambia la mia risposta                                [evento.js:169]
+
+Telefono e proiettore, risultati
+  {DOMANDA}
+  Per ogni opzione:  {OPZIONE}   {N} · {N}%   (barra)
+  Sotto:  {N} risposta / risposte                                   [evento.js:465]
+    e, se si possono scegliere più opzioni:
+    · una persona può indicarne più di una                          [evento.js:466]
+  Se nessuno ha risposto:  Nessuna risposta registrata.             [evento.js:450]
+
+Proiettore, raccolta
+  {DOMANDA}
+  (elenco delle opzioni, senza conteggi)
+  {N} risposta / risposte                                           [evento.js:384]
+
+Regia
+  Pulsanti:                                                         [evento-regia.js:65-69]
+    1  Apri la raccolta              — I partecipanti possono scegliere
+    2  Chiudi e mostra i risultati   — Le barre compaiono sullo schermo
+    3  Domanda successiva            — Nuovo giro: si riparte dalla raccolta
+  Riquadro:  Risultati                                              [evento-regia.js:195]
+  Per ogni opzione:  {OPZIONE}   {N} · {N}%                         [evento-regia.js:200]
+
+Messaggi d'errore dal server (sotto il pulsante Invia)               [Sondaggio.gs]
+  nessuna opzione scelta
+  opzione sconosciuta
+  si può scegliere una sola opzione
+  “{OPZIONE}” non si combina con altre opzioni
+
+
+-----------------------------------------------------------------------
+5. MESSAGGIO DI CONFIGURAZIONE (solo se il sito non è ancora collegato al foglio)
+-----------------------------------------------------------------------
+
+  Configura evento-config.js con l’URL /exec del web app di “{NOME}”.
+                                                    [evento.js:589, evento-regia.js:316]
+  (Lo vede solo chi prepara la sessione.)
