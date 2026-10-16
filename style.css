@@ -68,6 +68,7 @@ header {
 
 nav { display: flex; align-items: center; gap: 6px; }
 nav a {
+  white-space: nowrap;
   font-family: var(--font-head);
   font-size: .85rem; font-weight: 600;
   color: var(--text-muted); padding: 6px 12px; border-radius: 6px;
@@ -242,7 +243,10 @@ footer ul li a:hover { color: #6fe0a0; text-decoration: none; }
   .docs-grid { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr; }
   .contact-box { flex-direction: column; text-align: center; }
+}
 
+/* Menu collapses earlier than the page layout: the full menu needs ~1000px. */
+@media (max-width: 1000px) {
   .menu-toggle { display: flex; align-items: center; justify-content: center; }
 
   nav {
