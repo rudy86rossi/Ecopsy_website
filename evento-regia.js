@@ -126,7 +126,7 @@
 
   var SKIP_CONFIRM = 'Passare alla domanda successiva senza arrivare ai risultati? Le risposte di questa domanda restano nel foglio.';
 
-  var busy = false, state = null, timer = null, moreOpen = false;
+  var busy = false, state = null, timer = null, moreOpen = false, pdfCard = null;
 
   /* Created once and re-attached on each render: rebuilding it would erase the
      confirmation of the action that just ran. */
@@ -440,6 +440,11 @@
     app.textContent = '';
     app.appendChild(el('div', 'card loading', 'Collegamento…'));
     keepAwake();
+    /* Outside #app, so the redraw every few seconds leaves a running download alone. */
+    if (window.EventoRisultati && !pdfCard) {
+      pdfCard = window.EventoRisultati.card(post, PERSONA);
+      app.parentNode.appendChild(pdfCard);
+    }
     tick();
     clearInterval(timer);
     timer = setInterval(function () { if (!busy) tick(); }, 5000);

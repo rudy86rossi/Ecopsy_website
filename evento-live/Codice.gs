@@ -41,6 +41,7 @@ function doPost(e) {
       case 'question': return json_(withState_(actionQuestion_(body)));
       case 'analyze': return json_(withState_(actionAnalyze_(body)));
       case 'reset':   return json_(withState_(actionReset_(body)));
+      case 'export':  return json_(actionExport_(body));
       default:        return json_({ ok: false, error: 'azione sconosciuta' });
     }
   } catch (err) {

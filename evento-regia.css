@@ -145,3 +145,21 @@ ol.themes .desc { color: var(--text-muted); font-size: .85rem; }
   padding: 12px 26px; border: none; border-radius: 10px;
   background: var(--green-mid); color: var(--white); cursor: pointer;
 }
+
+/* — the results of a day as a PDF (evento-risultati.js) — */
+.pdfrow { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.pdfrow input {
+  flex: 1 1 160px; font-family: var(--font-body); font-size: 1rem;
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--white);
+}
+.pdfrow button {
+  font-family: var(--font-head); font-weight: 700; font-size: .95rem;
+  padding: 11px 20px; border: none; border-radius: 10px;
+  background: var(--green-mid); color: var(--white); cursor: pointer;
+}
+.pdfrow button:disabled { background: #b9c9bf; cursor: progress; }
+.pdfrow button.working::before {
+  content: ''; display: inline-block; width: .8em; height: .8em; margin-right: .45em;
+  border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
+  vertical-align: -1px; animation: spin .8s linear infinite;
+}

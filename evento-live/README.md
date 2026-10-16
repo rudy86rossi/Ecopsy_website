@@ -44,6 +44,27 @@ One-time setup on the computer that publishes:
    `~/.clasprc.json`, outside the repo.
 3. That account needs editor access to every person's spreadsheet.
 
+## Downloading the results
+
+```
+evento-live/scarica-risultati.py 2026-10-15              # everyone in evento-config.js
+evento-live/scarica-risultati.py 2026-10-15 rodolfo      # one person
+```
+
+For each person it asks their web app for an export (the `export` action, facilitator
+key only), saves every tab as CSV in `event data/<nome>/dati/` and runs
+`estrai-dati.py` on the given day: answers, themes, ballots, the projector's theme
+and ranking screens as PNG, and `Risultati-sessione-<nome>.pdf`. All the PDFs are
+also copied together into `event data/Risultati-<day>/`.
+
+The keys go in `evento-live/chiavi.local`, one line per person: `rodolfo = <chiave>`
+(*EcoPsy → Mostra chiave e link*). The file and `event data/` are in `.gitignore`;
+`deploy.sh` leaves both out of the site. A wrong key counts towards the 10-minute
+lockout like any other.
+
+The PNGs and the PDF need a headless Chromium: the script finds `chromium`,
+`google-chrome` or Playwright's `chrome-headless-shell`.
+
 ## Adding a person
 
 1. Create a spreadsheet — **Estensioni → Apps Script** creates the bound project.

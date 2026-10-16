@@ -21,3 +21,10 @@ desktop.ini
 
 # Local tooling
 .claude/
+
+# Live event: facilitator keys and participants' answers
+evento-live/chiavi.local
+event data/
+
+# Python
+__pycache__/
