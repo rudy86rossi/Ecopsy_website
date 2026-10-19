@@ -49,12 +49,15 @@
     }
   }
   /* Per session and question: moving to the next round, or a reset, must show
-     the answer boxes again. A `testo` answer can be sent only once, so its
-     marker survives a reload (localStorage); the others last for the tab. */
+     the answer boxes again. A `testo` or `sintesi` answer can be sent only
+     once, so its marker survives a reload (localStorage); the others last for
+     the tab. */
   function submittedKey(phase) {
     return 'ecopsy-' + PERSONA + '-' + (state ? state.session + '-' + state.questionId : '') + '-' + phase + '-done';
   }
-  function store() { return state && state.type === 'testo' ? localStorage : sessionStorage; }
+  function store() { return state && isLong(state) ? localStorage : sessionStorage; }
+  /* One free answer per person: `testo`, and `sintesi`, which is summarised instead of voted on. */
+  function isLong(s) { return s.type === 'testo' || s.type === 'sintesi'; }
   function markDone(phase) { try { store().setItem(submittedKey(phase), '1'); } catch (e) {} }
   function isDone(phase) { try { return store().getItem(submittedKey(phase)) === '1'; } catch (e) { return false; } }
   function clearDone(phase) { try { store().removeItem(submittedKey(phase)); } catch (e) {} }
@@ -98,12 +101,19 @@
       if (s.phase === 'results') return resultsCard(s);
       return isDone('answer') ? waitCard(s, 'Risposta inviata', 'Puoi cambiarla finché la raccolta è aperta.', 'answer') : pollCard(s);
     }
-    if (s.phase === 'collecting' && s.type === 'testo') {
+    if (s.type === 'sintesi') {
+      if (s.phase === 'collecting' && !s.question) return holdCard(s, 'In attesa della domanda', 'Compare qui fra un momento.');
+      if (s.phase === 'analysing') return holdCard(s, 'Sintesi in corso', 'Stiamo scrivendo una sintesi di tutte le risposte. Fra poco la trovi qui e sullo schermo.');
+      if (s.phase === 'results') return s.summary ? summaryCard(s) : holdCard(s, 'La sintesi arriva fra poco', 'Resta su questa pagina.');
+    }
+    if (s.phase === 'collecting' && isLong(s)) {
       if (!isDone('answer')) return textCard(s);
       var first = alreadyAnswered;
       alreadyAnswered = false;
       return waitCard(s, first ? 'Avevi già risposto' : 'Risposta inviata',
-        first ? 'Vale la prima risposta che hai inviato a questa domanda.' : 'Grazie! Le risposte vengono raccolte e poi raggruppate in temi.');
+        first ? 'Vale la prima risposta che hai inviato a questa domanda.'
+              : s.type === 'sintesi' ? 'Grazie! Alla fine le risposte vengono riassunte in una sintesi, qui e sullo schermo.'
+              : 'Grazie! Le risposte vengono raccolte e poi raggruppate in temi.');
     }
     if (s.phase === 'collecting') return isDone('answer') ? waitCard(s, 'Risposta inviata', 'Guarda lo schermo: le parole compaiono man mano.') : answerCard(s);
     if (s.phase === 'analysing')  return waitCard(s, 'Analisi in corso', 'Stiamo raggruppando le risposte in temi.');
@@ -160,7 +170,31 @@
     inputs[0].focus();
   }
 
-  /* A `testo` question: one free answer, a few sentences, sent once. */
+  /* A wait with nothing sent: the question is still being written, or the summary. */
+  function holdCard(s, head, sub) {
+    var card = el('div', 'card done hold');
+    if (roundLabel(s)) card.appendChild(el('div', 'round', roundLabel(s)));
+    card.appendChild(el('div', 'spinner'));
+    card.appendChild(el('h2', null, head));
+    card.appendChild(el('p', null, sub));
+    stage.appendChild(card);
+  }
+
+  /* The whole summary on the phone: the projector shows it a page at a time,
+     and the back of the room reads along here. */
+  function summaryCard(s) {
+    var card = el('div', 'card summary');
+    if (roundLabel(s)) card.appendChild(el('div', 'round', roundLabel(s)));
+    card.appendChild(el('div', 'hint', s.question));
+    card.appendChild(el('h2', 'stitle', s.summary.title));
+    s.summary.paragraphs.forEach(function (p) { card.appendChild(el('p', null, p)); });
+    stage.appendChild(card);
+  }
+
+  /* What is typed survives a redraw: a corrected question redraws the card. */
+  var drafts = {};
+
+  /* A `testo` or `sintesi` question: one free answer, a few sentences, sent once. */
   function textCard(s) {
     var max = s.maxLength || 500;
     var card = el('div', 'card');
@@ -175,13 +209,18 @@
     ta.placeholder = 'Scrivi qui…';
     var count = el('div', 'count', '0 / ' + max);
     /* Grows with the text, so a long answer can be read back before sending. */
-    ta.addEventListener('input', function () {
+    function grow() {
       count.textContent = ta.value.length + ' / ' + max;
       ta.style.height = 'auto';
       ta.style.height = ta.scrollHeight + 2 + 'px';
+    }
+    ta.addEventListener('input', function () {
+      drafts[s.questionId] = ta.value;
+      grow();
     });
     card.appendChild(ta);
     card.appendChild(count);
+    if (drafts[s.questionId]) { ta.value = drafts[s.questionId]; grow(); }
 
     var btn = el('button', 'act', 'Invia');
     var status = el('div', 'status');
@@ -426,7 +465,7 @@
       var join = el('div', 'join');
       join.appendChild(qrNode('qr'));
       var side = el('div', 'waiting');
-      side.appendChild(document.createTextNode(s.question));
+      side.appendChild(document.createTextNode(s.question || 'La prossima domanda arriva tra poco'));
       var url = el('div', 'meta');
       url.appendChild(document.createTextNode('Inquadra il codice o apri '));
       url.appendChild(el('span', 'joinurl', JOIN_URL.replace(/^https?:\/\//, '')));
@@ -458,7 +497,7 @@
     /* Long answers never go on screen while they come in: nobody has read
        them yet, and anyone with the QR can type anything. The room sees them
        arrive as a count and one dot per person. */
-    if (s.phase === 'collecting' && s.type === 'testo') {
+    if (s.phase === 'collecting' && isLong(s)) {
       live = { kind: 'dots', qid: s.questionId, num: el('div', 'bignum'), box: el('div', 'dots'), n: 0 };
       stage.appendChild(live.num);
       stage.appendChild(live.box);
@@ -477,7 +516,11 @@
       updateCloud(s);
       return;
     }
-    if (s.phase === 'analysing') { stage.appendChild(el('div', 'waiting', 'Analisi in corso…')); return; }
+    if (s.phase === 'analysing') {
+      stage.appendChild(el('div', 'waiting', s.type === 'sintesi' ? 'Sintesi in corso…' : 'Analisi in corso…'));
+      return;
+    }
+    if (s.type === 'sintesi' && s.phase === 'results') { summaryPage(s); return; }
     if (s.phase === 'themes' || s.phase === 'voting') {
       var wrap = el('div');
       s.themes.forEach(function (t) {
@@ -501,6 +544,44 @@
       stage.appendChild(resultsList(s));
       stage.appendChild(el('div', 'meta', s.ballots + (s.ballots === 1 ? ' voto' : ' voti') + ' · ' + s.responses + ' partecipanti'));
     }
+  }
+
+  /* One page of the summary, at the largest size that fits the screen. A page
+     is one paragraph or two short ones (the server groups them), but a long
+     paragraph or a 720p projector can still overflow, so the text shrinks
+     step by step until the page fits. */
+  var SUMMARY_SIZES = [2, 1.85, 1.7, 1.55, 1.4, 1.3];
+
+  function summaryPage(s) {
+    if (!s.summary) { stage.appendChild(el('div', 'waiting', 'La sintesi arriva fra poco')); return; }
+    var pages = s.summary.pages;
+    var at = Math.min(Math.max(s.page || 1, 1), pages.length);
+    var wrap = el('div', 'spage');
+    wrap.appendChild(el('div', 'stitle', s.summary.title));
+    var body = el('div', 'sbody');
+    pages[at - 1].forEach(function (k) { body.appendChild(el('p', null, s.summary.paragraphs[k])); });
+    wrap.appendChild(body);
+    stage.appendChild(wrap);
+    stage.appendChild(el('div', 'meta', (pages.length > 1 ? 'Pagina ' + at + ' di ' + pages.length + ' · ' : '') +
+      s.responses + (s.responses === 1 ? ' risposta' : ' risposte')));
+    fitting = body;
+    fitSummary();
+  }
+
+  /* Also after going full screen (F11 once the page is open) and once the web
+     font has arrived: both change what fits. */
+  var fitting = null;
+  function fitSummary() {
+    if (!fitting || !fitting.isConnected) return;
+    var root = document.documentElement;
+    for (var i = 0; i < SUMMARY_SIZES.length; i++) {
+      fitting.style.fontSize = SUMMARY_SIZES[i] + 'rem';
+      if (root.scrollHeight <= window.innerHeight) break;
+    }
+  }
+  if (IS_SCREEN) {
+    window.addEventListener('resize', fitSummary);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitSummary);
   }
 
   function resultsList(s) {
@@ -681,8 +762,10 @@
         /* The projector redraws whenever anything changed. A phone must not:
            someone else submitting an answer moves `rev`, and a redraw would
            wipe a half-typed answer or a half-built ranking. It follows the
-           phase (and the theme list) instead. */
-        var stamp = IS_SCREEN ? s.rev : s.questionId + '|' + s.phase + '|' + s.themes.length;
+           phase, the theme list, the question text (written in the room for
+           a summary round) and the summary instead. */
+        var stamp = IS_SCREEN ? s.rev : [s.questionId, s.phase, s.themes.length, s.question,
+          s.summary ? s.summary.title + s.summary.paragraphs.join('').length : ''].join('|');
         if (!force && stamp === lastRev) return;
         lastRev = stamp;
         state = s;

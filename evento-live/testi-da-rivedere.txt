@@ -77,6 +77,25 @@ Indicatore di giro (solo se ci sono più domande)
     Vale la prima risposta che hai inviato a questa domanda.
   Proiettore, durante la raccolta:  {N} risposta / risposte  (e un pallino per persona)
 
+--- Domanda con sintesi (tipo = sintesi) ---
+
+  Prima che la domanda sia scritta (con una rotellina):
+    In attesa della domanda
+    Compare qui fra un momento.                                     [evento.js:105]
+  Raccolta: come la risposta libera qui sopra. Dopo l'invio:
+    ✓ Risposta inviata
+    Grazie! Alla fine le risposte vengono riassunte in una sintesi,
+    qui e sullo schermo.                                            [evento.js:115]
+  Analisi (con una rotellina):
+    Sintesi in corso
+    Stiamo scrivendo una sintesi di tutte le risposte. Fra poco la
+    trovi qui e sullo schermo.                                      [evento.js:106]
+  Risultati: Domanda {N} di {TOTALE}, {DOMANDA}, {TITOLO DELLA SINTESI}
+    e tutta la sintesi.
+  Se la sintesi non c'è ancora:
+    La sintesi arriva fra poco
+    Resta su questa pagina.                                         [evento.js:107]
+
 --- Fase: analisi ---
 
     ✓ Analisi in corso
@@ -156,6 +175,20 @@ Stesso titolo della scheda, sopratitolo e titolo della pagina partecipanti
   Per ogni tema:  {TEMA}   {N} punti · {N} primi posti              [evento.js:434]
   Sotto:  {N} voto / voti · {N} partecipanti                        [evento.js:421]
   Se nessuno ha votato:  Nessun voto registrato.                    [evento.js:428]
+
+--- Domanda con sintesi ---
+
+  Apertura, prima che la domanda sia scritta (al posto della domanda):
+    La prossima domanda arriva tra poco                             [evento.js:468]
+  Raccolta: come la risposta libera ({N} risposte e un pallino per persona)
+  Analisi:  Sintesi in corso…                                       [evento.js:520]
+  Sintesi, una pagina alla volta:
+    {DOMANDA}
+    {TITOLO DELLA SINTESI}
+    (i paragrafi della pagina)
+    Sotto:  Pagina {N} di {TOTALE} · {N} risposta / risposte        [evento.js:565]
+            (una sola pagina: solo {N} risposte)
+  Se la sintesi non c'è ancora:  La sintesi arriva fra poco         [evento.js:556]
 
 
 -----------------------------------------------------------------------

@@ -179,3 +179,18 @@ body.screen .bignum {
   h1 { font-size: 1.3rem; }
   .wrap { padding: 22px 16px 56px; }
 }
+
+/* ── Summary of a `sintesi` question ── */
+.hold .spinner { width: 2rem; height: 2rem; border-width: 3px; color: var(--green-mid); margin-bottom: 4px; }
+.hold .round { margin-bottom: 14px; }
+.summary .stitle { font-size: 1.25rem; color: var(--green-dark); line-height: 1.25; margin: 4px 0 12px; }
+.summary p { font-size: .98rem; line-height: 1.6; margin-bottom: 12px; }
+.summary p:last-child { margin-bottom: 0; }
+/* On the projector: one page at a time, sized by evento.js to fit the screen. */
+body.screen .spage { max-width: 75rem; }
+body.screen .spage .stitle {
+  font-family: var(--font-head); font-weight: 800; font-size: 2.6rem; line-height: 1.15;
+  color: #8fe0b0; margin-bottom: 1.5rem;
+}
+body.screen .spage .sbody { font-size: 2rem; line-height: 1.5; color: var(--white); }
+body.screen .spage .sbody p + p { margin-top: 1em; }
