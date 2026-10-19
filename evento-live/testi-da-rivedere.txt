@@ -195,6 +195,18 @@ Stesso titolo della scheda, sopratitolo e titolo della pagina partecipanti
     Passare alla domanda successiva senza arrivare ai risultati? Le
     risposte di questa domanda restano nel foglio.                  [evento-regia.js:127]
 
+  Domanda con sintesi (tipo = sintesi):                             [evento-regia.js:63-76]
+    Se la domanda non è ancora scritta, al posto del testo:
+      Domanda da scrivere qui sotto                                 [evento-regia.js:212]
+    Cosa sta succedendo:
+      Scrivi la domanda                (domanda non ancora scritta)
+      Il pubblico sta scrivendo
+      Scrittura della sintesi in corso
+      Sullo schermo: la sintesi        (più pagine: …, pagina {N} di {TOTALE})
+    Numero grande: {N} risposta / risposte
+    Pulsante piccolo, finché non arriva la prima risposta:
+      Correggi la domanda                                           [evento-regia.js:234]
+
 --- Barra in basso: Avanti e Indietro ---
 
   Pulsante grande "AVANTI" (titolo + spiegazione sotto):            [evento-regia.js:68-95]
@@ -207,20 +219,67 @@ Stesso titolo della scheda, sopratitolo e titolo della pagina partecipanti
       votazione   Chiudi e mostra i voti    — La classifica compare sullo schermo
     Sondaggio
       raccolta    Chiudi e mostra i risultati — Le barre compaiono sullo schermo
+    Domanda con sintesi                                             [evento-regia.js:85-101]
+      domanda da scrivere  Mostra la domanda — Compare sullo schermo e sui telefoni
+      (correzione:         Mostra la domanda corretta)
+      raccolta    Chiudi e scrivi la sintesi — La sintesi compare subito su tutti gli schermi
+                  (nessuna risposta ancora: — Aspetta le prime risposte)
+      analisi     Sintesi in corso… {N} s   — Può richiedere fino a un minuto
+      sintesi     Pagina {N} di {TOTALE}    — Il seguito della sintesi
     Ai risultati  Domanda {N}               — {TESTO DELLA DOMANDA SUCCESSIVA}
-    All'ultima    Sessione conclusa         — Era l’ultima domanda
+    All'ultima    Sessione conclusa         — Puoi aggiungere una domanda qui sopra
 
   Pulsante "INDIETRO" accanto:                                      [evento-regia.js:101-106]
     Riapri la raccolta    (da analisi o temi; risultati di un sondaggio)
     Torna ai temi         (dalla votazione)
     Riapri la votazione   (dalla classifica)
+    Domanda con sintesi:                                            [evento-regia.js:145-146]
+      Pagina precedente     (dalla pagina 2 in poi)
+      Riapri la raccolta    (dall'analisi o dalla prima pagina della sintesi)
 
   Messaggi sopra i pulsanti dopo un comando:
     Eseguo…                                                         [evento-regia.js:351]
     {N} temi estratti. Controllali qui sopra.                       [evento-regia.js:364]
+    Sintesi sullo schermo.                                          [evento-regia.js:574]
+    Domanda sullo schermo.                                          [evento-regia.js:576]
+    Nuova domanda sullo schermo: la raccolta è aperta.              [evento-regia.js:577]
+    Scrivi prima la domanda.   (Avanti con la casella vuota)        [evento-regia.js:291]
     Fatto.                                                          [evento-regia.js:365]
     Non riuscito.                                                   [evento-regia.js:368]
     Nessuna risposta dal server. Controlla la connessione e riprova.   [evento-regia.js:375]
+
+--- Riquadro "Scrivi la domanda" (domanda con sintesi, non ancora scritta) ---
+
+  Scrivi la domanda   (correzione: Correggi la domanda)             [evento-regia.js:330]
+  Segnaposto:  La domanda per il pubblico                           [evento-regia.js:331]
+  Contatore:   {N} / 300
+  Nota sotto:
+    Compare sullo schermo e sui telefoni quando premi Avanti. Si
+    può correggere finché non arriva la prima risposta.             [evento-regia.js:334]
+  Solo in correzione:  Annulla la correzione                        [evento-regia.js:336]
+
+--- Riquadro "+ Nuova domanda" (ultima domanda, ai risultati) ---
+
+  Pulsante:  + Nuova domanda                                        [evento-regia.js:352]
+    sotto:   Risposte libere e una sintesi su tutti gli schermi
+  Aperto:
+    Nuova domanda
+    Segnaposto:  La domanda per il pubblico
+    Nota:  Compare subito sullo schermo e sui telefoni, e la
+           raccolta si apre.                                        [evento-regia.js:359]
+    Pulsanti:  Aggiungi e mostra · Annulla                          [evento-regia.js:363-364]
+
+--- Riquadro "Sintesi" (domanda con sintesi, ai risultati) ---
+
+  Sintesi                                                           [evento-regia.js:434]
+  {TITOLO DELLA SINTESI}, poi i paragrafi divisi per pagina:
+    Pagina {N}   (quella sul proiettore: Pagina {N} · sullo schermo)   [evento-regia.js:445]
+  Nota sotto:
+    Il testo è nel foglio Sintesi. Per riscriverlo: Altri comandi →
+    Rigenera la sintesi.                                            [evento-regia.js:449]
+  Se manca:
+    Nessuna sintesi per questa domanda: rigenerala da Altri comandi,
+    o scrivila nel foglio Sintesi.                                  [evento-regia.js:437]
 
 --- Riquadro "Temi" (temi pronti e votazione) ---
 
@@ -246,6 +305,18 @@ Stesso titolo della scheda, sopratitolo e titolo della pagina partecipanti
     5  Domanda successiva        — Nuovo giro: si riparte dalla raccolta
   Conferma prima di "Chiudi e analizza" (solo da qui):
     Chiudere la raccolta e analizzare le risposte di {N} partecipanti?     [evento-regia.js:285]
+  Domanda con sintesi, pulsanti:                                    [evento-regia.js:177-183]
+    1  Apri la raccolta          — I partecipanti possono scrivere
+    2  Chiudi e scrivi la sintesi — La sintesi compare subito su tutti gli schermi
+    3  Rigenera la sintesi       — Riscritta dalle stesse risposte; la precedente
+                                   resta nel foglio Sintesi
+    4  Mostra la sintesi del foglio — Quella scritta a mano nel foglio Sintesi
+    5  Domanda successiva        — Nuovo giro: si riparte dalla raccolta
+  Conferma prima di "Rigenera la sintesi":
+    Riscrivere la sintesi dalle stesse risposte? Quella attuale resta
+    nel foglio Sintesi.                                             [evento-regia.js:487]
+  Nell'elenco Domande, una domanda non ancora scritta:
+    (da scrivere in sala)                                           [evento-regia.js:501]
 
   Domande (solo se ce n'è più di una)                               [evento-regia.js:295]
   (elenco delle domande; accanto a ognuna tranne quella attuale:) Vai

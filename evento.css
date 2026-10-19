@@ -105,10 +105,13 @@ input.idea:disabled, .theme:disabled { opacity: .55; }
 .cloud span { font-family: var(--font-head); font-weight: 700; line-height: 1.25; white-space: nowrap; }
 
 /* ── Projector (proiettore_<nome>.html) ── */
+/* Sizes follow the screen height: 1rem is 16px at 1080 lines, and a 720p
+   projector shows the same layout, smaller. */
+:root:has(body.screen) { font-size: calc(100vh / 67.5); }
 body.screen { background: var(--green-dark); color: var(--white); }
-body.screen .wrap { max-width: 1500px; padding: 40px 48px; min-height: 100vh; display: flex; flex-direction: column; }
-body.screen .eyebrow { color: #8fe0b0; font-size: 1rem; letter-spacing: 2px; }
-body.screen h1 { color: var(--white); font-size: 2.6rem; margin: 10px 0 28px; }
+body.screen .wrap { max-width: 93.75rem; padding: 2.5rem 3rem; min-height: 100vh; display: flex; flex-direction: column; }
+body.screen .eyebrow { color: #8fe0b0; font-size: 1rem; letter-spacing: .125rem; }
+body.screen h1 { color: var(--white); font-size: 2.6rem; margin: .625rem 0 1.75rem; }
 body.screen .card { background: transparent; border: none; box-shadow: none; padding: 0; }
 body.screen .stage { flex: 1; display: flex; flex-direction: column; justify-content: center; }
 body.screen .cloud .w { display: inline-block; transform-origin: 0 0; transition: color .8s ease, opacity .8s ease; }
@@ -120,23 +123,32 @@ body.screen .cloud .f { display: inline-block; animation: drift 7s ease-in-out i
 @media (prefers-reduced-motion: reduce) {
   body.screen .cloud .f { animation: none; }
 }
-body.screen .meta { font-size: 1.1rem; color: rgba(255,255,255,.65); margin-top: 28px; }
+body.screen .meta { font-size: 1.1rem; color: rgba(255,255,255,.65); margin-top: 1.75rem; }
 body.screen .joinurl {
   font-family: var(--font-head); font-weight: 800; font-size: 1.8rem;
   color: #6fe0a0; word-break: break-all;
 }
 body.screen .theme { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.18); color: var(--white); cursor: default; }
-body.screen .theme .label { color: var(--white); font-size: 1.5rem; }
-body.screen .theme .desc { color: rgba(255,255,255,.7); font-size: 1rem; }
+/* Themes are read from the back of the room: large, near-white descriptions. */
+body.screen .theme { padding: .9rem 1.1rem; margin-bottom: .6rem; }
+body.screen .theme { gap: .875rem; border-radius: .625rem; }
+body.screen .theme .badge { width: 1.875rem; height: 1.875rem; }
+body.screen .theme .label { color: var(--white); font-size: 1.85rem; line-height: 1.2; }
+body.screen .theme .desc { color: rgba(255,255,255,.92); font-size: 1.45rem; line-height: 1.35; margin-top: .3rem; }
 body.screen .res .label { color: var(--white); font-size: 1.6rem; }
 body.screen .res .pts { color: rgba(255,255,255,.65); font-size: 1.1rem; }
-body.screen .bar { height: 16px; background: rgba(255,255,255,.14); }
+body.screen .res { margin-bottom: .875rem; }
+body.screen .res .top { gap: .75rem; }
+body.screen .bar { height: 1rem; border-radius: .3125rem; margin-top: .4375rem; background: rgba(255,255,255,.14); }
+body.screen .bar i { border-radius: .3125rem; }
+body.screen .cloud { gap: .375rem 1rem; }
+body.screen .round { margin-bottom: .375rem; }
 body.screen .bar i { background: #6fe0a0; }
 body.screen .loading { color: rgba(255,255,255,.75); font-size: 1.4rem; }
 body.screen .loading .spinner { color: #6fe0a0; width: 3rem; height: 3rem; }
 body.screen .waiting { font-size: 2rem; color: rgba(255,255,255,.75); text-align: center; }
-body.screen .qline { font-size: 1.5rem; color: rgba(255,255,255,.85); margin-bottom: 28px; }
-body.screen.hasqr .wrap { padding-right: 250px; }
+body.screen .qline { font-size: 1.5rem; color: rgba(255,255,255,.85); margin-bottom: 1.75rem; }
+body.screen.hasqr .wrap { padding-right: 15.625rem; }
 body.screen .round { color: #8fe0b0; font-size: 1rem; }
 
 /* ── Long answers on the projector: a count and one dot per person ── */
@@ -144,9 +156,9 @@ body.screen .bignum {
   font-family: var(--font-head); font-weight: 800; font-size: 5rem;
   color: var(--white); text-align: center; line-height: 1.1;
 }
-.dots { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; max-width: 1100px; margin: 36px auto 0; }
+.dots { display: flex; flex-wrap: wrap; gap: .875rem; justify-content: center; max-width: 68.75rem; margin: 2.25rem auto 0; }
 .dot {
-  width: 22px; height: 22px; border-radius: 50%; background: #6fe0a0;
+  width: 1.375rem; height: 1.375rem; border-radius: 50%; background: #6fe0a0;
   animation: dotin .7s cubic-bezier(.2,1.6,.4,1) backwards;
 }
 @keyframes dotin { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -154,14 +166,14 @@ body.screen .bignum {
 
 /* ── QR code: large on the opening screen, then in a corner for latecomers ── */
 .qr svg { display: block; width: 100%; height: auto; }
-.join { display: flex; gap: 48px; align-items: center; justify-content: center; flex-wrap: wrap; }
-.join .qr { width: min(38vh, 420px); background: #fff; padding: 14px; border-radius: 14px; }
-.join .waiting { flex: 1 1 420px; text-align: left; }
+.join { display: flex; gap: 3rem; align-items: center; justify-content: center; flex-wrap: wrap; }
+.join .qr { width: min(38vh, 26.25rem); background: #fff; padding: .875rem; border-radius: .875rem; }
+.join .waiting { flex: 1 1 26.25rem; text-align: left; }
 .qrcorner {
-  position: fixed; right: 28px; bottom: 28px; width: 170px;
-  background: #fff; padding: 10px 10px 6px; border-radius: 12px; text-align: center;
+  position: fixed; right: 1.75rem; bottom: 1.75rem; width: 10.625rem;
+  background: #fff; padding: .625rem .625rem .375rem; border-radius: .75rem; text-align: center;
 }
-.qrcorner .cap { font-family: var(--font-head); font-weight: 700; font-size: .85rem; color: var(--green-dark); margin-top: 4px; }
+.qrcorner .cap { font-family: var(--font-head); font-weight: 700; font-size: .85rem; color: var(--green-dark); margin-top: .25rem; }
 
 @media (max-width: 520px) {
   h1 { font-size: 1.3rem; }

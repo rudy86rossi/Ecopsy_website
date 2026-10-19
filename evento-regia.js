@@ -60,14 +60,56 @@
     collecting: 'Il pubblico sta scegliendo',
     results:    'Sullo schermo: i risultati'
   };
+  var NOW_TEXT_SUMMARY = {
+    collecting: 'Il pubblico sta scrivendo',
+    analysing:  'Scrittura della sintesi in corso',
+    results:    'Sullo schermo: la sintesi'
+  };
 
   function isLast(s) { return !s.round || s.round.n >= s.round.of; }
+  function isSummary(s) { return s.type === 'sintesi'; }
+  function pageCount(s) { return s.summary ? s.summary.pages.length : 0; }
+
+  function nowText(s) {
+    if (isSummary(s)) {
+      if (s.phase === 'collecting' && !s.question) return 'Scrivi la domanda';
+      if (s.phase === 'results' && pageCount(s) > 1) return NOW_TEXT_SUMMARY.results + ', pagina ' + s.page + ' di ' + pageCount(s);
+      return NOW_TEXT_SUMMARY[s.phase] || s.phase;
+    }
+    return (s.poll && NOW_TEXT_POLL[s.phase]) || NOW_TEXT[s.phase] || s.phase;
+  }
+
+  /* A `sintesi` round: write the question, collect, then the summary goes on
+     every screen at once and Avanti turns its pages. Null when the usual
+     step applies (the next question, after the last page). */
+  function summaryStep(s) {
+    if (s.phase === 'collecting' && (!s.question || editing === s.questionId)) {
+      return { label: s.question ? 'Mostra la domanda corretta' : 'Mostra la domanda',
+               sub: 'Compare sullo schermo e sui telefoni', run: { act: 'text' } };
+    }
+    switch (s.phase) {
+      case 'collecting':
+        return s.responses
+          ? { label: 'Chiudi e scrivi la sintesi', sub: 'La sintesi compare subito su tutti gli schermi', run: { act: 'analyze' } }
+          : { label: 'Chiudi e scrivi la sintesi', sub: 'Aspetta le prime risposte' };
+      case 'analysing':
+        return { label: 'Sintesi in corso…', sub: 'Può richiedere fino a un minuto' };
+      case 'results':
+        if (s.page < pageCount(s)) {
+          return { label: 'Pagina ' + (s.page + 1) + ' di ' + pageCount(s),
+                   sub: 'Il seguito della sintesi', run: { act: 'page', to: s.page + 1 } };
+        }
+    }
+    return null;
+  }
 
   /* The next step of the round: { label, sub, run } — run is absent when
      Avanti cannot be pressed, and `sub` then says why. */
   function nextStep(s) {
+    var own = isSummary(s) && summaryStep(s);
+    if (own) return own;
     if (s.phase === 'results') {
-      if (isLast(s)) return { label: 'Sessione conclusa', sub: 'Era l’ultima domanda' };
+      if (isLast(s)) return { label: 'Sessione conclusa', sub: 'Puoi aggiungere una domanda qui sopra' };
       var nq = s.questions && s.questions[s.round.n];
       return { label: 'Domanda ' + (s.round.n + 1), sub: nq ? nq.text : '', run: { act: 'next' } };
     }
@@ -99,6 +141,11 @@
   /* One step back. Analysing → collecting rescues an analysis that never came back. */
   function prevStep(s) {
     if (s.poll) return s.phase === 'results' ? { label: 'Riapri la raccolta', run: { to: 'collecting' } } : null;
+    if (isSummary(s)) {
+      if (s.phase === 'results' && s.page > 1) return { label: 'Pagina precedente', run: { act: 'page', to: s.page - 1 } };
+      if (s.phase === 'results' || s.phase === 'analysing') return { label: 'Riapri la raccolta', run: { to: 'collecting' } };
+      return null;
+    }
     switch (s.phase) {
       case 'analysing':
       case 'themes':  return { label: 'Riapri la raccolta', run: { to: 'collecting' } };
@@ -124,9 +171,27 @@
     { n: 3, act: 'next',      label: 'Domanda successiva',      sub: 'Nuovo giro: si riparte dalla raccolta', from: ['collecting', 'results'] }
   ];
 
+  /* A summary round: Rigenera writes a new summary from the same answers. The
+     sheet's summary (typed by hand when the model fails) can be shown
+     without one. Both need the question written. */
+  var SUMMARY_STEPS = [
+    { n: 1, to: 'collecting', label: 'Apri la raccolta',        sub: 'I partecipanti possono scrivere', from: ['results', 'analysing'] },
+    { n: 2, act: 'analyze',   label: 'Chiudi e scrivi la sintesi', sub: 'La sintesi compare subito su tutti gli schermi', from: ['collecting'], needsText: true },
+    { n: 3, act: 'analyze',   label: 'Rigenera la sintesi',     sub: 'Riscritta dalle stesse risposte; la precedente resta nel foglio Sintesi', from: ['results'], again: true },
+    { n: 4, to: 'results',    label: 'Mostra la sintesi del foglio', sub: 'Quella scritta a mano nel foglio Sintesi', from: ['collecting'], needsText: true },
+    { n: 5, act: 'next',      label: 'Domanda successiva',      sub: 'Nuovo giro: si riparte dalla raccolta', from: ['collecting', 'results'] }
+  ];
+
   var SKIP_CONFIRM = 'Passare alla domanda successiva senza arrivare ai risultati? Le risposte di questa domanda restano nel foglio.';
 
   var busy = false, state = null, timer = null, moreOpen = false, pdfCard = null;
+
+  /* The question being typed for a summary round, and the new question at the
+     end of the session. Created once and re-attached on each render, so the
+     redraw every few seconds keeps what is being typed. `editing` is the id of
+     a written question being corrected (until its first answer). */
+  var qbox = null, addBox = null, editing = null;
+  var MAX_QUESTION = 300;
 
   /* Created once and re-attached on each render: rebuilding it would erase the
      confirmation of the action that just ran. */
@@ -135,6 +200,7 @@
 
   function render(s) {
     state = s;
+    if (editing && (editing !== s.questionId || s.responses || s.phase !== 'collecting')) { editing = null; qbox = null; }
     titleEl.textContent = s.title || 'Sessione live';
     app.textContent = '';
 
@@ -142,9 +208,10 @@
     var head = el('div', 'card nowcard');
     var curq = el('div', 'curq');
     if (s.round) curq.appendChild(el('span', 'round', 'Domanda ' + s.round.n + ' di ' + s.round.of));
-    curq.appendChild(document.createTextNode(s.question || ''));
+    if (s.question) curq.appendChild(document.createTextNode(s.question));
+    else curq.appendChild(el('span', 'unwritten', 'Domanda da scrivere qui sotto'));
     head.appendChild(curq);
-    head.appendChild(el('div', 'nowtext', (s.poll && NOW_TEXT_POLL[s.phase]) || NOW_TEXT[s.phase] || s.phase));
+    head.appendChild(el('div', 'nowtext', nowText(s)));
     var count = countOf(s);
     if (count) {
       var big = el('div', 'bignum');
@@ -162,12 +229,23 @@
       });
       head.appendChild(skip);
     }
+    /* A typo can be fixed until the first answer arrives. */
+    if (isSummary(s) && s.phase === 'collecting' && s.question && !s.responses && editing !== s.questionId) {
+      var fix = el('button', 'skip', 'Correggi la domanda');
+      fix.type = 'button';
+      fix.addEventListener('click', function () { editing = s.questionId; qbox = null; render(state); });
+      head.appendChild(fix);
+    }
     app.appendChild(head);
+
+    if (isSummary(s) && s.phase === 'collecting' && (!s.question || editing === s.questionId)) app.appendChild(questionBox(s));
+    if (isLast(s) && s.phase === 'results') app.appendChild(addCard());
 
     /* — what the facilitator checks before pressing Avanti — */
     if (!s.poll && (s.phase === 'themes' || s.phase === 'voting') && s.themes.length) app.appendChild(themesCard(s));
     if (s.poll && s.poll.results) app.appendChild(pollCard(s));
     if (s.phase === 'results' && s.results) app.appendChild(rankingCard(s));
+    if (isSummary(s) && s.phase === 'results') app.appendChild(summaryCard(s));
 
     app.appendChild(moreCard(s));
 
@@ -193,13 +271,113 @@
       go.type = 'button';
       fillAvanti(go, nxt.run ? 'Avanti' : '', nxt.label, nxt.sub);
       go.disabled = !nxt.run;
-      if (nxt.run) go.addEventListener('click', function () { run(nxt.run, go); });
+      if (nxt.run) go.addEventListener('click', function () {
+        var st = withText(nxt.run);
+        if (st) run(st, go);
+      });
       row.appendChild(go);
     }
 
     inner.appendChild(row);
     bar.appendChild(inner);
     app.appendChild(bar);
+  }
+
+  /* Avanti on "Mostra la domanda" sends what is in the question box. */
+  function withText(st) {
+    if (st.act !== 'text') return st;
+    var t = qbox ? qbox.box.value() : '';
+    if (!t) {
+      say(status, 'Scrivi prima la domanda.', false);
+      if (qbox) qbox.box.ta.focus();
+      return null;
+    }
+    return { act: 'text', text: t };
+  }
+
+  /* A textarea with a character counter. value() is the text on one line. */
+  function textBox(placeholder) {
+    var wrap = el('div', 'qform');
+    var ta = el('textarea');
+    ta.maxLength = MAX_QUESTION;
+    ta.rows = 3;
+    ta.placeholder = placeholder;
+    var count = el('div', 'count');
+    function upd() { count.textContent = ta.value.length + ' / ' + MAX_QUESTION; }
+    ta.addEventListener('input', upd);
+    upd();
+    wrap.appendChild(ta);
+    wrap.appendChild(count);
+    return {
+      node: wrap, ta: ta,
+      value: function () { return ta.value.replace(/\s+/g, ' ').trim(); },
+      set: function (v) { ta.value = v; upd(); }
+    };
+  }
+
+  /* A kept card was switched off with the rest of the page by the last command. */
+  function revive(card) {
+    Array.prototype.forEach.call(card.querySelectorAll('button'), function (b) {
+      b.disabled = false;
+      b.classList.remove('working');
+    });
+    return card;
+  }
+
+  function questionBox(s) {
+    if (qbox && qbox.qid === s.questionId) return revive(qbox.card);
+    var card = el('div', 'card qcard');
+    card.appendChild(el('h2', null, s.question ? 'Correggi la domanda' : 'Scrivi la domanda'));
+    var box = textBox('La domanda per il pubblico');
+    if (s.question) box.set(s.question);
+    card.appendChild(box.node);
+    card.appendChild(el('p', 'links', 'Compare sullo schermo e sui telefoni quando premi Avanti. Si può correggere finché non arriva la prima risposta.'));
+    if (s.question) {
+      var cancel = el('button', 'skip', 'Annulla la correzione');
+      cancel.type = 'button';
+      cancel.addEventListener('click', function () { editing = null; qbox = null; render(state); });
+      card.appendChild(cancel);
+    }
+    qbox = { qid: s.questionId, card: card, box: box };
+    return card;
+  }
+
+  /* At the end of the session: one more question, always with a summary.
+     Closed, it is one large button; open, the question box. */
+  function addCard() {
+    if (addBox) return revive(addBox.card);
+    var card = el('div', 'card addcard');
+    var open = el('button', 'addopen');
+    open.type = 'button';
+    open.appendChild(el('span', 'v', '+ Nuova domanda'));
+    open.appendChild(el('span', 's', 'Risposte libere e una sintesi su tutti gli schermi'));
+    var form = el('div', 'addform');
+    form.hidden = true;
+    form.appendChild(el('h2', null, 'Nuova domanda'));
+    var box = textBox('La domanda per il pubblico');
+    form.appendChild(box.node);
+    form.appendChild(el('p', 'links', 'Compare subito sullo schermo e sui telefoni, e la raccolta si apre.'));
+    var row = el('div', 'addrow');
+    var add = el('button', 'addgo');
+    add.type = 'button';
+    add.appendChild(el('span', 'v', 'Aggiungi e mostra'));
+    var cancel = el('button', 'skip', 'Annulla');
+    cancel.type = 'button';
+    row.appendChild(add);
+    row.appendChild(cancel);
+    form.appendChild(row);
+    card.appendChild(open);
+    card.appendChild(form);
+
+    open.addEventListener('click', function () { open.hidden = true; form.hidden = false; box.ta.focus(); });
+    cancel.addEventListener('click', function () { form.hidden = true; open.hidden = false; });
+    add.addEventListener('click', function () {
+      var t = box.value();
+      if (!t) { say(status, 'Scrivi prima la domanda.', false); box.ta.focus(); return; }
+      run({ act: 'add', text: t }, add);
+    });
+    addBox = { card: card };
+    return card;
   }
 
   function fillAvanti(btn, kicker, label, sub) {
@@ -212,6 +390,9 @@
   /* The number worth glancing at in each phase. */
   function countOf(s) {
     var plural = function (n, one, many) { return n === 1 ? one : many; };
+    if (isSummary(s)) {
+      return s.question && s.phase !== 'analysing' ? { n: s.responses, what: plural(s.responses, 'risposta', 'risposte') } : null;
+    }
     if (s.phase === 'collecting') return { n: s.responses, what: plural(s.responses, 'risposta', 'risposte') };
     if (s.phase === 'themes') return { n: s.themes.length, what: plural(s.themes.length, 'tema', 'temi') };
     if (s.poll && s.phase === 'results') return { n: s.responses, what: plural(s.responses, 'risposta', 'risposte') };
@@ -248,6 +429,27 @@
     return pc;
   }
 
+  /* The summary as the room reads it, with the page on the projector marked. */
+  function summaryCard(s) {
+    var sc = el('div', 'card summary');
+    sc.appendChild(el('h2', null, 'Sintesi'));
+    if (!s.summary) {
+      sc.appendChild(el('p', 'links', 'Nessuna sintesi per questa domanda: rigenerala da Altri comandi, o scrivila nel foglio Sintesi.'));
+      return sc;
+    }
+    sc.appendChild(el('div', 'stitle', s.summary.title));
+    var many = s.summary.pages.length > 1;
+    s.summary.pages.forEach(function (idx, i) {
+      var on = i + 1 === s.page;
+      var pg = el('div', 'spage' + (many && on ? ' on' : ''));
+      if (many) pg.appendChild(el('div', 'pn', 'Pagina ' + (i + 1) + (on ? ' · sullo schermo' : '')));
+      idx.forEach(function (k) { pg.appendChild(el('p', null, s.summary.paragraphs[k])); });
+      sc.appendChild(pg);
+    });
+    sc.appendChild(el('p', 'links', 'Il testo è nel foglio Sintesi. Per riscriverlo: Altri comandi → Rigenera la sintesi.'));
+    return sc;
+  }
+
   function rankingCard(s) {
     var rc = el('div', 'card');
     rc.appendChild(el('h2', null, 'Classifica'));
@@ -272,7 +474,7 @@
     more.appendChild(el('summary', null, 'Altri comandi'));
 
     var steps = el('div', 'steps');
-    (s.poll ? POLL_STEPS : STEPS).forEach(function (st) {
+    (s.poll ? POLL_STEPS : isSummary(s) ? SUMMARY_STEPS : STEPS).forEach(function (st) {
       var b = el('button', 'step');
       b.type = 'button';
       b.appendChild(el('span', 'n', String(st.n)));
@@ -280,9 +482,10 @@
       body.appendChild(document.createTextNode(st.label));
       body.appendChild(el('span', 'sub', st.sub));
       b.appendChild(body);
-      b.disabled = st.from.indexOf(s.phase) === -1 || (st.act === 'next' && isLast(s));
+      b.disabled = st.from.indexOf(s.phase) === -1 || (st.act === 'next' && isLast(s)) || (st.needsText && !s.question);
       b.addEventListener('click', function () {
-        if (st.act === 'analyze' && !confirm('Chiudere la raccolta e analizzare le risposte di ' + s.responses + ' partecipanti?')) return;
+        if (st.again && !confirm('Riscrivere la sintesi dalle stesse risposte? Quella attuale resta nel foglio Sintesi.')) return;
+        if (st.act === 'analyze' && !st.again && !confirm('Chiudere la raccolta e analizzare le risposte di ' + s.responses + ' partecipanti?')) return;
         if (st.act === 'next' && s.phase !== 'results' && !confirm(SKIP_CONFIRM)) return;
         run(st, b);
       });
@@ -295,7 +498,7 @@
       more.appendChild(el('h2', null, 'Domande'));
       var qol = el('ol', 'qs');
       s.questions.forEach(function (q) {
-        var li = el('li', q.id === s.questionId ? 'cur' : null, q.text);
+        var li = el('li', q.id === s.questionId ? 'cur' : null, q.text || '(da scrivere in sala)');
         if (q.id !== s.questionId) {
           var go = el('button', null, 'Vai');
           go.type = 'button';
@@ -341,8 +544,10 @@
     btn.classList.add('working');
     var started = Date.now(), clock = null;
     if (st.act === 'analyze' && btn.classList.contains('avanti')) {
+      var summary = state && isSummary(state);
       var show = function () {
-        fillAvanti(btn, '', 'Analisi in corso… ' + Math.round((Date.now() - started) / 1000) + ' s', 'Può richiedere fino a mezzo minuto');
+        fillAvanti(btn, '', (summary ? 'Sintesi in corso… ' : 'Analisi in corso… ') + Math.round((Date.now() - started) / 1000) + ' s',
+          summary ? 'Può richiedere fino a un minuto' : 'Può richiedere fino a mezzo minuto');
       };
       show();
       clock = setInterval(show, 1000);
@@ -355,14 +560,21 @@
              : st.act === 'next'     ? post({ action: 'question', to: 'next' })
              : st.act === 'question' ? post({ action: 'question', to: st.to })
              : st.act === 'reset'    ? post({ action: 'reset', confirm: 'RESET' })
+             : st.act === 'text'     ? post({ action: 'question-text', id: state.questionId, text: st.text })
+             : st.act === 'add'      ? post({ action: 'add-question', text: st.text })
+             : st.act === 'page'     ? post({ action: 'page', to: st.to })
              : post({ action: 'phase', to: st.to });
 
     call.then(function (res) {
       busy = false;
       clearInterval(clock);
       if (res.ok) {
-        say(status, st.act === 'analyze' ? (res.themes.length + ' temi estratti. Controllali qui sopra.')
-                  : st.act === 'reset'   ? 'Sessione azzerata.' : 'Fatto.', true);
+        if (st.act === 'text') { qbox = null; editing = null; }
+        if (st.act === 'add') addBox = null;
+        say(status, st.act === 'analyze' ? (res.summary ? 'Sintesi sullo schermo.' : res.themes.length + ' temi estratti. Controllali qui sopra.')
+                  : st.act === 'reset'   ? 'Sessione azzerata.'
+                  : st.act === 'text'    ? 'Domanda sullo schermo.'
+                  : st.act === 'add'     ? 'Nuova domanda sullo schermo: la raccolta è aperta.' : 'Fatto.', true);
       } else {
         if (wrongKey(res)) return;
         say(status, (res.error || 'Non riuscito.') + (res.fallback ? ' — ' + res.fallback : ''), false);
@@ -395,9 +607,18 @@
     return true;
   }
 
-  /* A poll that set off before a command must not redraw over its spinner. */
+  /* A poll that set off before a command must not redraw over its spinner,
+     nor over a question being typed: rebuilding the page would close the
+     phone's keyboard. The next poll after the box loses focus redraws. */
   function tick() {
-    getState().then(function (s) { if (s.ok && !busy) render(s); }).catch(function () {});
+    getState().then(function (s) {
+      if (!s.ok || busy) return;
+      if (typing()) state = s; else render(s);
+    }).catch(function () {});
+  }
+  function typing() {
+    var a = document.activeElement;
+    return !!a && a.tagName === 'TEXTAREA' && app.contains(a);
   }
 
   /* Keeps the phone awake between steps: a locked screen in a pocket would

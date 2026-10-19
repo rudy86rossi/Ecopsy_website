@@ -163,3 +163,45 @@ ol.themes .desc { color: var(--text-muted); font-size: .85rem; }
   border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
   vertical-align: -1px; animation: spin .8s linear infinite;
 }
+
+/* — a summary round: the question typed in the room, the summary to read along — */
+.curq .unwritten { color: var(--text-muted); font-style: italic; }
+.qform textarea {
+  display: block; width: 100%; resize: vertical; min-height: 96px;
+  font-family: var(--font-body); font-size: 1.05rem; line-height: 1.45; color: var(--text);
+  padding: 12px 14px; border: 2px solid var(--border); border-radius: 10px; background: var(--white);
+}
+.qform textarea:focus { outline: none; border-color: var(--green-mid); }
+.qform .count { font-size: .78rem; color: var(--text-muted); text-align: right; margin-top: 4px; }
+.qcard .links, .addform .links { line-height: 1.5; margin-top: 8px; }
+
+.summary .stitle { font-family: var(--font-head); font-weight: 800; font-size: 1.2rem; color: var(--green-dark); margin-bottom: 10px; }
+.summary .spage { border-left: 3px solid transparent; padding-left: 12px; margin-bottom: 12px; }
+.summary .spage.on { border-left-color: var(--green-mid); }
+.summary .spage p { font-size: .95rem; line-height: 1.55; margin-bottom: 8px; }
+.summary .pn { font-size: .72rem; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+.summary .spage.on .pn { color: var(--green-mid); }
+
+/* — the end of the session: one more question — */
+.addcard { padding: 0; overflow: hidden; border-color: var(--green-mid); }
+.addcard [hidden] { display: none; }
+button.addopen {
+  display: flex; flex-direction: column; width: 100%; text-align: left; cursor: pointer;
+  border: none; background: var(--green-mid); color: var(--white);
+  font-family: var(--font-head); padding: 18px 20px;
+}
+button.addopen:hover:not(:disabled) { background: var(--green-dark); }
+button.addopen:disabled { opacity: .55; cursor: not-allowed; }
+button.addopen .v { font-size: 1.35rem; font-weight: 800; }
+button.addopen .s { font-family: var(--font-body); font-size: .85rem; opacity: .85; margin-top: 2px; }
+.addform { padding: 20px; }
+.addrow { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.addrow button.skip { margin-top: 0; }
+button.addgo {
+  font-family: var(--font-head); font-weight: 800; font-size: 1rem;
+  padding: 13px 22px; border: none; border-radius: 10px;
+  background: var(--green-mid); color: var(--white); cursor: pointer;
+}
+button.addgo:hover:not(:disabled) { background: var(--green-dark); }
+button.addgo:disabled { background: #b9c9bf; cursor: not-allowed; }
+button.addgo.working:disabled { background: var(--green-dark); cursor: progress; }
