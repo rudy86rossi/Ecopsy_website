@@ -123,6 +123,16 @@ function menuAnalizza() {
     return;
   }
   const res = runAnalyze_();
+  if (res.summary) {
+    ui.alert('Sintesi scritta: “' + res.summary.title + '”.\n\nÈ già sullo schermo. Il testo è nel foglio Sintesi.');
+    return;
+  }
+  if (getConfig().question.type === 'sintesi') {
+    ui.alert('Sintesi non riuscita\n\n' + res.error +
+             '\n\nLa raccolta è di nuovo aperta. Riprova, oppure scrivi la sintesi a mano nel foglio Sintesi ' +
+             '(questionId, titolo, testo) e usa “Chiudi e mostra i risultati”.');
+    return;
+  }
   if (res.ok) {
     ui.alert('Temi estratti: ' + res.themes.length + '.\n\nControllali nel foglio Temi, poi apri la votazione.');
   } else {
@@ -133,8 +143,9 @@ function menuAnalizza() {
 }
 
 function menuApriVotazione() {
-  if (getConfig().question.options) {
-    SpreadsheetApp.getUi().alert('La domanda sullo schermo è un sondaggio: non ha temi né votazione. Usa “Chiudi e mostra i risultati”.');
+  const q = getConfig().question;
+  if (q.options || q.type === 'sintesi') {
+    SpreadsheetApp.getUi().alert('La domanda sullo schermo non ha temi né votazione. Usa “Chiudi e mostra i risultati”.');
     return;
   }
   if (!readThemes_(getConfig().question.id).length) {
@@ -159,6 +170,13 @@ function menuRisultati() {
       }).join('\n'));
     return;
   }
+  if (cfg.question.type === 'sintesi') {
+    const summary = readSummary_(qid);
+    SpreadsheetApp.getUi().alert(summary
+      ? 'Sullo schermo: “' + summary.title + '”, ' + summary.pages.length + ' pagine.'
+      : 'Nessuna sintesi nel foglio Sintesi per questa domanda: lo schermo resta vuoto finché non ne scrivi una.');
+    return;
+  }
   const rows = scoreBallots_(readBallots_(qid), readThemes_(qid), cfg);
   toast_('Votazione chiusa');
   SpreadsheetApp.getUi().alert(
@@ -173,7 +191,7 @@ function menuDomandaSuccessiva() {
   const cfg = getConfig();
   const nxt = cfg.questions[cfg.questionIndex + 1];
   if (!nxt) {
-    ui.alert('Questa è l’ultima domanda del foglio Domande. Aggiungi una riga per proseguire.');
+    ui.alert('Questa è l’ultima domanda del foglio Domande. Aggiungi una riga, o usa “+ Nuova domanda” nella pagina del facilitatore.');
     return;
   }
   goToQuestion_(nxt.id);
@@ -202,7 +220,7 @@ function provaRiempi() {
   const q = getConfig().question;
   const qid = q.id;
   if (q.options) return provaRiempiSondaggio_(q);
-  if (q.type === 'testo') return provaRiempiTesto_(q);
+  if (q.type === 'testo' || q.type === 'sintesi') return provaRiempiTesto_(q);
   const people = [
     ['Ansia da prestazione', 'Giudizio dei coetanei', 'Voti'],
     ['Pressione scolastica', 'I social media', 'voti'],
@@ -225,7 +243,7 @@ function provaRiempi() {
   Logger.log('inserite ' + rows.length + ' idee di ' + people.length + ' partecipanti di prova (' + qid + ')');
 }
 
-/** Eight fake participants for a `testo` question: one free answer each, a few sentences long. */
+/** Eight fake participants for a `testo` or `sintesi` question: one free answer each, a few sentences long. */
 function provaRiempiTesto_(q) {
   const answers = [
     'Riuscire a stare in pace con me stesso anche quando le cose vanno male, senza sentirmi sempre sotto esame.',

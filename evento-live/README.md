@@ -111,8 +111,13 @@ Account Google* forces a login).
   "responses": 14, "entries": 35, "ballots": 0,
   "cloud": [["social media", 7], ["scuola", 5]],
   "themes": [{ "id": "t1", "label": "…", "description": "…" }],
-  "results": null, "rev": "q1-collecting-35-0-0", "serverTime": 1770000000000 }
+  "results": null, "summary": null, "page": 1,
+  "rev": "q1-collecting-35-0-0-…", "serverTime": 1770000000000 }
 ```
+
+For a `sintesi` question in `results`, `summary` is
+`{title, paragraphs:["…"], pages:[[0],[1,2],[3]]}` (paragraph indexes per
+projector page) and `page` the page on the projector, from 1.
 
 Everything refers to the question on screen. `responses` counts participants,
 `entries` the ideas they wrote.
@@ -125,11 +130,14 @@ something changed, so the projector can skip a redraw.
 
 | action | body | phase required |
 |---|---|---|
-| `submit` | `{voterId, sendId, items:["…","…"]}` — up to `answer_fields`, 80 characters each; a `testo` question takes one item of up to 500 and replies `already: true` if the device had answered | `collecting` |
+| `submit` | `{voterId, sendId, items:["…","…"]}` — up to `answer_fields`, 80 characters each; a `testo` or `sintesi` question takes one item of up to 500 and replies `already: true` if the device had answered | `collecting` |
 | `ballot` | `{voterId, sendId, ranking:["t2","t1","t5"]}` | `voting` |
 | `phase` | `{key, to}` | facilitator key |
 | `question` | `{key, to}` — a question id, or `"next"` | facilitator key |
-| `analyze` | `{key}` | facilitator key |
+| `analyze` | `{key}` — themes, or for a `sintesi` question the summary | facilitator key |
+| `question-text` | `{key, id, text}` — writes the text of the `sintesi` question on screen, until its first answer; 300 characters | facilitator key |
+| `add-question` | `{key, text}` — adds a `sintesi` question after the last one and puts it on screen | facilitator key, last question in `results` |
+| `page` | `{key, to}` — page of the summary on the projector, from 1 | facilitator key, `sintesi` in `results` |
 | `reset` | `{key, confirm:"RESET"}` | facilitator key |
 
 Every reply is HTTP 200 with `{ok: true|false}`; `ok:false` carries `error`.
@@ -172,7 +180,9 @@ The questions are the rows of the `Domande` tab, one round each:
 | `opzioni` | for a poll: the choices, separated by `\|`. Empty for an open question |
 | `multipla` | poll only: `sì` lets a participant pick several choices |
 | `esclusiva` | poll only: choices that clear all the others when picked (e.g. `No`), separated by `\|` |
-| `tipo` | open question only: `testo` asks for one free answer per person, up to 500 characters, with no word cloud. Empty (or `parole`) asks for short ideas that feed the cloud |
+| `tipo` | open question only: `testo` asks for one free answer per person, up to 500 characters, with no word cloud. `sintesi` the same, analysed into one written summary instead of themes and a vote; its `domanda` may be left empty and written in the room. Empty (or `parole`) asks for short ideas that feed the cloud |
+| `sessione` | filled by the script: the session a `sintesi` text was written in, or a row added from the facilitator page belongs to |
+| `origine` | filled by the script: `aggiunta` for a row added from the facilitator page |
 
 An open question runs `collecting` → `analysing` → `themes` → `voting` →
 `results`. A poll runs `collecting` → `results`: the projector shows the
@@ -205,6 +215,22 @@ and anyone with the QR can type anything. Analysis, themes and vote run as for
 any open question; the prompt tells the model that one answer can touch
 several themes.
 
+A `sintesi` question runs `collecting` → `analysing` → `results`. If its
+`domanda` is empty, the facilitator page asks for the text when the round is
+reached, and the phones wait until it is written. The text can be corrected
+until the first answer arrives, and belongs to that session: the next session
+asks for it again. Answers are as for `testo`. The analysis writes a summary of
+500–600 words (shorter with few answers) into the `Sintesi` tab and puts it on
+every screen at once; if it fails, the collection reopens. The projector shows
+it a page at a time (`pagina` in Config), the phones in full. A row typed by
+hand into `Sintesi` (`titolo`, `testo`, paragraphs on separate lines) shows the
+same way.
+
+When the last question's round is over, the facilitator page can add a
+`sintesi` question and put it on screen (*+ Nuova domanda*). The added row
+belongs to that session: after *Azzera sessione* the list is the planned one
+again.
+
 For a `parole` question the phone shows `answer_fields` short boxes, one idea per box. Each box is one
 entry in the cloud, kept whole ("social media" stays together), counted once
 per person. The projector opens each round with the question and a large QR
@@ -227,6 +253,7 @@ the date and time the session started. Each reset starts a new one.
 | `Voti` | ballot sent — a changed vote adds a row; the latest per device counts |
 | `Archivio risposte` / `temi` / `voti` | row moved out of the tab above, with `archiviato` (when) and `motivo`: `azzeramento` (reset) or `nuova analisi` (themes replaced by a new analysis) |
 | `Risultati` | theme in the ranking, each time a vote is closed. For a poll: option, with `punti` = how many chose it and `schede` = how many answered |
+| `Sintesi` | summary written for a `sintesi` question, with its question text; a new analysis adds a row and the latest one is shown |
 | `Cronologia` | change of phase, from the page or the menu |
 
 For analysis, read each tab together with its archive: *File → Scarica →
@@ -275,6 +302,7 @@ Nuova chiave facilitatore* invalida subito quello vecchio.
 | `max_themes` | how many themes the analysis returns, at most 5 (higher values are treated as 5) |
 | `top_n` | how many themes each participant ranks (Borda: 3/2/1) |
 | `answer_fields` | how many idea boxes the phone shows (1–6) |
+| `pagina` | page of the summary on the projector; set by the page, back to 1 on each `results` |
 | `max_cloud_words` | how many entries the projector shows |
 | `blocklist` | entries to drop — put the question's own vocabulary here, everyone echoes it. Blocking a one-word singular blocks its plural |
 | `synonyms` | `from=to` pairs for what the plural rule cannot reach, e.g. `problema=problemi`, `social=social media` |

@@ -21,6 +21,7 @@ const SHEETS = {
   ARCHIVIO_TEMI:     'Archivio temi',
   ARCHIVIO_VOTI:     'Archivio voti',
   RISULTATI:  'Risultati',
+  SINTESI:    'Sintesi',
   CRONOLOGIA: 'Cronologia',
   LOG:      'Log'
 };
@@ -39,6 +40,7 @@ const DEFAULT_CONFIG = [
   ['max_themes',       '5',           'At most 5 themes; higher values are treated as 5'],
   ['top_n',            '3',           'How many themes each participant ranks'],
   ['answer_fields',    '3',           'How many short boxes the phone shows: one idea per box'],
+  ['pagina',           '1',           'Page of the summary on the projector (sintesi questions); back to 1 on each results'],
   ['max_cloud_words',  '60',          'Entries returned to the projector'],
   ['blocklist',        '',            'Comma-separated entries to drop from the cloud (the question’s own vocabulary)'],
   ['synonyms',         '',            'Comma-separated pairs "from=to", e.g. problema=problemi, social=social media']
@@ -49,11 +51,12 @@ const DEFAULT_CONFIG = [
 const OBSOLETE_CONFIG = ['question', 'min_word_len'];
 
 const HEADERS = {
-  DOMANDE:  ['id', 'domanda', 'opzioni', 'multipla', 'esclusiva', 'tipo'],
+  DOMANDE:  ['id', 'domanda', 'opzioni', 'multipla', 'esclusiva', 'tipo', 'sessione', 'origine'],
   RISPOSTE: ['timestamp', 'voterId', 'text', 'questionId', 'sessione'],
   TEMI:     ['id', 'label', 'description', 'questionId', 'sessione', 'timestamp'],
   VOTI:     ['timestamp', 'voterId', 'ranking', 'questionId', 'sessione'],
   RISULTATI:  ['timestamp', 'sessione', 'questionId', 'domanda', 'posizione', 'themeId', 'label', 'punti', 'primi posti', 'schede'],
+  SINTESI:    ['timestamp', 'sessione', 'questionId', 'domanda', 'titolo', 'testo', 'partecipanti', 'modello'],
   CRONOLOGIA: ['timestamp', 'sessione', 'questionId', 'fase'],
   LOG:      ['timestamp', 'action', 'detail', 'outcome']
 };
@@ -100,7 +103,7 @@ function setup() {
   }
 
   ['DOMANDE', 'RISPOSTE', 'TEMI', 'VOTI', 'ARCHIVIO_RISPOSTE', 'ARCHIVIO_TEMI', 'ARCHIVIO_VOTI',
-   'RISULTATI', 'CRONOLOGIA', 'LOG'].forEach(function (k) {
+   'RISULTATI', 'SINTESI', 'CRONOLOGIA', 'LOG'].forEach(function (k) {
     const name = SHEETS[k];
     let sh = ss.getSheetByName(name);
     if (!sh) {
@@ -151,8 +154,15 @@ function readConfigRows_(sh) {
  * `multipla` = sì lets them pick several; `esclusiva` names the choices that
  * clear all the others when picked (e.g. "No"). Without `opzioni` the row is
  * an open question: `tipo` = testo asks for one longer free answer per person
- * (no word cloud), anything else asks for short ideas that feed the cloud.
- * `type` is 'sondaggio', 'testo' or 'parole'.
+ * (no word cloud), `tipo` = sintesi the same, summarised in one text instead
+ * of themes and a vote; anything else asks for short ideas that feed the cloud.
+ * `type` is 'sondaggio', 'testo', 'sintesi' or 'parole'.
+ *
+ * A `sintesi` row may have no text: the facilitator writes it in the room, and
+ * the text is stamped with the session (`sessione`). In a later session that
+ * text counts as empty, so the question is asked afresh. A row with `origine`
+ * = aggiunta was added from the facilitator page and belongs to its session
+ * only.
  */
 function readQuestions_() {
   const sh = sheet_('DOMANDE');
@@ -161,21 +171,72 @@ function readQuestions_() {
   const split = function (v) {
     return String(v).split('|').map(function (o) { return o.trim(); }).filter(Boolean);
   };
-  return sh.getRange(2, 1, last - 1, HEADERS.DOMANDE.length).getValues()
-    .filter(function (r) { return String(r[1]).trim() !== ''; })
-    .map(function (r, i) {
-      const q = { id: String(r[0]).trim() || ('q' + (i + 1)), text: String(r[1]).trim() };
-      const options = split(r[2]);
-      if (options.length) {
-        q.type = 'sondaggio';
-        q.options = options;
-        q.multiple = /^(s[iì]|yes|true|x|1)$/i.test(String(r[3]).trim());
-        q.exclusive = split(r[4]).filter(function (o) { return options.indexOf(o) !== -1; });
-      } else {
-        q.type = /^test/i.test(String(r[5]).trim()) ? 'testo' : 'parole';
-      }
-      return q;
+  const session = sessionId_();
+  const out = [];
+  sh.getRange(2, 1, last - 1, HEADERS.DOMANDE.length).getValues().forEach(function (r) {
+    const tipo = String(r[5]).trim();
+    const own = sessionText_(r[6]);
+    const isSummary = /^sint/i.test(tipo);
+    if (own && own !== session && String(r[7]).trim() === ORIGIN_ADDED) return;
+    let text = String(r[1]).trim();
+    if (isSummary && own && own !== session) text = '';
+    if (!text && !isSummary) return;
+    const q = { id: String(r[0]).trim() || ('q' + (out.length + 1)), text: text };
+    const options = split(r[2]);
+    if (options.length) {
+      q.type = 'sondaggio';
+      q.options = options;
+      q.multiple = /^(s[iì]|yes|true|x|1)$/i.test(String(r[3]).trim());
+      q.exclusive = split(r[4]).filter(function (o) { return options.indexOf(o) !== -1; });
+    } else {
+      q.type = isSummary ? 'sintesi' : /^test/i.test(tipo) ? 'testo' : 'parole';
+    }
+    out.push(q);
+  });
+  return out;
+}
+
+/** `origine` of a row added from the facilitator page. */
+const ORIGIN_ADDED = 'aggiunta';
+
+/** Longest question the facilitator page can write. */
+const MAX_QUESTION_LEN = 300;
+
+/** A question typed on the facilitator page: one line, not empty, capped. Returns {text} or {error}. */
+function cleanQuestion_(raw) {
+  const text = String(raw || '').replace(/\s+/g, ' ').trim();
+  if (!text) return { error: 'scrivi la domanda' };
+  if (text.length > MAX_QUESTION_LEN) return { error: 'domanda troppo lunga (massimo ' + MAX_QUESTION_LEN + ' caratteri)' };
+  return { text: text };
+}
+
+/** Sheet row of a question id, or 0. Ids that fall back to their position are not found. */
+function questionRow_(id) {
+  const sh = sheet_('DOMANDE');
+  const last = sh.getLastRow();
+  if (last < 2) return 0;
+  const ids = sh.getRange(2, 1, last - 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]).trim() === id) return i + 2;
+  }
+  return 0;
+}
+
+/**
+ * An id no row has ever used: q + one more than the highest number in the tab,
+ * counting rows hidden from this session, so an id never names two texts.
+ */
+function nextQuestionId_() {
+  const sh = sheet_('DOMANDE');
+  const last = sh.getLastRow();
+  let top = last - 1;
+  if (last >= 2) {
+    sh.getRange(2, 1, last - 1, 1).getValues().forEach(function (r) {
+      const m = /^q(\d+)$/i.exec(String(r[0]).trim());
+      if (m) top = Math.max(top, Number(m[1]));
     });
+  }
+  return 'q' + (top + 1);
 }
 
 /**
@@ -190,6 +251,7 @@ function getConfig() {
   out.top_n           = Math.max(1, Number(out.top_n) || 3);
   out.answer_fields   = Math.min(6, Math.max(1, Number(out.answer_fields) || 3));
   out.max_cloud_words = Number(out.max_cloud_words) || 60;
+  out.pagina          = Math.max(1, Math.floor(Number(out.pagina)) || 1);
   if (PHASES.indexOf(out.phase) === -1) out.phase = 'collecting';
 
   out.questions = readQuestions_();
@@ -208,8 +270,12 @@ function setConfig(key, value) {
   setConfigs_(pair);
 }
 
-/** Several Config values with one read of the tab. A phase change goes into Cronologia. */
+/**
+ * Several Config values with one read of the tab. A phase change goes into
+ * Cronologia. Entering the results always starts a summary from its first page.
+ */
 function setConfigs_(values) {
+  if (values.phase === 'results' && !('pagina' in values)) values.pagina = 1;
   const sh = sheet_('CONFIG');
   const rows = readConfigRows_(sh);
   Object.keys(values).forEach(function (key) {
@@ -252,7 +318,7 @@ function goToQuestion_(toId, cfg) {
 
 function stampQuestion_(qid) {
   withLock_(function () {
-    ['RISPOSTE', 'TEMI', 'VOTI'].forEach(function (k) {
+    ['RISPOSTE', 'TEMI', 'VOTI', 'SINTESI'].forEach(function (k) {
       const sh = sheet_(k);
       const last = sh.getLastRow();
       if (last < 2) return;

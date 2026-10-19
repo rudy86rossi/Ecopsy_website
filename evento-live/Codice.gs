@@ -39,6 +39,9 @@ function doPost(e) {
       case 'ballot':  return json_(actionBallot_(body));
       case 'phase':   return json_(withState_(actionPhase_(body)));
       case 'question': return json_(withState_(actionQuestion_(body)));
+      case 'question-text': return json_(withState_(actionQuestionText_(body)));
+      case 'add-question':  return json_(withState_(actionAddQuestion_(body)));
+      case 'page':    return json_(withState_(actionPage_(body)));
       case 'analyze': return json_(withState_(actionAnalyze_(body)));
       case 'reset':   return json_(withState_(actionReset_(body)));
       case 'export':  return json_(actionExport_(body));
@@ -84,10 +87,13 @@ function state_() {
   const q = cfg.question;
   const qid = q.id;
   const isPoll = !!q.options;
-  const isText = q.type === 'testo';
+  const isSummary = q.type === 'sintesi';
+  const isText = q.type === 'testo' || isSummary;
   const answers = readAnswers_(qid);
-  const themes = isPoll ? [] : readThemes_(qid);
-  const ballots = isPoll ? [] : readBallots_(qid);
+  const themes = isPoll || isSummary ? [] : readThemes_(qid);
+  const ballots = isPoll || isSummary ? [] : readBallots_(qid);
+  const summary = isSummary && cfg.phase === 'results' ? readSummary_(qid) : null;
+  const page = summary ? Math.min(cfg.pagina, summary.pages.length) : 1;
 
   const out = {
     ok: true,
@@ -113,14 +119,24 @@ function state_() {
     ballots: ballots.length,
     cloud: isPoll || isText ? [] : buildCloud_(answers, cfg),
     themes: themes,
-    results: !isPoll && cfg.phase === 'results' ? scoreBallots_(ballots, themes, cfg) : null,
-    rev: [qid, cfg.phase, answers.length, themes.length, ballots.length].join('-')
+    results: !isPoll && !isSummary && cfg.phase === 'results' ? scoreBallots_(ballots, themes, cfg) : null,
+    summary: summary,
+    page: page,
+    rev: [qid, cfg.phase, answers.length, themes.length, ballots.length,
+          textHash_(q.text), summary ? textHash_(summary.paragraphs.join('')) : '', page].join('-')
   };
 
   // A write that landed while this state was being read has already dropped
   // the cache; storing this (older) state would bring it back.
   if (cache.get('state-gen') === gen) cache.put('state', JSON.stringify(out), STATE_TTL);
   return out;
+}
+
+/** A short fingerprint, so `rev` changes when a text does. */
+function textHash_(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
 }
 
 function dropStateCache_() {
@@ -152,7 +168,7 @@ function participantView_() {
   if (cached) {
     const s = JSON.parse(cached);
     return {
-      phase: s.phase, qid: s.questionId, type: s.type, poll: s.poll,
+      phase: s.phase, qid: s.questionId, type: s.type, text: s.question, poll: s.poll,
       answerFields: s.answerFields, topN: s.topN,
       themeIds: s.themes.map(function (t) { return t.id; })
     };
@@ -160,7 +176,7 @@ function participantView_() {
   const cfg = getConfig();
   const q = cfg.question;
   return {
-    phase: cfg.phase, qid: q.id, type: q.type,
+    phase: cfg.phase, qid: q.id, type: q.type, text: q.text,
     poll: q.options ? { options: q.options, multiple: q.multiple, exclusive: q.exclusive } : null,
     answerFields: cfg.answer_fields, topN: cfg.top_n,
     themeIds: null
@@ -219,7 +235,8 @@ function actionSubmit_(body) {
   const v = participantView_();
   if (v.phase !== 'collecting') return { ok: false, error: 'la raccolta è chiusa' };
   if (v.poll) return submitPoll_(v, body);
-  if (v.type === 'testo') return submitText_(v, body);
+  if (!v.text) return { ok: false, error: 'la domanda non è ancora stata scritta' };
+  if (v.type === 'testo' || v.type === 'sintesi') return submitText_(v, body);
 
   // One idea per box. Each becomes its own row, and its own entry in the cloud.
   const items = (Array.isArray(body.items) ? body.items : [body.text])
@@ -235,7 +252,7 @@ function actionSubmit_(body) {
 }
 
 /**
- * A `testo` question: one free answer per device, sent once. A second send
+ * A `testo` or `sintesi` question: one free answer per device, sent once. A second send
  * from the same device (another tab, a reload) is answered `already` and
  * changes nothing: the first answer stands.
  */
@@ -298,8 +315,12 @@ function actionPhase_(body) {
   requireKey_(body.key);
   const to = String(body.to || '');
   if (PHASES.indexOf(to) === -1) return { ok: false, error: 'fase sconosciuta' };
-  if (getConfig().question.options && to !== 'collecting' && to !== 'results') {
+  const q = getConfig().question;
+  if (q.options && to !== 'collecting' && to !== 'results') {
     return { ok: false, error: 'un sondaggio ha solo raccolta e risultati' };
+  }
+  if (q.type === 'sintesi' && to !== 'collecting' && to !== 'results') {
+    return { ok: false, error: 'una domanda con sintesi ha solo raccolta e sintesi' };
   }
   setConfig('phase', to);
   log_('phase', to, 'ok');
@@ -319,6 +340,70 @@ function actionQuestion_(body) {
   return goToQuestion_(to, cfg);
 }
 
+/**
+ * Writes the text of a `sintesi` question in the room. Only the question on
+ * screen, and only until the first answer: after that, a changed text would
+ * no longer match what people answered.
+ */
+function actionQuestionText_(body) {
+  requireKey_(body.key);
+  const cfg = getConfig();
+  const q = cfg.question;
+  if (String(body.id || '') !== q.id) return { ok: false, error: 'non è la domanda sullo schermo' };
+  if (q.type !== 'sintesi') return { ok: false, error: 'solo le domande con sintesi si scrivono dalla pagina' };
+  const clean = cleanQuestion_(body.text);
+  if (clean.error) return { ok: false, error: clean.error };
+  const row = questionRow_(q.id);
+  if (!row) return { ok: false, error: 'la domanda non ha un id nel foglio Domande' };
+  let refused = false;
+  withLock_(function () {
+    if (readAnswers_(q.id).length) { refused = true; return; }
+    const sh = sheet_('DOMANDE');
+    sh.getRange(row, 2).setValue(safeCell_(clean.text));
+    sh.getRange(row, HEADERS.DOMANDE.indexOf('sessione') + 1).setValue(sessionId_());
+  });
+  if (refused) return { ok: false, error: 'sono già arrivate risposte: la domanda non si può più cambiare' };
+  dropStateCache_();
+  log_('question-text', q.id, 'ok');
+  return { ok: true, questionId: q.id };
+}
+
+/**
+ * Adds a `sintesi` question after the last one and puts it on screen. Only
+ * once the session is finished: the last question, on its results. The row
+ * belongs to this session (see readQuestions_).
+ */
+function actionAddQuestion_(body) {
+  requireKey_(body.key);
+  const cfg = getConfig();
+  if (cfg.questionIndex < cfg.questions.length - 1 || cfg.phase !== 'results') {
+    return { ok: false, error: 'si aggiunge una domanda solo alla fine della sessione' };
+  }
+  const clean = cleanQuestion_(body.text);
+  if (clean.error) return { ok: false, error: clean.error };
+  let id = '';
+  withLock_(function () {
+    id = nextQuestionId_();
+    const row = [id, safeCell_(clean.text), '', '', '', 'sintesi', sessionId_(), ORIGIN_ADDED];
+    const sh = sheet_('DOMANDE');
+    sh.getRange(sh.getLastRow() + 1, 1, 1, row.length).setValues([row]);
+  });
+  log_('add-question', id, 'ok');
+  return goToQuestion_(id);
+}
+
+/** Turns the page of the summary on the projector. `to` is 1-based. */
+function actionPage_(body) {
+  requireKey_(body.key);
+  const cfg = getConfig();
+  if (cfg.question.type !== 'sintesi' || cfg.phase !== 'results') return { ok: false, error: 'nessuna sintesi sullo schermo' };
+  const summary = readSummary_(cfg.question.id);
+  const to = Math.floor(Number(body.to));
+  if (!summary || !(to >= 1 && to <= summary.pages.length)) return { ok: false, error: 'pagina inesistente' };
+  setConfig('pagina', to);
+  return { ok: true, page: to };
+}
+
 function actionAnalyze_(body) {
   requireKey_(body.key);
   return runAnalyze_();
@@ -331,6 +416,7 @@ function runAnalyze_() {
   if (cfg.question.options) return { ok: false, error: 'un sondaggio non si analizza: chiudi e mostra i risultati' };
   const answers = readAnswers_(qid);
   if (!answers.length) return { ok: false, error: 'nessuna risposta da analizzare' };
+  if (cfg.question.type === 'sintesi') return runSummary_(cfg, answers);
 
   setConfig('phase', 'analysing');
   const started = Date.now();
@@ -347,6 +433,27 @@ function runAnalyze_() {
     setConfig('phase', 'themes');
     log_('analyze', String(err), 'error');
     return { ok: false, error: String(err), fallback: 'scrivi i temi a mano nel foglio Temi' };
+  }
+}
+
+/**
+ * A `sintesi` question goes from the analysis straight to the room: the round
+ * has already waited on the facilitator typing the question. On failure the
+ * collection reopens and the facilitator runs it again.
+ */
+function runSummary_(cfg, answers) {
+  setConfig('phase', 'analysing');
+  const started = Date.now();
+  try {
+    const summary = extractSummary_(cfg, answers);
+    writeSummary_(cfg, summary, summary.participants);
+    setConfig('phase', 'results');
+    log_('analyze', 'sintesi ' + summary.paragraphs.length + ' paragrafi in ' + (Date.now() - started) + 'ms', 'ok');
+    return { ok: true, summary: { title: summary.title, paragraphs: summary.paragraphs } };
+  } catch (err) {
+    setConfig('phase', 'collecting');
+    log_('analyze', String(err), 'error');
+    return { ok: false, error: String(err), fallback: 'riprova, o scrivi la sintesi a mano nel foglio Sintesi' };
   }
 }
 
@@ -370,6 +477,7 @@ function resetSession_(from) {
       archiveRows_(k, sh.getRange(2, 1, last - 1, HEADERS[k].length).getValues(), 'azzeramento');
       sh.deleteRows(2, last - 1);
     });
+    stampSummarySession_();
     startSession_();
   });
   const first = readQuestions_()[0];

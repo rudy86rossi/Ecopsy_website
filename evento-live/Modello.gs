@@ -16,8 +16,41 @@
 
 function extractThemes_(cfg, answers) {
   const prompt = buildPrompt_(cfg, answers);
-  const data = parseJson_(callModel_(cfg, prompt));
+  const data = parseJson_(callModel_(cfg, prompt, themeSchema_()));
   return checkThemes_((data && data.themes) || [], prompt.participants, cfg.max_themes);
+}
+
+/** Returns {title, paragraphs, participants}. */
+function extractSummary_(cfg, answers) {
+  const prompt = buildSummaryPrompt_(cfg, answers);
+  const data = parseJson_(callModel_(cfg, prompt, summarySchema_()));
+  const out = checkSummary_(data);
+  out.participants = prompt.participants;
+  return out;
+}
+
+const MAX_TITLE_LEN = 80;
+const MAX_SUMMARY_WORDS = 900;
+const MAX_SUMMARY_CHARS = 8000;
+const MAX_PARAGRAPHS = 8;
+
+/**
+ * Flattens each paragraph to one line and caps the title. No lower bound on
+ * length: with a handful of answers a short summary is the honest one. Too
+ * long means the model ignored the brief; the facilitator runs it again.
+ */
+function checkSummary_(data) {
+  const paragraphs = (data && Array.isArray(data.paragrafi) ? data.paragrafi : [])
+    .map(function (p) { return oneLine_(p, Infinity); })
+    .filter(Boolean);
+  if (!paragraphs.length) throw new Error('sintesi vuota');
+  if (paragraphs.length > MAX_PARAGRAPHS) throw new Error('sintesi in troppi paragrafi (' + paragraphs.length + ')');
+  const text = paragraphs.join(' ');
+  const words = text.split(' ').length;
+  if (words > MAX_SUMMARY_WORDS || text.length > MAX_SUMMARY_CHARS) {
+    throw new Error('sintesi troppo lunga (' + words + ' parole)');
+  }
+  return { title: oneLine_(data.titolo, MAX_TITLE_LEN) || 'Sintesi', paragraphs: paragraphs };
 }
 
 /**
@@ -69,10 +102,10 @@ function parseJson_(text) {
   }
 }
 
-function callModel_(cfg, prompt) {
+function callModel_(cfg, prompt, schema) {
   const provider = (cfg.provider || 'anthropic').toLowerCase();
-  if (provider === 'gemini') return callGemini_(cfg, prompt);
-  return callAnthropic_(cfg, prompt);
+  if (provider === 'gemini') return callGemini_(cfg, prompt, schema);
+  return callAnthropic_(cfg, prompt, schema);
 }
 
 function prop_(name) {
@@ -98,10 +131,11 @@ function fetchWithRetry_(url, options) {
   throw last;
 }
 
-function callAnthropic_(cfg, prompt) {
+function callAnthropic_(cfg, prompt, schema) {
   const payload = {
     model: cfg.model || 'claude-opus-5',
-    // Enough for low-effort thinking plus a few hundred tokens of JSON, and a
+    // Enough for low-effort thinking plus the JSON (about 1 000 tokens for a
+    // 600-word summary), and a
     // ceiling on the worst-case cost of one analysis (8000 × $25/M = $0.20).
     max_tokens: 8000,
     // No `temperature`: sampling parameters are rejected on Claude Opus 5.
@@ -109,7 +143,7 @@ function callAnthropic_(cfg, prompt) {
     // a room waiting for it.
     output_config: {
       effort: 'low',
-      format: { type: 'json_schema', schema: themeSchema_() }
+      format: { type: 'json_schema', schema: schema }
     },
     // Instructions in `system`, answers in the user turn: the model treats the
     // two with different authority, which is the first line against an answer
@@ -144,12 +178,12 @@ function callAnthropic_(cfg, prompt) {
   return block.text;
 }
 
-function callGemini_(cfg, prompt) {
+function callGemini_(cfg, prompt, schema) {
   // Gemini's responseSchema follows a subset of OpenAPI and rejects
   // additionalProperties, so the shared schema is stripped down here.
-  const schema = themeSchema_();
-  delete schema.additionalProperties;
-  delete schema.properties.themes.items.additionalProperties;
+  schema = JSON.parse(JSON.stringify(schema, function (k, v) {
+    return k === 'additionalProperties' ? undefined : v;
+  }));
 
   const model = cfg.model && cfg.model.indexOf('gemini') === 0 ? cfg.model : 'gemini-2.5-flash';
   const url = 'https://generativelanguage.googleapis.com/v1beta/models/' +

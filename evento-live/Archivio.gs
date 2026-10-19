@@ -10,19 +10,30 @@
  * - Archivio risposte / temi / voti: rows moved out of those tabs, by a reset or
  *   by a new analysis replacing a question's themes, with when and why.
  * - Risultati: the ranking shown to the room, each time a vote is closed.
+ * - Sintesi: every summary written for a `sintesi` question, with its question.
  * - Cronologia: every change of phase, from the page or from the menu.
  *
  * For analysis, read each tab together with its archive.
  */
 
+// Read once per execution: readQuestions_ compares rows against it on every getConfig.
+let SESSION_ = null;
+
 function sessionId_() {
-  return PropertiesService.getScriptProperties().getProperty('SESSION_ID') || startSession_();
+  return SESSION_ || (SESSION_ = PropertiesService.getScriptProperties().getProperty('SESSION_ID') || startSession_());
 }
 
 function startSession_() {
   const id = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
   PropertiesService.getScriptProperties().setProperty('SESSION_ID', id);
-  return id;
+  return (SESSION_ = id);
+}
+
+/** A `sessione` cell as text: Sheets turns the id it was given into a date. */
+function sessionText_(v) {
+  return v instanceof Date
+    ? Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss')
+    : String(v).trim();
 }
 
 /**
@@ -66,6 +77,7 @@ function recordResults_() {
   const cfg = getConfig();
   const qid = cfg.question.id;
   if (cfg.question.options) return recordPollResults_(cfg);
+  if (cfg.question.type === 'sintesi') return;  // the Sintesi tab is its record
   const ballots = readBallots_(qid);
   const rows = scoreBallots_(ballots, readThemes_(qid), cfg);
   if (!rows.length) return;
