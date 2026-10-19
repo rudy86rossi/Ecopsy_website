@@ -3,7 +3,7 @@
 
   /* The results of one day as a PDF, built in the facilitator's browser: the
      projector's screens for each question (the poll result, the themes put to
-     the vote, the final ranking), one per page, each session opening with a
+     the vote, the final ranking, each page of a summary), one per page, each session opening with a
      divider page. The data comes from the sheet's `export` action, which needs
      the facilitator key. The same screens come out of
      evento-live/estrai-dati.py; a change to one belongs in the other. */
@@ -65,11 +65,28 @@
     var topN = Math.max(1, Number(cfg.top_n) || 3);
 
     var domande = rows(tabs, 'Domande').filter(function (r) { return r.id; });
-    var text = {}, place = {}, polls = {};
+    /* The rounds of a session: the planned rows, then those added in it. */
+    var text = {}, place = {}, polls = {}, summaries = {}, planned = [], added = {};
     domande.forEach(function (r, i) {
       text[r.id] = r.domanda;
       place[r.id] = i + 1;
       if ((r.opzioni || '').trim()) polls[r.id] = true;
+      if (/^sint/i.test((r.tipo || '').trim())) summaries[r.id] = true;
+      if ((r.origine || '').trim() === 'aggiunta') {
+        var k = (r.sessione || '').trim();
+        (added[k] = added[k] || []).push(r.id);
+      } else {
+        planned.push(r.id);
+      }
+    });
+
+    /* The summary on screen: the last one written per session and question,
+       with the question as it was asked (a `sintesi` row is rewritten in each session). */
+    var summaryOf = {};
+    rows(tabs, 'Sintesi').forEach(function (r) {
+      if (!onDay(r, day) || !(r.testo || '').trim()) return;
+      summaryOf[r.sessione + '|' + r.questionId] = r;
+      summaries[r.questionId] = true;
     });
 
     /* The ranking saved each time a vote closed: the last one per session and question. */
@@ -94,7 +111,6 @@
     answers.forEach(function (r) { if (sessions.indexOf(r.sessione) === -1) sessions.push(r.sessione); });
     sessions.sort();
 
-    var of = Math.max(domande.length, 1);
     var pages = [];
     sessions.forEach(function (sess, si) {
       var sAnswers = answers.filter(function (r) { return r.sessione === sess; });
@@ -104,13 +120,34 @@
       var qids = [];
       sAnswers.forEach(function (r) { if (qids.indexOf(r.questionId) === -1) qids.push(r.questionId); });
       qids.sort(function (a, b) { return (place[a] || 99) - (place[b] || 99) || (a < b ? -1 : 1); });
+      var order = planned.concat(added[sess] || []);
 
       qids.forEach(function (qid) {
         var qa = sAnswers.filter(function (r) { return r.questionId === qid; });
         var qt = themes.filter(function (r) { return r.sessione === sess && r.questionId === qid; });
         var res = saved[sess + '|' + qid];
-        var base = { question: text[qid] || qid, n: place[qid] || Number(qid.slice(1)) || 1, of: of };
+        var srow = summaryOf[sess + '|' + qid];
+        var at = order.indexOf(qid);
+        var base = { question: (srow && srow.domanda) || text[qid] || qid,
+                     n: at !== -1 ? at + 1 : place[qid] || Number(qid.slice(1)) || 1,
+                     of: Math.max(order.length, 1) };
         var isPoll = polls[qid] || (!domande.length && res && !res[0].themeId);
+
+        if (summaries[qid]) {
+          if (!srow) return;  // no summary was written: nothing was on screen
+          var paras = srow.testo.split(/\s*\n\s*/).filter(Boolean);
+          var people = {};
+          qa.forEach(function (r) { people[r.voterId] = true; });
+          var nPeople = Object.keys(people).length;
+          var spages = pagesOf(paras);
+          spages.forEach(function (idx, i) {
+            pages.push(Object.assign({ kind: 'summary', title: srow.titolo,
+              paragraphs: idx.map(function (k) { return paras[k]; }),
+              meta: (spages.length > 1 ? 'Pagina ' + (i + 1) + ' di ' + spages.length + ' · ' : '') +
+                    nPeople + (nPeople === 1 ? ' risposta' : ' risposte') }, base));
+          });
+          return;
+        }
 
         if (isPoll) {
           var counts = [], total;
@@ -170,19 +207,43 @@
             .sort(function (a, b) { return b.points - a.points || b.firsts - a.firsts; });
           ballots = Object.keys(lastBallot).length;
         }
-        var people = {};
-        qa.forEach(function (r) { people[r.voterId] = true; });
-        var nPeople = Object.keys(people).length;
+        var voters = {};
+        qa.forEach(function (r) { voters[r.voterId] = true; });
+        var nVoters = Object.keys(voters).length;
 
         pages.push(Object.assign({ kind: 'themes', ballots: ballots, themes: qt }, base));
         pages.push(Object.assign({ kind: 'ranking',
-          meta: ballots + (ballots === 1 ? ' voto' : ' voti') + ' · ' + nPeople + ' partecipanti',
+          meta: ballots + (ballots === 1 ? ' voto' : ' voti') + ' · ' + nVoters + ' partecipanti',
           rows: ranked.map(function (r) {
             return [r.label, r.points, r.points + ' punti · ' + r.firsts + ' primi posti'];
           }) }, base));
       });
     });
     return { title: (cfg.title || '').trim() || 'Sessione EcoPsy', pages: pages };
+  }
+
+  /* How the server groups a summary's paragraphs into projector pages (Sintesi.gs pagesOf_). */
+  var PAGE_CHARS = 700;
+  function pagesOf(paragraphs) {
+    var out = [], page = [], size = 0;
+    paragraphs.forEach(function (p, i) {
+      if (page.length && size + p.length > PAGE_CHARS) { out.push(page); page = []; size = 0; }
+      page.push(i);
+      size += p.length;
+    });
+    if (page.length) out.push(page);
+    return out;
+  }
+
+  /* A summary page shrinks until it fits its frame, as evento.js summaryPage() does on the projector. */
+  var SUMMARY_SIZES = [2, 1.85, 1.7, 1.55, 1.4, 1.3];
+  function fitSummary(wrap) {
+    var b = wrap.querySelector('.sbody');
+    if (!b) return;
+    SUMMARY_SIZES.some(function (s) {
+      b.style.fontSize = s + 'rem';
+      return wrap.scrollHeight <= wrap.clientHeight;
+    });
   }
 
   /* The markup evento.js screenView() builds for the same phase. */
@@ -194,14 +255,20 @@
       b = '<div class="waiting"><div class="bignum">Sessione ' + p.n + '</div>' + esc(when) + '</div>';
     } else {
       if (p.of > 1) b += '<div class="round">Domanda ' + p.n + ' di ' + p.of + '</div>';
-      b += '<div class="qline">' + esc(p.question) + '</div><div>';
-      if (p.kind === 'themes') {
+      b += '<div class="qline">' + esc(p.question) + '</div>';
+      if (p.kind === 'summary') {
+        b += '<div class="spage"><div class="stitle">' + esc(p.title) + '</div><div class="sbody">' +
+             p.paragraphs.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('') + '</div></div>' +
+             '<div class="meta">' + esc(p.meta) + '</div>';
+      } else if (p.kind === 'themes') {
+        b += '<div>';
         p.themes.forEach(function (t) {
           b += '<div class="theme"><span class="badge">•</span><div><div class="label">' + esc(t.label) +
                '</div><div class="desc">' + esc(t.description) + '</div></div></div>';
         });
         b += '</div><div class="meta">' + p.ballots + (p.ballots === 1 ? ' voto espresso' : ' voti espressi') + '</div>';
       } else {
+        b += '<div>';
         var top = Math.max.apply(null, p.rows.map(function (r) { return r[1]; }).concat([1]));
         p.rows.forEach(function (r) {
           b += '<div class="res"><div class="top"><div class="label">' + esc(r[0]) + '</div><div class="pts">' +
@@ -266,6 +333,7 @@
           doc.body.innerHTML = pageHtml(p, built.title);
           return doc.fonts ? doc.fonts.ready : null;
         }).then(function () {
+          fitSummary(doc.body.firstChild);
           return window.html2canvas(doc.body.firstChild, {
             scale: 1, width: 1920, height: 1080, windowWidth: 1920, windowHeight: 1080,
             backgroundColor: '#1a4a2e', logging: false
@@ -290,7 +358,7 @@
     var box = document.createElement('div');
     box.className = 'card pdfcard';
     box.innerHTML = '<h2>Risultati in PDF</h2>' +
-      '<p class="links">Le schermate di temi e classifiche di un giorno, una pagina per schermata.</p>' +
+      '<p class="links">Le schermate di temi, classifiche e sintesi di un giorno, una pagina per schermata.</p>' +
       '<div class="pdfrow"><input type="date" aria-label="Giorno"><button type="button">Scarica PDF</button></div>' +
       '<p class="status"></p>';
     var input = box.querySelector('input');

@@ -7,7 +7,7 @@ an export with their facilitator key, saves each tab as CSV and runs
 estrai-dati.py on it. Writes into the output folder (default: "event data"):
 
   <nome>/dati/<Tab>.csv           the sheet as it is now
-  <nome>/estratto-<day>/          answers, themes, ballots, screens, PDF
+  <nome>/estratto-<day>/          answers, themes, ballots, summaries, screens, PDF
   Risultati-<day>/Risultati-sessione-<nome>.pdf   every person's PDF, together
 
 The keys live in evento-live/chiavi.local, one per line, as `nome = chiave`
