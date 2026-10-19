@@ -107,7 +107,8 @@ function buildSummaryPrompt_(cfg, answers) {
     '- Fra 500 e 600 parole. Con poche risposte scrivi di meno: non aggiungere nulla per allungare.',
     '- "titolo": 3-8 parole che dicono di cosa parla la sintesi.',
     '- "paragrafi": da 4 a 6 paragrafi, ognuno su un aspetto. Prima ciò che accomuna molte ' +
-    'risposte, poi le differenze e le idee meno frequenti.',
+    'risposte, poi le differenze e le idee meno frequenti. Ogni elemento è un paragrafo completo ' +
+    'di più frasi: niente parole sciolte, note o elementi vuoti.',
     '- Di’ quanto è condivisa un’idea con parole come "molti", "alcuni", "una persona", mai con ' +
     'numeri o percentuali.',
     '- Riporta quello che i partecipanti hanno scritto, con le loro parole dove puoi; non ' +

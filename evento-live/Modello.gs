@@ -33,16 +33,19 @@ const MAX_TITLE_LEN = 80;
 const MAX_SUMMARY_WORDS = 900;
 const MAX_SUMMARY_CHARS = 8000;
 const MAX_PARAGRAPHS = 8;
+/* Shorter is a stray fragment, not a paragraph: the model once returned a lone "aggiungi". */
+const MIN_PARAGRAPH_WORDS = 5;
 
 /**
- * Flattens each paragraph to one line and caps the title. No lower bound on
- * length: with a handful of answers a short summary is the honest one. Too
- * long means the model ignored the brief; the facilitator runs it again.
+ * Flattens each paragraph to one line, drops fragments too short to be one,
+ * and caps the title. No lower bound on the whole: with a handful of answers
+ * a short summary is the honest one. Too long means the model ignored the
+ * brief; the facilitator runs it again.
  */
 function checkSummary_(data) {
   const paragraphs = (data && Array.isArray(data.paragrafi) ? data.paragrafi : [])
     .map(function (p) { return oneLine_(p, Infinity); })
-    .filter(Boolean);
+    .filter(function (p) { return p.split(' ').length >= MIN_PARAGRAPH_WORDS; });
   if (!paragraphs.length) throw new Error('sintesi vuota');
   if (paragraphs.length > MAX_PARAGRAPHS) throw new Error('sintesi in troppi paragrafi (' + paragraphs.length + ')');
   const text = paragraphs.join(' ');
