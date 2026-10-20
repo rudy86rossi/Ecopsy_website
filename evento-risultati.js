@@ -65,9 +65,15 @@
     var topN = Math.max(1, Number(cfg.top_n) || 3);
 
     var domande = rows(tabs, 'Domande').filter(function (r) { return r.id; });
-    /* The rounds of a session: the planned rows, then those added in it. */
-    var text = {}, place = {}, polls = {}, summaries = {}, planned = [], added = {};
+    /* The rounds of a session: the planned rows of its scaletta, then those added in it. */
+    var text = {}, place = {}, polls = {}, summaries = {}, planned = [], added = {}, setNames = [];
+    function names(v) {
+      return (v || '').split('|').map(function (x) { return x.trim(); }).filter(Boolean);
+    }
     domande.forEach(function (r, i) {
+      names(r.scaletta).forEach(function (n) {
+        if (!setNames.some(function (m) { return m.toLowerCase() === n.toLowerCase(); })) setNames.push(n);
+      });
       text[r.id] = r.domanda;
       place[r.id] = i + 1;
       if ((r.opzioni || '').trim()) polls[r.id] = true;
@@ -76,9 +82,21 @@
         var k = (r.sessione || '').trim();
         (added[k] = added[k] || []).push(r.id);
       } else {
-        planned.push(r.id);
+        planned.push({ id: r.id, sets: names(r.scaletta).map(function (n) { return n.toLowerCase(); }) });
       }
     });
+
+    /* The scaletta each session ran, from Cronologia. Sessions from before
+       scalette existed ran the first one, as the server would today. */
+    var setOf = {};
+    rows(tabs, 'Cronologia').forEach(function (r) {
+      if ((r.scaletta || '').trim()) setOf[r.sessione] = r.scaletta.trim();
+    });
+    function plannedFor(sess) {
+      var use = (setOf[sess] || setNames[0] || '').toLowerCase();
+      return planned.filter(function (q) { return !use || !q.sets.length || q.sets.indexOf(use) !== -1; })
+        .map(function (q) { return q.id; });
+    }
 
     /* The summary on screen: the last one written per session and question,
        with the question as it was asked (a `sintesi` row is rewritten in each session). */
@@ -115,12 +133,12 @@
     sessions.forEach(function (sess, si) {
       var sAnswers = answers.filter(function (r) { return r.sessione === sess; });
       var first = sAnswers.map(function (r) { return r.timestamp.slice(11, 16); }).filter(Boolean).sort()[0];
-      pages.push({ divider: true, n: si + 1, day: day, from: first || '' });
+      pages.push({ divider: true, n: si + 1, day: day, from: first || '', scaletta: setNames.length ? setOf[sess] || setNames[0] : '' });
 
       var qids = [];
       sAnswers.forEach(function (r) { if (qids.indexOf(r.questionId) === -1) qids.push(r.questionId); });
       qids.sort(function (a, b) { return (place[a] || 99) - (place[b] || 99) || (a < b ? -1 : 1); });
-      var order = planned.concat(added[sess] || []);
+      var order = plannedFor(sess).concat(added[sess] || []);
 
       qids.forEach(function (qid) {
         var qa = sAnswers.filter(function (r) { return r.questionId === qid; });
@@ -251,7 +269,7 @@
     var b = '';
     if (p.divider) {
       var when = Number(p.day.slice(8, 10)) + ' ' + MONTHS[Number(p.day.slice(5, 7)) - 1] + ' ' + p.day.slice(0, 4) +
-                 (p.from ? ' · dalle ' + p.from : '');
+                 (p.from ? ' · dalle ' + p.from : '') + (p.scaletta ? ' · ' + p.scaletta : '');
       b = '<div class="waiting"><div class="bignum">Sessione ' + p.n + '</div>' + esc(when) + '</div>';
     } else {
       if (p.of > 1) b += '<div class="round">Domanda ' + p.n + ' di ' + p.of + '</div>';

@@ -186,6 +186,9 @@
 
   var busy = false, state = null, timer = null, moreOpen = false, pdfCard = null;
 
+  /* The scaletta picked in "Nuova sessione", kept across the redraw. */
+  var resetPick = null;
+
   /* The question being typed for a summary round, and the new question at the
      end of the session. Created once and re-attached on each render, so the
      redraw every few seconds keeps what is being typed. `editing` is the id of
@@ -238,6 +241,7 @@
     }
     app.appendChild(head);
 
+    if (atStart(s)) app.appendChild(setsCard(s));
     if (isSummary(s) && s.phase === 'collecting' && (!s.question || editing === s.questionId)) app.appendChild(questionBox(s));
     if (isLast(s) && s.phase === 'results') app.appendChild(addCard());
 
@@ -281,6 +285,37 @@
     inner.appendChild(row);
     bar.appendChild(inner);
     app.appendChild(bar);
+  }
+
+  /* Before the first answer of a session, the question set can still be
+     swapped: nothing has to be archived. */
+  function atStart(s) {
+    return !!s.scalette && s.scalette.length > 1 && !!s.round && s.round.n === 1 &&
+      s.phase === 'collecting' && !s.responses;
+  }
+
+  /* The scalette of the Domande tab: picking one starts the session on it. */
+  function setsCard(s) {
+    var card = el('div', 'card');
+    card.appendChild(el('h2', null, 'Scaletta della sessione'));
+    var list = el('div', 'steps');
+    s.scalette.forEach(function (sc) {
+      var cur = sc.name === s.scaletta;
+      var b = el('button', 'step' + (cur ? ' next' : ''));
+      b.type = 'button';
+      b.appendChild(el('span', 'n', String(sc.count)));
+      var body = el('div');
+      body.appendChild(document.createTextNode(sc.name));
+      body.appendChild(el('span', 'sub', (sc.count === 1 ? '1 domanda' : sc.count + ' domande') +
+        (cur ? ' · in uso' : ' · tocca per usarla')));
+      b.appendChild(body);
+      if (cur) b.setAttribute('aria-current', 'true');
+      else b.addEventListener('click', function () { run({ act: 'reset', scaletta: sc.name }, b); });
+      list.appendChild(b);
+    });
+    card.appendChild(list);
+    card.appendChild(el('p', 'links', 'Si può cambiare finché non arriva la prima risposta.'));
+    return card;
   }
 
   /* Avanti on "Mostra la domanda" sends what is in the question box. */
@@ -495,7 +530,7 @@
 
     /* — the rounds, from the Domande tab; any of them can be put on screen — */
     if (s.questions && s.questions.length > 1) {
-      more.appendChild(el('h2', null, 'Domande'));
+      more.appendChild(el('h2', null, s.scaletta ? 'Domande · ' + s.scaletta : 'Domande'));
       var qol = el('ol', 'qs');
       s.questions.forEach(function (q) {
         var li = el('li', q.id === s.questionId ? 'cur' : null, q.text || '(da scrivere in sala)');
@@ -524,12 +559,30 @@
     links.appendChild(el('code', null, dir + 'voto_studente_' + PERSONA + '.html'));
     more.appendChild(links);
 
+    /* — a new session, on any scaletta — */
     var danger = el('div', 'danger');
-    var rb = el('button', 'reset', 'Azzera la sessione');
+    var many = s.scalette && s.scalette.length > 1;
+    var pick = null;
+    if (many) {
+      if (!resetPick || !s.scalette.some(function (sc) { return sc.name === resetPick; })) resetPick = s.scaletta;
+      pick = el('select', 'resetpick');
+      pick.setAttribute('aria-label', 'Scaletta della nuova sessione');
+      s.scalette.forEach(function (sc) {
+        var o = el('option', null, sc.name + (sc.count === 1 ? ' (1 domanda)' : ' (' + sc.count + ' domande)'));
+        o.value = sc.name;
+        pick.appendChild(o);
+      });
+      pick.value = resetPick;
+      pick.addEventListener('change', function () { resetPick = pick.value; });
+      danger.appendChild(pick);
+    }
+    var rb = el('button', 'reset', 'Nuova sessione');
     rb.type = 'button';
     rb.addEventListener('click', function () {
-      if (!confirm('Sposta risposte, temi e voti di tutte le domande nei fogli Archivio, apre una nuova sessione e torna alla prima domanda. Procedere?')) return;
-      run({ act: 'reset' }, rb);
+      var name = pick ? pick.value : '';
+      if (!confirm('Sposta risposte, temi e voti di tutte le domande nei fogli Archivio, apre una nuova sessione' +
+        (name ? ' con la scaletta ' + name : '') + ' e torna alla prima domanda. Procedere?')) return;
+      run({ act: 'reset', scaletta: name || undefined }, rb);
     });
     danger.appendChild(rb);
     more.appendChild(danger);
@@ -559,7 +612,7 @@
     var call = st.act === 'analyze'  ? post({ action: 'analyze' })
              : st.act === 'next'     ? post({ action: 'question', to: 'next' })
              : st.act === 'question' ? post({ action: 'question', to: st.to })
-             : st.act === 'reset'    ? post({ action: 'reset', confirm: 'RESET' })
+             : st.act === 'reset'    ? post({ action: 'reset', confirm: 'RESET', scaletta: st.scaletta })
              : st.act === 'text'     ? post({ action: 'question-text', id: state.questionId, text: st.text })
              : st.act === 'add'      ? post({ action: 'add-question', text: st.text })
              : st.act === 'page'     ? post({ action: 'page', to: st.to })
@@ -571,8 +624,9 @@
       if (res.ok) {
         if (st.act === 'text') { qbox = null; editing = null; }
         if (st.act === 'add') addBox = null;
+        if (st.act === 'reset') resetPick = null;
         say(status, st.act === 'analyze' ? (res.summary ? 'Sintesi sullo schermo.' : res.themes.length + ' temi estratti. Controllali qui sopra.')
-                  : st.act === 'reset'   ? 'Sessione azzerata.'
+                  : st.act === 'reset'   ? (res.scaletta ? 'Nuova sessione: ' + res.scaletta + '.' : 'Nuova sessione.')
                   : st.act === 'text'    ? 'Domanda sullo schermo.'
                   : st.act === 'add'     ? 'Nuova domanda sullo schermo: la raccolta è aperta.' : 'Fatto.', true);
       } else {
@@ -608,8 +662,9 @@
   }
 
   /* A poll that set off before a command must not redraw over its spinner,
-     nor over a question being typed: rebuilding the page would close the
-     phone's keyboard. The next poll after the box loses focus redraws. */
+     nor over a question being typed or a list being picked from: rebuilding
+     the page would close the phone's keyboard or the list. The next poll
+     after it loses focus redraws. */
   function tick() {
     getState().then(function (s) {
       if (!s.ok || busy) return;
@@ -618,7 +673,7 @@
   }
   function typing() {
     var a = document.activeElement;
-    return !!a && a.tagName === 'TEXTAREA' && app.contains(a);
+    return !!a && (a.tagName === 'TEXTAREA' || a.tagName === 'SELECT') && app.contains(a);
   }
 
   /* Keeps the phone awake between steps: a locked screen in a pocket would

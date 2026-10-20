@@ -109,6 +109,7 @@ Account Google* forces a login).
   "question": "…", "questionId": "q1", "type": "parole", "maxLength": 80,
   "session": "2026-10-11 10:00:00", "round": { "n": 1, "of": 3 },
   "questions": [{ "id": "q1", "text": "…" }], "answerFields": 3, "topN": 3,
+  "scaletta": "FSL-1", "scalette": [{ "name": "FSL-1", "count": 5 }, { "name": "FSL-2", "count": 1 }],
   "responses": 14, "entries": 35, "ballots": 0,
   "cloud": [["social media", 7], ["scuola", 5]],
   "themes": [{ "id": "t1", "label": "…", "description": "…" }],
@@ -139,7 +140,7 @@ something changed, so the projector can skip a redraw.
 | `question-text` | `{key, id, text}` — writes the text of the `sintesi` question on screen, until its first answer; 300 characters | facilitator key |
 | `add-question` | `{key, text}` — adds a `sintesi` question after the last one and puts it on screen | facilitator key, last question in `results` |
 | `page` | `{key, to}` — page of the summary on the projector, from 1 | facilitator key, `sintesi` in `results` |
-| `reset` | `{key, confirm:"RESET"}` | facilitator key |
+| `reset` | `{key, confirm:"RESET", scaletta}` — a new session; `scaletta` (optional) is its question set, otherwise the current one stays | facilitator key |
 
 Every reply is HTTP 200 with `{ok: true|false}`; `ok:false` carries `error`.
 `sendId` is optional: a send repeated with the same id within 10 minutes is
@@ -172,7 +173,8 @@ accidental double submissions; it is not an identity check and does not need to 
 
 ## Running the session
 
-The questions are the rows of the `Domande` tab, one round each:
+The questions are the rows of the `Domande` tab, one round each, grouped into
+*scalette* (question sets):
 
 | column | what to write |
 |---|---|
@@ -184,6 +186,27 @@ The questions are the rows of the `Domande` tab, one round each:
 | `tipo` | open question only: `testo` asks for one free answer per person, up to 500 characters, with no word cloud. `sintesi` the same, analysed into one written summary instead of themes and a vote; its `domanda` may be left empty and written in the room. Empty (or `parole`) asks for short ideas that feed the cloud |
 | `sessione` | filled by the script: the session a `sintesi` text was written in, or a row added from the facilitator page belongs to |
 | `origine` | filled by the script: `aggiunta` for a row added from the facilitator page |
+| `scaletta` | the question sets the row belongs to (e.g. `FSL-1`), separated by `\|`. Empty puts it in every set |
+
+### Scalette
+
+Each sheet holds several question sets, and each session runs one of them. Today:
+**FSL-1**, the poll and four `testo` questions (q1–q5), and **FSL-2**, a free
+session: one `sintesi` row with no text (q6), so the facilitator writes the
+first question in the room and adds the next ones with *+ Nuova domanda*.
+
+- The facilitator page lists the scalette at the start of a session (first
+  question, no answers yet); tapping one starts the session on it. After the
+  first answer, *Altri comandi → Nuova sessione* picks the set of the next
+  session. The menu's *Nuova sessione (azzera)* asks for the name.
+- Within a set the rounds run in sheet order; `round`, the *Domande* list and
+  *Domanda successiva* see only that set. With no names in the column the tab
+  is one list.
+- **Ids are unique across the whole tab**: answers, themes and the export find
+  a question by id alone. A set with an id two rows share is refused when a
+  session starts on it, with the id in the message.
+- `Cronologia` records the set of each session; the export prints it on the
+  session's opening page.
 
 An open question runs `collecting` → `analysing` → `themes` → `voting` →
 `results`. A poll runs `collecting` → `results`: the projector shows the
@@ -205,7 +228,7 @@ state so the next poll finds it ready.
 Answers, themes and ballots carry a `questionId`, so every round stays in the
 sheet. A row with an empty `questionId` — a theme typed by hand — belongs to
 the question on screen, and is tagged with it when the room moves on.
-*Azzera sessione* empties all rounds and goes back to the first question;
+*Nuova sessione* empties all rounds and goes back to the first question;
 `Domande` is kept.
 
 A `testo` question shows one large box on the phone. Each device can send one
@@ -229,7 +252,7 @@ same way.
 
 When the last question's round is over, the facilitator page can add a
 `sintesi` question and put it on screen (*+ Nuova domanda*). The added row
-belongs to that session: after *Azzera sessione* the list is the planned one
+belongs to that session and its set: after *Nuova sessione* the list is the planned one
 again.
 
 For a `parole` question the phone shows `answer_fields` short boxes, one idea per box. Each box is one
@@ -255,7 +278,7 @@ the date and time the session started. Each reset starts a new one.
 | `Archivio risposte` / `temi` / `voti` | row moved out of the tab above, with `archiviato` (when) and `motivo`: `azzeramento` (reset) or `nuova analisi` (themes replaced by a new analysis) |
 | `Risultati` | theme in the ranking, each time a vote is closed. For a poll: option, with `punti` = how many chose it and `schede` = how many answered |
 | `Sintesi` | summary written for a `sintesi` question, with its question text; a new analysis adds a row and the latest one is shown |
-| `Cronologia` | change of phase, from the page or the menu |
+| `Cronologia` | change of phase, from the page or the menu, with the session's `scaletta` |
 
 For analysis, read each tab together with its archive: *File → Scarica →
 Microsoft Excel* exports every tab at once. Ballots name themes by id (`t1`,
@@ -298,6 +321,7 @@ Nuova chiave facilitatore* invalida subito quello vecchio.
 |---|---|
 | `phase` | current step; everything reads this |
 | `current_question` | id of the question on screen; set it from the menu or the page |
+| `scaletta` | question set of the session; set when a session starts. Empty or unknown means the first one in `Domande` |
 | `title` | shown on every screen |
 | `provider`, `model` | `anthropic` + `claude-opus-5`, or `gemini` + `gemini-2.5-flash` |
 | `max_themes` | how many themes the analysis returns, at most 5 (higher values are treated as 5) |
@@ -336,7 +360,7 @@ screen), `provaStato()` (the GET payload, cloud included), `provaAnalisi()`
 (the real model call, writes `Temi`).
 `provaModelli()` logs the Gemini ids the key can call — a `model` value the
 endpoint does not serve comes back as a 404 at the worst moment.
-Then `menuReset` / the *Azzera sessione* menu item.
+Then `menuReset` / the *Nuova sessione (azzera)* menu item.
 
 Before the event, on the deployed site and from a phone on cellular data:
 one GET, one POST reading its reply, a partial ballot, a re-submission from the

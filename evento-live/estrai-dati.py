@@ -4,7 +4,7 @@ Extracts one day of the live event from a sheet's CSV export.
 
 Reads the tabs exported as CSV (File -> Download -> .csv, one per tab) from a
 folder: Archivio risposte / temi / voti, and Risposte / Temi / Voti / Risultati /
-Domande / Sintesi when present.
+Domande / Sintesi / Cronologia when present.
 Writes, for every session started on the given day:
 
   risposte.csv  every answer; for a poll, each device's latest choice
@@ -46,6 +46,11 @@ QUESTIONS = {
     'q4': 'Quali sono le situazioni e/o condizioni che mi fanno stare bene?',
     'q5': 'Quali sono le situazioni e/o condizioni che mi fanno stare male?',
 }
+
+
+def split_names(v):
+    """The scalette of a Domande row: names separated by |."""
+    return [x.strip() for x in (v or '').split('|') if x.strip()]
 
 
 def read_tab(folder, name):
@@ -246,6 +251,8 @@ def write_screens(folder, screens, title, pdf):
             when = '%d %s %s' % (int(day[8:10]), MONTHS[int(day[5:7]) - 1], day[:4])
             if time:
                 when += ' · dalle ' + time[:5]
+            if sc.get('scaletta'):
+                when += ' · ' + sc['scaletta']
             pages += page % ('<div class="waiting"><div class="bignum">Sessione %d</div>%s</div>' % (last, esc(when)))
         pages += page % screen_body(sc)
     full = SCREEN_PAGE.split('</head>')[0] % (css[0], css[1]) + '<style>%s</style></head><body class="screen">%s%s</body></html>' % (ALL_SCREENS_CSS, pages, FIT_SCRIPT)
@@ -273,8 +280,12 @@ def main():
     questions = dict(QUESTIONS)
     polls = set()  # questions with fixed choices: from Domande, else from a Risultati row with no theme
     summaries = set()  # `sintesi` questions: from Domande, else from a Sintesi row
-    planned, added = [], {}  # the rounds of a session: the planned rows, then those added in it
+    planned, added = [], {}  # the rounds of a session: the planned rows of its scaletta, then those added in it
+    set_names = []  # the scalette, in order of first appearance
     for r in read_tab(a.folder, 'Domande'):
+        for name in split_names(r.get('scaletta')):
+            if name.lower() not in [n.lower() for n in set_names]:
+                set_names.append(name)
         if r.get('id'):
             questions[r['id']] = r['domanda']
             if (r.get('opzioni') or '').strip():
@@ -284,8 +295,20 @@ def main():
             if (r.get('origine') or '').strip() == 'aggiunta':
                 added.setdefault((r.get('sessione') or '').strip(), []).append(r['id'])
             else:
-                planned.append(r['id'])
+                planned.append((r['id'], [n.lower() for n in split_names(r.get('scaletta'))]))
     have_domande = bool(questions.keys() - QUESTIONS.keys()) or bool(read_tab(a.folder, 'Domande'))
+
+    # The scaletta each session ran, from Cronologia. Sessions from before
+    # scalette existed ran the first one, as the server would today.
+    set_of = {r['sessione']: r['scaletta'].strip()
+              for r in read_tab(a.folder, 'Cronologia') if (r.get('scaletta') or '').strip()}
+
+    def scaletta_of(sess):
+        return (set_of.get(sess) or set_names[0]) if set_names else ''
+
+    def planned_for(sess):
+        use = scaletta_of(sess).lower()
+        return [qid for qid, sets in planned if not use or not sets or use in sets]
 
     # The summary on screen: the last one written per session and question. It
     # also carries the question as it was asked: a `sintesi` row is rewritten
@@ -327,10 +350,11 @@ def main():
     for n, sess in enumerate(sessions, 1):
         first = first_time([r for r in answers if r['sessione'] == sess])
         started = a.day + ' ' + (first or (sess.split()[1] if sess.startswith(a.day) else ''))
-        md += ['## Sessione %d (%s %s)' % (n, a.day, ('prima risposta alle ' + first) if first else 'avviata ' + sess), '']
+        md += ['## Sessione %d (%s %s)%s' % (n, a.day, ('prima risposta alle ' + first) if first else 'avviata ' + sess,
+                                           ' — ' + scaletta_of(sess) if scaletta_of(sess) else ''), '']
         qids = sorted({r['questionId'] for r in answers if r['sessione'] == sess},
                       key=lambda q: int(q[1:]) if q[1:].isdigit() else 99)
-        order = planned + added.get(sess, [])
+        order = planned_for(sess) + added.get(sess, [])
         for qn, qid in enumerate(qids, 1):
             srow = summary_rows.get((sess, qid))
             text = srow['domanda'] if srow and srow.get('domanda') else questions.get(qid, qid)
@@ -339,7 +363,7 @@ def main():
                 place, of = order.index(qid) + 1, len(order)
             else:
                 place, of = (int(qid[1:]) if qid[1:].isdigit() else qn), max(len(questions), len(qids))
-            sc = {'n': place, 'of': of, 'question': text, 'session': n, 'started': started}
+            sc = {'n': place, 'of': of, 'question': text, 'session': n, 'started': started, 'scaletta': scaletta_of(sess)}
             prefix = 's%d-%s' % (n, qid)
             q_answers = [r for r in answers if r['sessione'] == sess and r['questionId'] == qid]
             q_themes = [r for r in themes if r['sessione'] == sess and r['questionId'] == qid]

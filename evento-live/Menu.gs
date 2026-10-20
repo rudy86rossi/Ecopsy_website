@@ -16,7 +16,7 @@ function onOpen() {
     .addItem('5 · Passa alla domanda successiva', 'menuDomandaSuccessiva')
     .addSeparator()
     .addItem('Nuova chiave facilitatore', 'nuovaChiave')
-    .addItem('Azzera sessione', 'menuReset')
+    .addItem('Nuova sessione (azzera)', 'menuReset')
     .addToUi();
 }
 
@@ -198,14 +198,27 @@ function menuDomandaSuccessiva() {
   toast_('Domanda ' + (cfg.questionIndex + 2) + ' di ' + cfg.questions.length + ': raccolta aperta');
 }
 
+/** With several scalette in Domande, asks which one the new session runs. */
 function menuReset() {
   const ui = SpreadsheetApp.getUi();
-  const answer = ui.alert('Azzerare la sessione?',
-    'Sposta risposte, temi e voti di tutte le domande nei fogli Archivio, apre una nuova sessione e torna alla prima domanda.',
-    ui.ButtonSet.YES_NO);
-  if (answer !== ui.Button.YES) return;
-  resetSession_('menu');
-  toast_('Sessione azzerata');
+  const cfg = getConfig();
+  const what = 'Sposta risposte, temi e voti di tutte le domande nei fogli Archivio, apre una nuova sessione e torna alla prima domanda.';
+  let name = '';
+  if (cfg.scalette.length > 1) {
+    const list = cfg.scalette.map(function (s) {
+      return s.name + ' (' + s.count + (s.count === 1 ? ' domanda)' : ' domande)');
+    }).join(', ');
+    const res = ui.prompt('Nuova sessione',
+      what + '\n\nScalette: ' + list + '.\nScrivi quella della nuova sessione, o lascia vuoto per ' + cfg.scaletta + '.',
+      ui.ButtonSet.OK_CANCEL);
+    if (res.getSelectedButton() !== ui.Button.OK) return;
+    name = res.getResponseText().trim();
+  } else if (ui.alert('Nuova sessione?', what, ui.ButtonSet.YES_NO) !== ui.Button.YES) {
+    return;
+  }
+  const out = resetSession_('menu', name);
+  if (!out.ok) { ui.alert(out.error); return; }
+  toast_(out.scaletta ? 'Nuova sessione: ' + out.scaletta : 'Nuova sessione');
 }
 
 function toast_(msg) {

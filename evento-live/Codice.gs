@@ -106,6 +106,8 @@ function state_() {
     maxLength: isText ? MAX_TEXT_LEN : MAX_ITEM_LEN,
     round: { n: cfg.questionIndex + 1, of: cfg.questions.length },
     questions: cfg.questions,
+    scaletta: cfg.scaletta,
+    scalette: cfg.scalette,
     answerFields: cfg.answer_fields,
     topN: cfg.top_n,
     poll: isPoll ? {
@@ -122,7 +124,7 @@ function state_() {
     results: !isPoll && !isSummary && cfg.phase === 'results' ? scoreBallots_(ballots, themes, cfg) : null,
     summary: summary,
     page: page,
-    rev: [qid, cfg.phase, answers.length, themes.length, ballots.length,
+    rev: [cfg.scaletta, qid, cfg.phase, answers.length, themes.length, ballots.length,
           textHash_(q.text), summary ? textHash_(summary.paragraphs.join('')) : '', page].join('-')
   };
 
@@ -371,7 +373,7 @@ function actionQuestionText_(body) {
 /**
  * Adds a `sintesi` question after the last one and puts it on screen. Only
  * once the session is finished: the last question, on its results. The row
- * belongs to this session (see readQuestions_).
+ * belongs to this session and its scaletta (see readDomande_).
  */
 function actionAddQuestion_(body) {
   requireKey_(body.key);
@@ -384,7 +386,7 @@ function actionAddQuestion_(body) {
   let id = '';
   withLock_(function () {
     id = nextQuestionId_();
-    const row = [id, safeCell_(clean.text), '', '', '', 'sintesi', sessionId_(), ORIGIN_ADDED];
+    const row = [id, safeCell_(clean.text), '', '', '', 'sintesi', sessionId_(), ORIGIN_ADDED, cfg.scaletta];
     const sh = sheet_('DOMANDE');
     sh.getRange(sh.getLastRow() + 1, 1, 1, row.length).setValues([row]);
   });
@@ -457,18 +459,29 @@ function runSummary_(cfg, answers) {
   }
 }
 
+/** `scaletta`, optional, is the question set of the new session; without it the current one stays. */
 function actionReset_(body) {
   requireKey_(body.key);
   if (body.confirm !== 'RESET') return { ok: false, error: 'conferma mancante' };
-  resetSession_('web');
-  return { ok: true };
+  return resetSession_('web', body.scaletta);
 }
 
 /**
- * Moves every round into the archive tabs, starts a new session and goes back
- * to the first question. Domande is kept.
+ * Moves every round into the archive tabs, starts a new session on the
+ * scaletta `name` (the current one when empty) and goes to its first question.
+ * Domande is kept. A list with an id two rows share is refused before anything
+ * moves: its answers could not be told apart.
  */
-function resetSession_(from) {
+function resetSession_(from, name) {
+  const cfg = getConfig();
+  let use = cfg.scaletta;
+  if (name) {
+    use = findScaletta_(cfg.scalette.map(function (s) { return s.name; }), name);
+    if (!use) return { ok: false, error: 'scaletta sconosciuta: ' + String(name).slice(0, 40) };
+  }
+  const clash = readDomande_(use).clash;
+  if (clash) return { ok: false, error: 'l’id ' + clash + ' è usato da due righe nel foglio Domande: correggilo prima di iniziare' };
+
   withLock_(function () {
     ['RISPOSTE', 'TEMI', 'VOTI'].forEach(function (k) {
       const sh = sheet_(k);
@@ -480,9 +493,13 @@ function resetSession_(from) {
     stampSummarySession_();
     startSession_();
   });
-  const first = readQuestions_()[0];
-  setConfigs_(first ? { current_question: first.id, phase: 'collecting' } : { phase: 'collecting' });
-  log_('reset', from, 'ok');
+  // The new session changes which rows Domande shows (see readDomande_).
+  const first = readDomande_(use).questions[0];
+  const values = { scaletta: use, phase: 'collecting' };
+  if (first) values.current_question = first.id;
+  setConfigs_(values);
+  log_('reset', from + (use ? ' · ' + use : ''), 'ok');
+  return { ok: true, scaletta: use };
 }
 
 /* ── helpers ───────────────────────────────────────────────────────────── */

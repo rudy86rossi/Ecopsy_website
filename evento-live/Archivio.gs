@@ -11,12 +11,13 @@
  *   by a new analysis replacing a question's themes, with when and why.
  * - Risultati: the ranking shown to the room, each time a vote is closed.
  * - Sintesi: every summary written for a `sintesi` question, with its question.
- * - Cronologia: every change of phase, from the page or from the menu.
+ * - Cronologia: every change of phase, from the page or from the menu, with
+ *   the scaletta the session runs.
  *
  * For analysis, read each tab together with its archive.
  */
 
-// Read once per execution: readQuestions_ compares rows against it on every getConfig.
+// Read once per execution: readDomande_ compares rows against it on every getConfig.
 let SESSION_ = null;
 
 function sessionId_() {
@@ -58,9 +59,9 @@ function archiveRows_(key, rows, reason) {
 }
 
 /** Called by setConfig on every phase change. */
-function recordPhase_(phase, qid) {
+function recordPhase_(phase, qid, scaletta) {
   try {
-    sheet_('CRONOLOGIA').appendRow([new Date(), sessionId_(), qid, phase]);
+    sheet_('CRONOLOGIA').appendRow([new Date(), sessionId_(), qid, phase, scaletta || '']);
     if (phase === 'results') recordResults_();
   } catch (err) {
     // Like the log: keeping the record must never break the event.

@@ -105,6 +105,10 @@ button.reset {
   padding: 9px 16px; border-radius: 8px; cursor: pointer;
 }
 button.reset:hover { background: #fdf3f2; }
+select.resetpick {
+  font-family: var(--font-body); font-size: .88rem; margin-right: 8px; max-width: 100%;
+  padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--white);
+}
 
 .status { font-size: .88rem; margin-top: 14px; min-height: 1.3em; }
 .status.err { color: #a3352c; }

@@ -6,9 +6,10 @@
  * ballots, their archives, the results, the timeline and the log. Nothing else
  * is persisted anywhere (see Archivio.gs for what is kept and where).
  *
- * A session is a sequence of rounds, one per row of the Domande tab. Answers,
- * themes and ballots carry the id of the question they belong to, so earlier
- * rounds stay in the sheet when the room moves on.
+ * A session is a sequence of rounds, one per row of the Domande tab in the
+ * session's scaletta (question set). Answers, themes and ballots carry the id
+ * of the question they belong to, so earlier rounds stay in the sheet when the
+ * room moves on.
  */
 
 const SHEETS = {
@@ -34,6 +35,7 @@ const DEFAULT_QUESTION = 'Quali fattori contano di più per la salute mentale de
 const DEFAULT_CONFIG = [
   ['phase',            'collecting',  'collecting | analysing | themes | voting | results'],
   ['current_question', 'q1',          'Id of the question on screen (tab Domande). Change it from the menu or the facilitator page'],
+  ['scaletta',         '',            'Question set of the session (column scaletta in Domande). Chosen when a session starts; empty means the first'],
   ['title',            'Sessione EcoPsy', 'Shown at the top of every screen'],
   ['provider',         'anthropic',   'anthropic | gemini'],
   ['model',            'claude-opus-5', 'claude-opus-5 | a gemini id from provaModelli()'],
@@ -51,13 +53,13 @@ const DEFAULT_CONFIG = [
 const OBSOLETE_CONFIG = ['question', 'min_word_len'];
 
 const HEADERS = {
-  DOMANDE:  ['id', 'domanda', 'opzioni', 'multipla', 'esclusiva', 'tipo', 'sessione', 'origine'],
+  DOMANDE:  ['id', 'domanda', 'opzioni', 'multipla', 'esclusiva', 'tipo', 'sessione', 'origine', 'scaletta'],
   RISPOSTE: ['timestamp', 'voterId', 'text', 'questionId', 'sessione'],
   TEMI:     ['id', 'label', 'description', 'questionId', 'sessione', 'timestamp'],
   VOTI:     ['timestamp', 'voterId', 'ranking', 'questionId', 'sessione'],
   RISULTATI:  ['timestamp', 'sessione', 'questionId', 'domanda', 'posizione', 'themeId', 'label', 'punti', 'primi posti', 'schede'],
   SINTESI:    ['timestamp', 'sessione', 'questionId', 'domanda', 'titolo', 'testo', 'partecipanti', 'modello'],
-  CRONOLOGIA: ['timestamp', 'sessione', 'questionId', 'fase'],
+  CRONOLOGIA: ['timestamp', 'sessione', 'questionId', 'fase', 'scaletta'],
   LOG:      ['timestamp', 'action', 'detail', 'outcome']
 };
 ['RISPOSTE', 'TEMI', 'VOTI'].forEach(function (k) {
@@ -147,7 +149,16 @@ function readConfigRows_(sh) {
 }
 
 /**
- * The rounds, in sheet order. An empty id falls back to its position.
+ * The rounds of one scaletta, in sheet order, and the list of scalette.
+ *
+ * `scaletta` names the question sets a row belongs to, separated by |; an
+ * empty cell puts the row in every one. `name` is matched without regard to
+ * case; an empty or unknown name means the first scaletta in the tab. A tab
+ * with no names at all is one list, as before scalette existed.
+ * Returns {questions, scaletta, scalette:[{name, count}], clash}: `scaletta`
+ * is the name in use ('' with no names), `clash` an id of this list that two
+ * rows of the tab share ('' if none). Ids must be unique across the tab, since
+ * answers, themes and the export find a question by id alone.
  *
  * A row with `opzioni` (choices separated by |) is a poll: participants pick
  * from the choices, and the round goes from collecting straight to results.
@@ -156,7 +167,8 @@ function readConfigRows_(sh) {
  * an open question: `tipo` = testo asks for one longer free answer per person
  * (no word cloud), `tipo` = sintesi the same, summarised in one text instead
  * of themes and a vote; anything else asks for short ideas that feed the cloud.
- * `type` is 'sondaggio', 'testo', 'sintesi' or 'parole'.
+ * `type` is 'sondaggio', 'testo', 'sintesi' or 'parole'. An empty id falls
+ * back to the row's position in the tab.
  *
  * A `sintesi` row may have no text: the facilitator writes it in the room, and
  * the text is stamped with the session (`sessione`). In a later session that
@@ -164,16 +176,27 @@ function readConfigRows_(sh) {
  * = aggiunta was added from the facilitator page and belongs to its session
  * only.
  */
-function readQuestions_() {
+function readDomande_(name) {
   const sh = sheet_('DOMANDE');
   const last = sh.getLastRow();
-  if (last < 2) return [];
+  const rows = last < 2 ? [] : sh.getRange(2, 1, last - 1, HEADERS.DOMANDE.length).getValues();
   const split = function (v) {
     return String(v).split('|').map(function (o) { return o.trim(); }).filter(Boolean);
   };
   const session = sessionId_();
-  const out = [];
-  sh.getRange(2, 1, last - 1, HEADERS.DOMANDE.length).getValues().forEach(function (r) {
+
+  const names = [];
+  const seen = {};
+  rows.forEach(function (r) {
+    split(r[8]).forEach(function (n) { if (!findScaletta_(names, n)) names.push(n); });
+    const id = String(r[0]).trim();
+    if (id) seen[id] = (seen[id] || 0) + 1;
+  });
+  const use = findScaletta_(names, name) || names[0] || '';
+
+  const kept = [];
+  const counts = {};
+  rows.forEach(function (r, i) {
     const tipo = String(r[5]).trim();
     const own = sessionText_(r[6]);
     const isSummary = /^sint/i.test(tipo);
@@ -181,7 +204,12 @@ function readQuestions_() {
     let text = String(r[1]).trim();
     if (isSummary && own && own !== session) text = '';
     if (!text && !isSummary) return;
-    const q = { id: String(r[0]).trim() || ('q' + (out.length + 1)), text: text };
+    const sets = split(r[8]);
+    names.forEach(function (n) {
+      if (!sets.length || findScaletta_(sets, n)) counts[n] = (counts[n] || 0) + 1;
+    });
+    if (sets.length && !findScaletta_(sets, use)) return;
+    const q = { id: String(r[0]).trim() || ('q' + (i + 1)), text: text };
     const options = split(r[2]);
     if (options.length) {
       q.type = 'sondaggio';
@@ -191,9 +219,26 @@ function readQuestions_() {
     } else {
       q.type = isSummary ? 'sintesi' : /^test/i.test(tipo) ? 'testo' : 'parole';
     }
-    out.push(q);
+    kept.push(q);
   });
-  return out;
+
+  const clash = kept.filter(function (q) { return seen[q.id] > 1; })[0];
+  return {
+    questions: kept,
+    scaletta: use,
+    scalette: names.map(function (n) { return { name: n, count: counts[n] || 0 }; }),
+    clash: clash ? clash.id : ''
+  };
+}
+
+/** The name in `list` that matches `name` without regard to case, or ''. */
+function findScaletta_(list, name) {
+  const want = String(name || '').trim().toLowerCase();
+  if (!want) return '';
+  for (let i = 0; i < list.length; i++) {
+    if (list[i].toLowerCase() === want) return list[i];
+  }
+  return '';
 }
 
 /** `origine` of a row added from the facilitator page. */
@@ -241,7 +286,8 @@ function nextQuestionId_() {
 
 /**
  * Whole config as a plain object. Read once per execution.
- * `questions` is the list of rounds, `question` the one on screen.
+ * `questions` is the list of rounds of the session's scaletta, `question` the
+ * one on screen, `scalette` every question set in Domande.
  */
 function getConfig() {
   const rows = readConfigRows_(sheet_('CONFIG'));
@@ -254,7 +300,10 @@ function getConfig() {
   out.pagina          = Math.max(1, Math.floor(Number(out.pagina)) || 1);
   if (PHASES.indexOf(out.phase) === -1) out.phase = 'collecting';
 
-  out.questions = readQuestions_();
+  const d = readDomande_(out.scaletta);
+  out.questions = d.questions;
+  out.scaletta = d.scaletta;
+  out.scalette = d.scalette;
   let at = 0;
   for (let i = 0; i < out.questions.length; i++) {
     if (out.questions[i].id === out.current_question) { at = i; break; }
@@ -290,12 +339,14 @@ function setConfigs_(values) {
   });
   dropStateCache_();
   if ('phase' in values) {
-    recordPhase_(values.phase, 'current_question' in values ? values.current_question : currentQuestionIn_(rows));
+    recordPhase_(values.phase,
+      'current_question' in values ? values.current_question : configValueIn_(rows, 'current_question'),
+      'scaletta' in values ? values.scaletta : configValueIn_(rows, 'scaletta'));
   }
 }
 
-function currentQuestionIn_(rows) {
-  const r = rows.filter(function (r) { return r.key === 'current_question'; })[0];
+function configValueIn_(rows, key) {
+  const r = rows.filter(function (r) { return r.key === key; })[0];
   return r ? String(r.value).trim() : '';
 }
 
