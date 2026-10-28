@@ -66,7 +66,7 @@
 
     var domande = rows(tabs, 'Domande').filter(function (r) { return r.id; });
     /* The rounds of a session: the planned rows of its scaletta, then those added in it. */
-    var text = {}, place = {}, polls = {}, summaries = {}, planned = [], added = {}, setNames = [];
+    var text = {}, place = {}, polls = {}, summaries = {}, rankings = {}, planned = [], added = {}, setNames = [];
     function names(v) {
       return (v || '').split('|').map(function (x) { return x.trim(); }).filter(Boolean);
     }
@@ -76,7 +76,12 @@
       });
       text[r.id] = r.domanda;
       place[r.id] = i + 1;
-      if ((r.opzioni || '').trim()) polls[r.id] = true;
+      if ((r.opzioni || '').trim()) {
+        var many = (r.multipla || '').trim();
+        /* Its options in sheet order, and how many each participant picks (0 = any). */
+        polls[r.id] = { options: names(r.opzioni), pick: /^\d+$/.test(many) && Number(many) > 1 ? Number(many) : 0 };
+      }
+      if (/^class/i.test((r.tipo || '').trim())) rankings[r.id] = true;
       if (/^sint/i.test((r.tipo || '').trim())) summaries[r.id] = true;
       if ((r.origine || '').trim() === 'aggiunta') {
         var k = (r.sessione || '').trim();
@@ -135,8 +140,10 @@
       var first = sAnswers.map(function (r) { return r.timestamp.slice(11, 16); }).filter(Boolean).sort()[0];
       pages.push({ divider: true, n: si + 1, day: day, from: first || '', scaletta: setNames.length ? setOf[sess] || setNames[0] : '' });
 
+      /* A classifica has ballots and no answers. */
       var qids = [];
-      sAnswers.forEach(function (r) { if (qids.indexOf(r.questionId) === -1) qids.push(r.questionId); });
+      sAnswers.concat(votes.filter(function (r) { return r.sessione === sess; }))
+        .forEach(function (r) { if (qids.indexOf(r.questionId) === -1) qids.push(r.questionId); });
       qids.sort(function (a, b) { return (place[a] || 99) - (place[b] || 99) || (a < b ? -1 : 1); });
       var order = plannedFor(sess).concat(added[sess] || []);
 
@@ -184,10 +191,26 @@
             Object.keys(latest).forEach(function (v) {
               latest[v].items.forEach(function (t) { by[t] = (by[t] || 0) + 1; });
             });
-            counts = Object.keys(by).map(function (t) { return [t, by[t]]; });
+            var opts = polls[qid] ? polls[qid].options : [];
+            counts = (opts.length ? opts : Object.keys(by)).map(function (t) { return [t, by[t] || 0]; });
             total = Object.keys(latest).length;
           }
-          pages.push(Object.assign({ kind: 'poll', meta: total + (total === 1 ? ' risposta' : ' risposte'),
+          var meta = total + (total === 1 ? ' risposta' : ' risposte');
+          var many = polls[qid] && polls[qid].pick;
+          if (many) {
+            /* As the projector: the `many` most chosen, ties in sheet order. */
+            counts = counts.map(function (c, i) { return { c: c, i: i }; })
+              .sort(function (a, b) { return b.c[1] - a.c[1] || a.i - b.i; })
+              .map(function (x) { return x.c; });
+            var rest = counts.slice(many).map(function (c) { return c[1]; });
+            counts = counts.slice(0, many);
+            if (rest.length) {
+              var lo = Math.min.apply(null, rest), hi = Math.max.apply(null, rest);
+              meta = 'Altre ' + rest.length + ' voci: ' + (lo === hi ? lo : lo + '–' + hi) + (hi === 1 ? ' scelta' : ' scelte') +
+                     ' ciascuna · ' + meta + ' · ' + many + ' voci a testa';
+            }
+          }
+          pages.push(Object.assign({ kind: 'poll', meta: meta,
             rows: counts.map(function (c) {
               return [c[0], c[1], c[1] + ' · ' + Math.round(total ? 100 * c[1] / total : 0) + '%'];
             }) }, base));
@@ -196,6 +219,8 @@
         if (!qt.length) return;  // the analysis never saved themes: nothing was on screen
 
         var ranked, ballots;
+        var isRanking = !!rankings[qid];
+        var places = isRanking ? qt.length : topN;
         if (res) {
           ranked = res.map(function (r) {
             return { label: r.label, points: Number(r.punti) || 0, firsts: Number(r['primi posti']) || 0 };
@@ -217,7 +242,7 @@
           Object.keys(lastBallot).forEach(function (v) {
             lastBallot[v].list.forEach(function (id, i) {
               if (pts[id] === undefined) return;
-              pts[id] += Math.max(0, topN - i);
+              pts[id] += Math.max(0, places - i);
               if (i === 0) firsts[id] += 1;
             });
           });
@@ -229,9 +254,10 @@
         qa.forEach(function (r) { voters[r.voterId] = true; });
         var nVoters = Object.keys(voters).length;
 
-        pages.push(Object.assign({ kind: 'themes', ballots: ballots, themes: qt }, base));
+        pages.push(Object.assign({ kind: 'themes', ballots: ballots, themes: qt, full: isRanking }, base));
         pages.push(Object.assign({ kind: 'ranking',
-          meta: ballots + (ballots === 1 ? ' voto' : ' voti') + ' · ' + nVoters + ' partecipanti',
+          meta: isRanking ? ballots + (ballots === 1 ? ' classifica' : ' classifiche')
+                          : ballots + (ballots === 1 ? ' voto' : ' voti') + ' · ' + nVoters + ' partecipanti',
           rows: ranked.map(function (r) {
             return [r.label, r.points, r.points + ' punti · ' + r.firsts + ' primi posti'];
           }) }, base));
@@ -279,14 +305,16 @@
              p.paragraphs.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('') + '</div></div>' +
              '<div class="meta">' + esc(p.meta) + '</div>';
       } else if (p.kind === 'themes') {
-        b += '<div>';
+        /* The items of a classifica go in two columns, as on the projector. */
+        b += p.full ? '<div class="cols">' : '<div>';
         p.themes.forEach(function (t) {
           b += '<div class="theme"><span class="badge">•</span><div><div class="label">' + esc(t.label) +
                '</div><div class="desc">' + esc(t.description) + '</div></div></div>';
         });
-        b += '</div><div class="meta">' + p.ballots + (p.ballots === 1 ? ' voto espresso' : ' voti espressi') + '</div>';
+        b += '</div><div class="meta">' + p.ballots + (p.full ? (p.ballots === 1 ? ' classifica inviata' : ' classifiche inviate')
+             : (p.ballots === 1 ? ' voto espresso' : ' voti espressi')) + '</div>';
       } else {
-        b += '<div>';
+        b += p.rows.length > 6 ? '<div class="many">' : '<div>';
         var top = Math.max.apply(null, p.rows.map(function (r) { return r[1]; }).concat([1]));
         p.rows.forEach(function (r) {
           b += '<div class="res"><div class="top"><div class="label">' + esc(r[0]) + '</div><div class="pts">' +

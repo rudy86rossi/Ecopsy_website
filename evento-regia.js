@@ -68,6 +68,8 @@
 
   function isLast(s) { return !s.round || s.round.n >= s.round.of; }
   function isSummary(s) { return s.type === 'sintesi'; }
+  /* A `classifica`: the items most chosen in the poll before it, put in order by everyone. */
+  function isRanking(s) { return s.type === 'classifica'; }
   function pageCount(s) { return s.summary ? s.summary.pages.length : 0; }
 
   function nowText(s) {
@@ -76,6 +78,7 @@
       if (s.phase === 'results' && pageCount(s) > 1) return NOW_TEXT_SUMMARY.results + ', pagina ' + s.page + ' di ' + pageCount(s);
       return NOW_TEXT_SUMMARY[s.phase] || s.phase;
     }
+    if (isRanking(s) && s.phase === 'voting') return 'Il pubblico sta mettendo in ordine le voci';
     return (s.poll && NOW_TEXT_POLL[s.phase]) || NOW_TEXT[s.phase] || s.phase;
   }
 
@@ -133,6 +136,11 @@
           ? { label: 'Apri la votazione', sub: 'I temi diventano votabili sui telefoni', run: { to: 'voting' } }
           : { label: 'Apri la votazione', sub: 'Nessun tema: scrivili nel foglio Temi' };
       case 'voting':
+        if (isRanking(s)) {
+          return s.ballots
+            ? { label: 'Chiudi e mostra la classifica', sub: 'La classifica del gruppo compare sullo schermo', run: { to: 'results' } }
+            : { label: 'Chiudi e mostra la classifica', sub: 'Aspetta le prime classifiche' };
+        }
         return { label: 'Chiudi e mostra i voti', sub: 'La classifica compare sullo schermo', run: { to: 'results' } };
     }
     return null;
@@ -141,6 +149,7 @@
   /* One step back. Analysing → collecting rescues an analysis that never came back. */
   function prevStep(s) {
     if (s.poll) return s.phase === 'results' ? { label: 'Riapri la raccolta', run: { to: 'collecting' } } : null;
+    if (isRanking(s)) return s.phase === 'results' ? { label: 'Riapri la votazione', run: { to: 'voting' } } : null;
     if (isSummary(s)) {
       if (s.phase === 'results' && s.page > 1) return { label: 'Pagina precedente', run: { act: 'page', to: s.page - 1 } };
       if (s.phase === 'results' || s.phase === 'analysing') return { label: 'Riapri la raccolta', run: { to: 'collecting' } };
@@ -169,6 +178,13 @@
     { n: 1, to: 'collecting', label: 'Apri la raccolta',        sub: 'I partecipanti possono scegliere', from: ['results'] },
     { n: 2, to: 'results',    label: 'Chiudi e mostra i risultati', sub: 'Le barre compaiono sullo schermo', from: ['collecting'] },
     { n: 3, act: 'next',      label: 'Domanda successiva',      sub: 'Nuovo giro: si riparte dalla raccolta', from: ['collecting', 'results'] }
+  ];
+
+  /* A classifica opens on its vote: its items come from the poll before it. */
+  var RANKING_STEPS = [
+    { n: 1, to: 'voting',     label: 'Riapri la votazione',     sub: 'I partecipanti possono mettere in ordine le voci', from: ['results'] },
+    { n: 2, to: 'results',    label: 'Chiudi e mostra la classifica', sub: 'La classifica compare sullo schermo', from: ['voting'] },
+    { n: 3, act: 'next',      label: 'Domanda successiva',      sub: 'Nuovo giro: si riparte dalla raccolta', from: ['voting', 'results'] }
   ];
 
   /* A summary round: Rigenera writes a new summary from the same answers. The
@@ -431,13 +447,14 @@
     if (s.phase === 'collecting') return { n: s.responses, what: plural(s.responses, 'risposta', 'risposte') };
     if (s.phase === 'themes') return { n: s.themes.length, what: plural(s.themes.length, 'tema', 'temi') };
     if (s.poll && s.phase === 'results') return { n: s.responses, what: plural(s.responses, 'risposta', 'risposte') };
+    if (isRanking(s)) return { n: s.ballots, what: plural(s.ballots, 'classifica', 'classifiche') };
     if (s.phase === 'voting' || s.phase === 'results') return { n: s.ballots, what: plural(s.ballots, 'voto', 'voti') };
     return null;
   }
 
   function themesCard(s) {
     var tc = el('div', 'card');
-    tc.appendChild(el('h2', null, 'Temi (' + s.themes.length + ')'));
+    tc.appendChild(el('h2', null, (isRanking(s) ? 'Voci da mettere in ordine (' : 'Temi (') + s.themes.length + ')'));
     var ol = el('ol', 'themes');
     s.themes.forEach(function (t) {
       var li = el('li');
@@ -446,18 +463,37 @@
       ol.appendChild(li);
     });
     tc.appendChild(ol);
-    tc.appendChild(el('p', 'links', 'Correggili nel foglio Temi: la pagina di voto legge quello, non il modello.'));
+    tc.appendChild(el('p', 'links', isRanking(s)
+      ? 'Le più scelte nel sondaggio precedente. Sono nel foglio Temi.'
+      : 'Correggili nel foglio Temi: la pagina di voto legge quello, non il modello.'));
     return tc;
   }
 
+  /* With a fixed number of choices (`pick`): most chosen first, the first
+     `pick` marked (a classifica after the poll ranks them), and a tie at the
+     cut named, since the sheet order then decides. */
   function pollCard(s) {
+    var pick = s.poll.pick;
+    var rows = s.poll.results;
+    if (pick) {
+      rows = rows.map(function (r, i) { return { r: r, i: i }; })
+        .sort(function (a, b) { return b.r.count - a.r.count || a.i - b.i; })
+        .map(function (x) { return x.r; });
+    }
     var pc = el('div', 'card');
     pc.appendChild(el('h2', null, 'Risultati'));
+    var cut = pick && rows.length > pick ? rows[pick - 1].count : null;
+    if (cut !== null && rows[pick].count === cut) {
+      var tied = rows.filter(function (r) { return r.count === cut; }).map(function (r) { return r.option; });
+      pc.appendChild(el('p', 'links', 'Pari merito al ' + pick + 'º posto (' + cut + (cut === 1 ? ' scelta' : ' scelte') + '): ' +
+        tied.join(', ') + '. Passano quelle più in alto nel foglio Domande.'));
+    }
     var ol = el('ol', 'themes');
-    s.poll.results.forEach(function (r) {
-      var li = el('li');
+    rows.forEach(function (r, i) {
+      var li = el('li', pick && i >= pick ? 'out' : null);
       li.appendChild(el('span', 'label', r.option));
-      li.appendChild(el('div', 'desc', r.count + ' · ' + Math.round(r.share * 100) + '%'));
+      li.appendChild(el('div', 'desc', r.count + ' · ' + Math.round(r.share * 100) + '%' +
+        (pick && i < pick ? ' · va in classifica' : '')));
       ol.appendChild(li);
     });
     pc.appendChild(ol);
@@ -509,7 +545,7 @@
     more.appendChild(el('summary', null, 'Altri comandi'));
 
     var steps = el('div', 'steps');
-    (s.poll ? POLL_STEPS : isSummary(s) ? SUMMARY_STEPS : STEPS).forEach(function (st) {
+    (s.poll ? POLL_STEPS : isSummary(s) ? SUMMARY_STEPS : isRanking(s) ? RANKING_STEPS : STEPS).forEach(function (st) {
       var b = el('button', 'step');
       b.type = 'button';
       b.appendChild(el('span', 'n', String(st.n)));

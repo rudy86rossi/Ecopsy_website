@@ -162,13 +162,17 @@ function readConfigRows_(sh) {
  *
  * A row with `opzioni` (choices separated by |) is a poll: participants pick
  * from the choices, and the round goes from collecting straight to results.
- * `multipla` = sì lets them pick several; `esclusiva` names the choices that
+ * `multipla` = sì lets them pick several, a number N exactly N (`pick`);
+ * `esclusiva` names the choices that
  * clear all the others when picked (e.g. "No"). Without `opzioni` the row is
  * an open question: `tipo` = testo asks for one longer free answer per person
  * (no word cloud), `tipo` = sintesi the same, summarised in one text instead
  * of themes and a vote; anything else asks for short ideas that feed the cloud.
- * `type` is 'sondaggio', 'testo', 'sintesi' or 'parole'. An empty id falls
- * back to the row's position in the tab.
+ * `tipo` = classifica asks each participant to put in order the options most
+ * chosen in the poll right before it (`from`): `places` of them, the poll's
+ * N, or all its options.
+ * `type` is 'sondaggio', 'testo', 'sintesi', 'classifica' or 'parole'. An
+ * empty id falls back to the row's position in the tab.
  *
  * A `sintesi` row may have no text: the facilitator writes it in the room, and
  * the text is stamped with the session (`sessione`). In a later session that
@@ -212,14 +216,26 @@ function readDomande_(name) {
     const q = { id: String(r[0]).trim() || ('q' + (i + 1)), text: text };
     const options = split(r[2]);
     if (options.length) {
+      const many = String(r[3]).trim();
+      const pick = /^\d+$/.test(many) ? Math.min(Number(many), options.length) : 0;
       q.type = 'sondaggio';
       q.options = options;
-      q.multiple = /^(s[iì]|yes|true|x|1)$/i.test(String(r[3]).trim());
+      q.pick = pick > 1 ? pick : 0;
+      q.multiple = q.pick > 0 || /^(s[iì]|yes|true|x|1)$/i.test(many);
       q.exclusive = split(r[4]).filter(function (o) { return options.indexOf(o) !== -1; });
     } else {
-      q.type = isSummary ? 'sintesi' : /^test/i.test(tipo) ? 'testo' : 'parole';
+      q.type = isSummary ? 'sintesi' : /^test/i.test(tipo) ? 'testo' : /^class/i.test(tipo) ? 'classifica' : 'parole';
     }
     kept.push(q);
+  });
+
+  // A classifica ranks the most chosen options of the poll right before it.
+  let poll = null;
+  kept.forEach(function (q) {
+    if (q.options) poll = q;
+    if (q.type !== 'classifica') return;
+    q.from = poll ? poll.id : '';
+    q.places = poll ? (poll.pick || poll.options.length) : 0;
   });
 
   const clash = kept.filter(function (q) { return seen[q.id] > 1; })[0];
@@ -362,9 +378,30 @@ function goToQuestion_(toId, cfg) {
   const target = cfg.questions.filter(function (q) { return q.id === toId; })[0];
   if (!target) return { ok: false, error: 'domanda sconosciuta' };
   if (target.id !== cfg.question.id) stampQuestion_(cfg.question.id);
-  setConfigs_({ current_question: target.id, phase: 'collecting' });
+  if (target.type === 'classifica') {
+    const filled = fillRanking_(target, cfg);
+    if (filled.error) return { ok: false, error: filled.error };
+  }
+  setConfigs_({ current_question: target.id, phase: target.type === 'classifica' ? 'voting' : 'collecting' });
   log_('question', target.id, 'ok');
   return { ok: true, questionId: target.id };
+}
+
+/**
+ * A classifica's items are the most chosen options of its poll, written into
+ * Temi as its themes the first time the room reaches it: from then on the
+ * ballots name them by id, so a later visit keeps the same list.
+ */
+function fillRanking_(q, cfg) {
+  if (readThemes_(q.id).length) return {};
+  const poll = cfg.questions.filter(function (p) { return p.id === q.from; })[0];
+  if (!poll) return { error: 'la classifica non ha un sondaggio prima di sé nella scaletta' };
+  const answers = readAnswers_(poll.id);
+  if (!countParticipants_(answers)) return { error: 'il sondaggio precedente non ha risposte' };
+  writeThemes_(q.id, topPollOptions_(poll, answers, q.places).map(function (r) {
+    return { label: r.option, description: '' };
+  }));
+  return {};
 }
 
 function stampQuestion_(qid) {

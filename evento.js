@@ -118,9 +118,15 @@
     if (s.phase === 'collecting') return isDone('answer') ? waitCard(s, 'Risposta inviata', 'Guarda lo schermo: le parole compaiono man mano.') : answerCard(s);
     if (s.phase === 'analysing')  return waitCard(s, 'Analisi in corso', 'Stiamo raggruppando le risposte in temi.');
     if (s.phase === 'themes')     return themesPreview(s);
+    if (s.phase === 'voting' && isRanking(s)) {
+      return isDone('vote') ? waitCard(s, 'Classifica inviata', 'Puoi cambiarla finché la votazione è aperta.', 'ranking') : voteCard(s);
+    }
     if (s.phase === 'voting')     return isDone('vote') ? waitCard(s, 'Voto registrato', 'Puoi cambiarlo finché la votazione è aperta.', 'vote') : voteCard(s);
     if (s.phase === 'results')    return resultsCard(s);
   }
+
+  /* A `classifica`: every participant puts in order all the items the group chose most in the poll before it. */
+  function isRanking(s) { return s.type === 'classifica'; }
 
   function roundLabel(s) {
     return s.round && s.round.of > 1 ? 'Domanda ' + s.round.n + ' di ' + s.round.of : '';
@@ -290,7 +296,9 @@
     attempt(true);
   }
 
-  /* `change` names what can still be changed: 'vote', or 'answer' for a poll. */
+  /* `change` names what can still be changed: 'vote', 'ranking', or 'answer' for a poll. */
+  var CHANGE_LABEL = { vote: 'Cambia il mio voto', ranking: 'Cambia la mia classifica', answer: 'Cambia la mia risposta' };
+
   function waitCard(s, head, sub, change) {
     var card = el('div', 'card done' + (justSent ? ' pop' : ''));
     justSent = false;
@@ -298,9 +306,9 @@
     card.appendChild(el('h2', null, head));
     card.appendChild(el('p', null, sub));
     if (change) {
-      var b = el('button', 'act', change === 'vote' ? 'Cambia il mio voto' : 'Cambia la mia risposta');
+      var b = el('button', 'act', CHANGE_LABEL[change]);
       b.addEventListener('click', function () {
-        clearDone(change);
+        clearDone(change === 'ranking' ? 'vote' : change);
         render(state);
       });
       card.appendChild(b);
@@ -324,12 +332,17 @@
     stage.appendChild(card);
   }
 
+  /* A theme vote ranks up to topN themes. A classifica ranks every item: when
+     one is left it takes the last place by itself. */
   function voteCard(s) {
     picked = [];
+    var full = isRanking(s);
     var card = el('div', 'card');
-    card.appendChild(el('div', 'question', 'Quali temi vale la pena approfondire?'));
-    card.appendChild(el('p', 'hint', 'Tocca i temi in ordine di preferenza, fino a ' + s.topN +
-      '. Tocca di nuovo per togliere. Puoi sceglierne anche meno.'));
+    if (full && roundLabel(s)) card.appendChild(el('div', 'round', roundLabel(s)));
+    card.appendChild(el('div', 'question', full ? s.question : 'Quali temi vale la pena approfondire?'));
+    card.appendChild(el('p', 'hint', full
+      ? 'Tocca le voci in ordine, dalla più importante alla meno importante. Tocca di nuovo per togliere.'
+      : 'Tocca i temi in ordine di preferenza, fino a ' + s.topN + '. Tocca di nuovo per togliere. Puoi sceglierne anche meno.'));
 
     var btn = el('button', 'act', 'Invia');
     var status = el('div', 'status');
@@ -351,6 +364,9 @@
         if (at !== -1) picked.splice(at, 1);
         else if (picked.length < s.topN) picked.push(t.id);
         else { status.className = 'status'; status.textContent = 'Hai già scelto ' + s.topN + ' temi. Togline uno per cambiarli.'; return; }
+        if (full && at === -1 && picked.length === s.themes.length - 1) {
+          picked.push(s.themes.filter(function (x) { return picked.indexOf(x.id) === -1; })[0].id);
+        }
         status.textContent = '';
         paint();
       });
@@ -364,10 +380,11 @@
         b.row.setAttribute('aria-pressed', at !== -1 ? 'true' : 'false');
         b.badge.textContent = at !== -1 ? String(at + 1) : '–';
       });
-      btn.disabled = picked.length === 0;
+      btn.disabled = full ? picked.length < s.themes.length : picked.length === 0;
+      if (full) btn.textContent = picked.length < s.themes.length ? picked.length + ' di ' + s.themes.length + ' in ordine' : 'Invia';
     }
 
-    btn.disabled = true;
+    paint();
     card.appendChild(btn);
     card.appendChild(status);
 
@@ -380,14 +397,17 @@
   }
 
   /* A poll: tap to choose, tap again to clear. With several choices allowed,
-     an exclusive option ("No") clears the others and any other clears it. */
+     an exclusive option ("No") clears the others and any other clears it.
+     With a fixed number (`pick`) the list is long, so the count and the
+     button stay in a bar at the bottom of the screen. */
   function pollCard(s) {
     var p = s.poll;
     picked = [];
-    var card = el('div', 'card');
+    var card = el('div', 'card' + (p.pick ? ' picklist' : ''));
     if (roundLabel(s)) card.appendChild(el('div', 'round', roundLabel(s)));
     card.appendChild(el('div', 'question', s.question));
-    card.appendChild(el('p', 'hint', p.multiple ? 'Puoi sceglierne più di una.' : 'Scegline una.'));
+    card.appendChild(el('p', 'hint', p.pick ? 'Scegline esattamente ' + p.pick + '. Tocca di nuovo per togliere.'
+      : p.multiple ? 'Puoi sceglierne più di una.' : 'Scegline una.'));
 
     var btn = el('button', 'act', 'Invia');
     var status = el('div', 'status');
@@ -401,7 +421,13 @@
       row.appendChild(el('div', 'label', o));
       row.addEventListener('click', function () {
         var at = picked.indexOf(o);
+        status.className = 'status';
+        status.textContent = '';
         if (at !== -1) picked.splice(at, 1);
+        else if (p.pick && picked.length >= p.pick) {
+          status.textContent = 'Hai già scelto ' + p.pick + ' voci: togline una per cambiarle.';
+          return;
+        }
         else if (!p.multiple) picked = [o];
         else if (p.exclusive.indexOf(o) !== -1) picked = [o];
         else {
@@ -420,12 +446,20 @@
         b.row.setAttribute('aria-pressed', on ? 'true' : 'false');
         b.badge.textContent = on ? '✓' : '';
       });
-      btn.disabled = picked.length === 0;
+      btn.disabled = p.pick ? picked.length !== p.pick : picked.length === 0;
+      if (p.pick) btn.textContent = picked.length === p.pick ? 'Invia' : picked.length + ' di ' + p.pick;
     }
     paint();
 
-    card.appendChild(btn);
-    card.appendChild(status);
+    if (p.pick) {
+      var bar = el('div', 'pickbar');
+      bar.appendChild(status);
+      bar.appendChild(btn);
+      card.appendChild(bar);
+    } else {
+      card.appendChild(btn);
+      card.appendChild(status);
+    }
     btn.addEventListener('click', function () {
       send({ action: 'submit', items: picked }, 'answer', btn,
         buttons.map(function (b) { return b.row; }), status);
@@ -436,7 +470,7 @@
 
   function resultsCard(s) {
     var card = el('div', 'card');
-    card.appendChild(el('div', 'question', s.poll ? s.question : 'Risultati'));
+    card.appendChild(el('div', 'question', s.poll ? s.question : isRanking(s) ? 'La classifica del gruppo' : 'Risultati'));
     card.appendChild(s.poll ? pollResults(s) : resultsList(s));
     stage.appendChild(card);
   }
@@ -483,6 +517,14 @@
         stage.appendChild(pollResults(s));
         return;
       }
+      /* A long list does not fit the screen: the room sees people answer. */
+      if (s.poll.pick) {
+        live = { kind: 'dots', qid: s.questionId, num: el('div', 'bignum'), box: el('div', 'dots'), n: 0 };
+        stage.appendChild(live.num);
+        stage.appendChild(live.box);
+        drawDots(s.responses);
+        return;
+      }
       var opts = el('div');
       s.poll.options.forEach(function (o) {
         var row = el('div', 'theme opt');
@@ -522,7 +564,7 @@
     }
     if (s.type === 'sintesi' && s.phase === 'results') { summaryPage(s); return; }
     if (s.phase === 'themes' || s.phase === 'voting') {
-      var wrap = el('div');
+      var wrap = el('div', isRanking(s) ? 'cols' : null);
       s.themes.forEach(function (t) {
         var row = el('div', 'theme');
         row.appendChild(el('span', 'badge', '•'));
@@ -535,14 +577,16 @@
       stage.appendChild(wrap);
       /* During voting the count is shown, never the tally: a bar chart that
          moves while people vote steers everyone who votes late. */
-      stage.appendChild(el('div', 'meta', s.phase === 'voting'
-        ? s.ballots + (s.ballots === 1 ? ' voto espresso' : ' voti espressi')
-        : 'Votazione in apertura…'));
+      stage.appendChild(el('div', 'meta', s.phase !== 'voting' ? 'Votazione in apertura…'
+        : isRanking(s) ? s.ballots + (s.ballots === 1 ? ' classifica inviata' : ' classifiche inviate')
+        : s.ballots + (s.ballots === 1 ? ' voto espresso' : ' voti espressi')));
       return;
     }
     if (s.phase === 'results') {
       stage.appendChild(resultsList(s));
-      stage.appendChild(el('div', 'meta', s.ballots + (s.ballots === 1 ? ' voto' : ' voti') + ' · ' + s.responses + ' partecipanti'));
+      stage.appendChild(el('div', 'meta', isRanking(s)
+        ? s.ballots + (s.ballots === 1 ? ' classifica' : ' classifiche')
+        : s.ballots + (s.ballots === 1 ? ' voto' : ' voti') + ' · ' + s.responses + ' partecipanti'));
     }
   }
 
@@ -588,6 +632,7 @@
     var wrap = el('div');
     var rows = s.results || [];
     if (!rows.length) { wrap.appendChild(el('p', 'hint', 'Nessun voto registrato.')); return wrap; }
+    if (rows.length > 6) wrap.className = 'many';
     var max = Math.max.apply(null, rows.map(function (r) { return r.points; })) || 1;
     rows.forEach(function (r) {
       var box = el('div', 'res');
@@ -605,11 +650,20 @@
     return wrap;
   }
 
-  /* Shares are of the people who answered: with several choices allowed they add up to more than 100%. */
+  /* Shares are of the people who answered: with several choices allowed they add up to more than 100%.
+     With a fixed number of choices, the `pick` most chosen, in order: the
+     ones a following classifica ranks (ties go by sheet order, as on the server). */
   function pollResults(s) {
     var wrap = el('div');
     var rows = s.poll.results || [];
     if (!s.responses) { wrap.appendChild(el('p', 'hint', 'Nessuna risposta registrata.')); return wrap; }
+    var rest = [];
+    if (s.poll.pick) {
+      rows = topOptions(rows);
+      rest = rows.slice(s.poll.pick);
+      rows = rows.slice(0, s.poll.pick);
+    }
+    if (rows.length > 6) wrap.className = 'many';
     var max = Math.max.apply(null, rows.map(function (r) { return r.count; })) || 1;
     rows.forEach(function (r) {
       var box = el('div', 'res');
@@ -624,9 +678,22 @@
       box.appendChild(bar);
       wrap.appendChild(box);
     });
+    if (rest.length) {
+      var counts = rest.map(function (r) { return r.count; });
+      var lo = Math.min.apply(null, counts), hi = Math.max.apply(null, counts);
+      wrap.appendChild(el('div', IS_SCREEN ? 'meta' : 'hint', 'Altre ' + rest.length + ' voci: ' +
+        (hi === lo ? lo : lo + '–' + hi) + (hi === 1 ? ' scelta' : ' scelte') + ' ciascuna'));
+    }
     wrap.appendChild(el('div', IS_SCREEN ? 'meta' : 'hint', s.responses + (s.responses === 1 ? ' risposta' : ' risposte') +
-      (s.poll.multiple ? ' · una persona può indicarne più di una' : '')));
+      (s.poll.pick ? ' · ' + s.poll.pick + ' voci a testa' : s.poll.multiple ? ' · una persona può indicarne più di una' : '')));
     return wrap;
+  }
+
+  /* Most chosen first; equal counts keep the sheet order. */
+  function topOptions(rows) {
+    return rows.map(function (r, i) { return { r: r, i: i }; })
+      .sort(function (a, b) { return b.r.count - a.r.count || a.i - b.i; })
+      .map(function (x) { return x.r; });
   }
 
   function participants(s) {

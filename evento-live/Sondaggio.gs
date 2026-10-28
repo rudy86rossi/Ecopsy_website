@@ -20,6 +20,7 @@ function checkPollChoice_(q, picked) {
   if (!items.length) return { error: 'nessuna opzione scelta' };
   if (items.some(function (t) { return q.options.indexOf(t) === -1; })) return { error: 'opzione sconosciuta' };
   if (!q.multiple && items.length > 1) return { error: 'si può scegliere una sola opzione' };
+  if (q.pick && items.length !== q.pick) return { error: 'scegline esattamente ' + q.pick };
   if (items.length > 1 && items.some(function (t) { return q.exclusive.indexOf(t) !== -1; })) {
     return { error: '“' + items.filter(function (t) { return q.exclusive.indexOf(t) !== -1; })[0] + '” non si combina con altre opzioni' };
   }
@@ -53,4 +54,13 @@ function countPoll_(q, answers) {
   return q.options.map(function (o) {
     return { option: o, count: counts[o], share: latest.length ? counts[o] / latest.length : 0 };
   });
+}
+
+/** The `n` options chosen most often, ties broken by sheet order. */
+function topPollOptions_(q, answers, n) {
+  return countPoll_(q, answers)
+    .map(function (r, i) { return { r: r, i: i }; })
+    .sort(function (a, b) { return b.r.count - a.r.count || a.i - b.i; })
+    .slice(0, n)
+    .map(function (x) { return x.r; });
 }

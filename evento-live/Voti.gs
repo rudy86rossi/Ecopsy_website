@@ -6,7 +6,8 @@
  * "the latest ballot from a device wins" a single comparison.
  *
  * Scoring is Borda: with top_n = 3 the first choice is worth 3, the second 2,
- * the third 1. First-place counts are reported alongside the totals because the
+ * the third 1. A classifica ranks all its items, so with 10 the first is
+ * worth 10 and the last 1. First-place counts are reported alongside the totals because the
  * two sometimes disagree, and that disagreement is worth showing the room.
  */
 
@@ -30,14 +31,20 @@ function readBallots_(qid) {
   return Object.keys(byVoter).map(function (k) { return byVoter[k]; });
 }
 
-function scoreBallots_(ballots, themes, cfg) {
+/** How many places a ballot has: every item of a classifica, else top_n. */
+function placesOf_(q, themes, cfg) {
+  return q.type === 'classifica' ? themes.length : cfg.top_n;
+}
+
+/** `places` is what a first choice is worth (see placesOf_). */
+function scoreBallots_(ballots, themes, places) {
   const points = {}, firsts = {};
   themes.forEach(function (t) { points[t.id] = 0; firsts[t.id] = 0; });
 
   ballots.forEach(function (b) {
     b.ranking.forEach(function (id, i) {
       if (points[id] === undefined) return;      // a theme deleted after voting opened
-      points[id] += Math.max(0, cfg.top_n - i);  // partial ballots simply score less
+      points[id] += Math.max(0, places - i);     // partial ballots simply score less
       if (i === 0) firsts[id] += 1;
     });
   });

@@ -109,13 +109,14 @@ def latest_ballots(rows):
     return out
 
 
-def score(themes, ballots):
+def score(themes, ballots, places=TOP_N):
+    """Borda: a first choice is worth `places` (top_n, or every item of a classifica)."""
     pts = {t['id']: 0 for t in themes}
     first = {t['id']: 0 for t in themes}
     for ranking in ballots.values():
         for i, tid in enumerate(ranking):
             if tid in pts:
-                pts[tid] += max(0, TOP_N - i)
+                pts[tid] += max(0, places - i)
                 if i == 0:
                     first[tid] += 1
     ranked = [dict(t, punti=pts[t['id']], primi=first[t['id']]) for t in themes]
@@ -188,12 +189,18 @@ def screen_body(sc):
         b += ('<div class="spage"><div class="stitle">%s</div><div class="sbody">%s</div></div>'
               % (esc(sc['title']), ''.join('<p>%s</p>' % esc(p) for p in sc['paragraphs'])))
         return b + '<div class="meta">%s</div>' % esc(sc['meta'])
-    b += '<div>'
+    # As on the projector: a classifica's items in two columns, more than six bars tighter.
+    b += ('<div class="cols">' if sc.get('ranking')
+          else '<div class="many">' if len(sc.get('rows') or []) > 6 else '<div>')
     if sc['kind'] == 'temi':
         for t in sc['themes']:
             b += ('<div class="theme"><span class="badge">•</span><div><div class="label">%s</div>'
                   '<div class="desc">%s</div></div></div>' % (esc(t['label']), esc(t['description'])))
-        b += '</div><div class="meta">%d %s</div>' % (sc['ballots'], 'voto espresso' if sc['ballots'] == 1 else 'voti espressi')
+        if sc.get('ranking'):
+            what = 'classifica inviata' if sc['ballots'] == 1 else 'classifiche inviate'
+        else:
+            what = 'voto espresso' if sc['ballots'] == 1 else 'voti espressi'
+        b += '</div><div class="meta">%d %s</div>' % (sc['ballots'], what)
         return b
     rows = sc['rows']
     top = max([r[1] for r in rows] + [1])
@@ -280,6 +287,8 @@ def main():
     questions = dict(QUESTIONS)
     polls = set()  # questions with fixed choices: from Domande, else from a Risultati row with no theme
     summaries = set()  # `sintesi` questions: from Domande, else from a Sintesi row
+    rankings = set()  # `classifica` questions: every participant ranks all the items
+    poll_options = {}  # poll id -> its options in sheet order, and how many each picks (0 = any)
     planned, added = [], {}  # the rounds of a session: the planned rows of its scaletta, then those added in it
     set_names = []  # the scalette, in order of first appearance
     for r in read_tab(a.folder, 'Domande'):
@@ -290,6 +299,10 @@ def main():
             questions[r['id']] = r['domanda']
             if (r.get('opzioni') or '').strip():
                 polls.add(r['id'])
+                many = (r.get('multipla') or '').strip()
+                poll_options[r['id']] = (split_names(r['opzioni']), int(many) if many.isdigit() and int(many) > 1 else 0)
+            if (r.get('tipo') or '').strip().lower().startswith('class'):
+                rankings.add(r['id'])
             if (r.get('tipo') or '').strip().lower().startswith('sint'):
                 summaries.add(r['id'])
             if (r.get('origine') or '').strip() == 'aggiunta':
@@ -352,7 +365,8 @@ def main():
         started = a.day + ' ' + (first or (sess.split()[1] if sess.startswith(a.day) else ''))
         md += ['## Sessione %d (%s %s)%s' % (n, a.day, ('prima risposta alle ' + first) if first else 'avviata ' + sess,
                                            ' — ' + scaletta_of(sess) if scaletta_of(sess) else ''), '']
-        qids = sorted({r['questionId'] for r in answers if r['sessione'] == sess},
+        # A classifica has ballots and no answers.
+        qids = sorted({r['questionId'] for r in answers + votes if r['sessione'] == sess},
                       key=lambda q: int(q[1:]) if q[1:].isdigit() else 99)
         order = planned_for(sess) + added.get(sess, [])
         for qn, qid in enumerate(qids, 1):
@@ -414,13 +428,27 @@ def main():
                         counts[t] = counts.get(t, 0) + 1
                         r_rows.append([a.persona, sess, qid, text, voter, t])
                 saved = results.get((sess, qid))
+                options, pick = poll_options.get(qid, ([], 0))
                 if saved:
                     counts = OrderedDict((r['label'], int(r['punti'])) for r in saved)
                     latest = [None] * int(saved[0]['schede'])
+                elif options:
+                    counts = OrderedDict((o, counts.get(o, 0)) for o in options)
+                rows = list(counts.items())
+                meta = '%d %s' % (len(latest), 'risposta' if len(latest) == 1 else 'risposte')
+                if pick:
+                    # As the projector: the `pick` most chosen, ties in sheet order.
+                    rows = sorted(rows, key=lambda kv: -kv[1])
+                    rest = [c for _, c in rows[pick:]]
+                    rows = rows[:pick]
+                    if rest:
+                        lo, hi = min(rest), max(rest)
+                        meta = 'Altre %d voci: %s %s ciascuna · %s · %d voci a testa' % (
+                            len(rest), lo if lo == hi else '%d–%d' % (lo, hi), 'scelta' if hi == 1 else 'scelte', meta, pick)
                 screens.append(dict(sc, name=prefix + '-sondaggio', kind='sondaggio',
                                     rows=[(o, c, '%d · %d%%' % (c, round(100 * c / len(latest))))
-                                          for o, c in counts.items()],
-                                    meta='%d %s' % (len(latest), 'risposta' if len(latest) == 1 else 'risposte')))
+                                          for o, c in rows],
+                                    meta=meta))
                 md += ['Sondaggio, %d partecipanti.' % len(latest), '',
                        '| risposta | n | % |', '|---|---:|---:|']
                 for opt, c in sorted(counts.items(), key=lambda kv: -kv[1]):
@@ -431,8 +459,10 @@ def main():
             for r in q_answers:
                 r_rows.append([a.persona, sess, qid, text, r['voterId'], r['text'].strip()])
             ballots = latest_ballots([r for r in votes if r['sessione'] == sess and r['questionId'] == qid])
+            is_ranking = qid in rankings
+            places = len(q_themes) if is_ranking else TOP_N
             ranked = score([{'id': t['id'], 'label': t['label'], 'description': t['description']}
-                            for t in q_themes], ballots)
+                            for t in q_themes], ballots, places)
             saved = results.get((sess, qid))
             if saved:
                 desc = {t['id']: t['description'] for t in q_themes}
@@ -446,22 +476,24 @@ def main():
                 print('note: %s %s: no Risultati, ranking recomputed from the ballots' % (sess, qid))
             n_ballots = int(saved[0]['schede']) if saved else len(ballots)
             n_people = len({r['voterId'] for r in q_answers})
-            screens.append(dict(sc, name=prefix + '-a-temi', kind='temi', ballots=n_ballots,
+            screens.append(dict(sc, name=prefix + '-a-temi', kind='temi', ballots=n_ballots, ranking=is_ranking,
                                 themes=[{'label': t['label'], 'description': t['description']} for t in q_themes]))
             screens.append(dict(sc, name=prefix + '-b-classifica', kind='classifica',
                                 rows=[(t['label'], t['punti'], '%d punti · %d primi posti' % (t['punti'], t['primi']))
                                       for t in ranked],
-                                meta='%d %s · %d partecipanti' % (n_ballots, 'voto' if n_ballots == 1 else 'voti', n_people)))
+                                meta=('%d %s' % (n_ballots, 'classifica' if n_ballots == 1 else 'classifiche')) if is_ranking
+                                     else '%d %s · %d partecipanti' % (n_ballots, 'voto' if n_ballots == 1 else 'voti', n_people)))
             for pos, t in enumerate(ranked, 1):
                 t_rows.append([a.persona, sess, qid, text, pos, t['id'], t['label'], t['description'],
                                t['punti'], t['primi'], n_ballots])
             labels = {t['id']: t['label'] for t in ranked}
             for voter, ranking in ballots.items():
-                v_rows.append([a.persona, sess, qid, voter] + [labels.get(x, x) for x in ranking[:TOP_N]]
-                              + [''] * (TOP_N - len(ranking[:TOP_N])))
+                v_rows.append([a.persona, sess, qid, voter] + [labels.get(x, x) for x in ranking[:places]])
 
-            md += ['%d risposte, %d schede di voto.' % (len(q_answers), len(ballots)), '',
-                   '**Temi (classifica del voto, punti 3-2-1)**', '',
+            md += [('%d classifiche.' % len(ballots)) if is_ranking
+                   else '%d risposte, %d schede di voto.' % (len(q_answers), len(ballots)), '',
+                   ('**Classifica (punti %d-1)**' % places) if is_ranking
+                   else '**Temi (classifica del voto, punti 3-2-1)**', '',
                    '| # | tema | punti | primi posti | descrizione |', '|---:|---|---:|---:|---|']
             for pos, t in enumerate(ranked, 1):
                 md.append('| %d | %s | %d | %d | %s |' % (pos, t['label'], t['punti'], t['primi'],
@@ -473,8 +505,10 @@ def main():
     write_csv(out / 'risposte.csv', ['persona', 'sessione', 'questionId', 'domanda', 'voterId', 'risposta'], r_rows)
     write_csv(out / 'temi.csv', ['persona', 'sessione', 'questionId', 'domanda', 'posizione', 'themeId', 'tema',
                                  'descrizione', 'punti', 'primi posti', 'schede'], t_rows)
-    write_csv(out / 'voti.csv', ['persona', 'sessione', 'questionId', 'voterId', 'scelta 1', 'scelta 2', 'scelta 3'],
-              v_rows)
+    # As many choice columns as the longest ballot: 3 for a theme vote, every item for a classifica.
+    width = max([TOP_N] + [len(r) - 4 for r in v_rows])
+    write_csv(out / 'voti.csv', ['persona', 'sessione', 'questionId', 'voterId'] + ['scelta %d' % i for i in range(1, width + 1)],
+              [r + [''] * (width + 4 - len(r)) for r in v_rows])
     write_csv(out / 'sintesi.csv', ['persona', 'sessione', 'questionId', 'domanda', 'titolo', 'testo',
                                     'partecipanti', 'modello'], s_rows)
     (out / 'riepilogo.md').write_text('\n'.join(md), encoding='utf-8')

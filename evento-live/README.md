@@ -181,9 +181,9 @@ The questions are the rows of the `Domande` tab, one round each, grouped into
 | `id` | short id (`q1`, `q2`…); empty means its position |
 | `domanda` | the question shown on screen |
 | `opzioni` | for a poll: the choices, separated by `\|`. Empty for an open question |
-| `multipla` | poll only: `sì` lets a participant pick several choices |
+| `multipla` | poll only: `sì` lets a participant pick several choices; a number (`10`) asks for exactly that many |
 | `esclusiva` | poll only: choices that clear all the others when picked (e.g. `No`), separated by `\|` |
-| `tipo` | open question only: `testo` asks for one free answer per person, up to 500 characters, with no word cloud. `sintesi` the same, analysed into one written summary instead of themes and a vote; its `domanda` may be left empty and written in the room. Empty (or `parole`) asks for short ideas that feed the cloud |
+| `tipo` | open question only: `testo` asks for one free answer per person, up to 500 characters, with no word cloud. `sintesi` the same, analysed into one written summary instead of themes and a vote; its `domanda` may be left empty and written in the room. `classifica` asks everyone to put in order the options most chosen in the poll right before it (see below). Empty (or `parole`) asks for short ideas that feed the cloud |
 | `sessione` | filled by the script: the session a `sintesi` text was written in, or a row added from the facilitator page belongs to |
 | `origine` | filled by the script: `aggiunta` for a row added from the facilitator page |
 | `scaletta` | the question sets the row belongs to (e.g. `FSL-1`), separated by `\|`. Empty puts it in every set |
@@ -191,9 +191,11 @@ The questions are the rows of the `Domande` tab, one round each, grouped into
 ### Scalette
 
 Each sheet holds several question sets, and each session runs one of them. Today:
-**FSL-1**, the poll and four `testo` questions (q1–q5), and **FSL-2**, a free
+**FSL-1**, the poll and four `testo` questions (q1–q5); **FSL-2**, a free
 session: one `sintesi` row with no text (q6), so the facilitator writes the
-first question in the room and adds the next ones with *+ Nuova domanda*.
+first question in the room and adds the next ones with *+ Nuova domanda*; and
+**FSL-3**: a poll where each participant picks 10 items (q7, `multipla` = 10),
+a `classifica` of the group's 10 (q8), then a free session as in FSL-2 (q9).
 
 - The facilitator page lists the scalette at the start of a session (first
   question, no answers yet); tapping one starts the session on it. After the
@@ -230,6 +232,21 @@ sheet. A row with an empty `questionId` — a theme typed by hand — belongs to
 the question on screen, and is tagged with it when the room moves on.
 *Nuova sessione* empties all rounds and goes back to the first question;
 `Domande` is kept.
+
+A poll with a number in `multipla` asks for exactly that many choices: the
+phone lists the options with the count and *Invia* in a bar at the bottom, and
+Invia works only at the right count. The projector shows the answer count and
+one dot per participant while it is open, and at the results the most chosen
+ones, as many as the number, with a line for the rest. Ties at the cut go by
+sheet order; the facilitator page names them.
+
+A `classifica` question runs `voting` → `results`. When the room reaches it,
+the server writes the most chosen options of the poll right before it (as many
+as that poll's number) into `Temi` as its themes and opens the vote straight
+away; a later visit keeps that list, since the ballots name its ids. With no
+answers in the poll the move is refused. Each phone puts every item in order
+(the last one goes to its place by itself), and scoring is Borda over the whole
+list: with 10 items the first is worth 10 points, the last 1. No model call.
 
 A `testo` question shows one large box on the phone. Each device can send one
 answer per question: a second send (another tab, a reload) is answered
@@ -325,7 +342,7 @@ Nuova chiave facilitatore* invalida subito quello vecchio.
 | `title` | shown on every screen |
 | `provider`, `model` | `anthropic` + `claude-opus-5`, or `gemini` + `gemini-2.5-flash` |
 | `max_themes` | how many themes the analysis returns, at most 5 (higher values are treated as 5) |
-| `top_n` | how many themes each participant ranks (Borda: 3/2/1) |
+| `top_n` | how many themes each participant ranks (Borda: 3/2/1). A `classifica` ranks all its items instead |
 | `answer_fields` | how many idea boxes the phone shows (1–6) |
 | `pagina` | page of the summary on the projector; set by the page, back to 1 on each `results` |
 | `max_cloud_words` | how many entries the projector shows |

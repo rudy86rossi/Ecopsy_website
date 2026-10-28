@@ -80,7 +80,8 @@ function recordResults_() {
   if (cfg.question.options) return recordPollResults_(cfg);
   if (cfg.question.type === 'sintesi') return;  // the Sintesi tab is its record
   const ballots = readBallots_(qid);
-  const rows = scoreBallots_(ballots, readThemes_(qid), cfg);
+  const themes = readThemes_(qid);
+  const rows = scoreBallots_(ballots, themes, placesOf_(cfg.question, themes, cfg));
   if (!rows.length) return;
   const now = new Date();
   const session = sessionId_();

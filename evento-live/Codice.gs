@@ -94,6 +94,7 @@ function state_() {
   const ballots = isPoll || isSummary ? [] : readBallots_(qid);
   const summary = isSummary && cfg.phase === 'results' ? readSummary_(qid) : null;
   const page = summary ? Math.min(cfg.pagina, summary.pages.length) : 1;
+  const places = placesOf_(q, themes, cfg);
 
   const out = {
     ok: true,
@@ -109,10 +110,11 @@ function state_() {
     scaletta: cfg.scaletta,
     scalette: cfg.scalette,
     answerFields: cfg.answer_fields,
-    topN: cfg.top_n,
+    topN: places,
     poll: isPoll ? {
       options: q.options,
       multiple: q.multiple,
+      pick: q.pick,
       exclusive: q.exclusive,
       results: cfg.phase === 'results' ? countPoll_(q, answers) : null
     } : null,
@@ -121,7 +123,7 @@ function state_() {
     ballots: ballots.length,
     cloud: isPoll || isText ? [] : buildCloud_(answers, cfg),
     themes: themes,
-    results: !isPoll && !isSummary && cfg.phase === 'results' ? scoreBallots_(ballots, themes, cfg) : null,
+    results: !isPoll && !isSummary && cfg.phase === 'results' ? scoreBallots_(ballots, themes, places) : null,
     summary: summary,
     page: page,
     rev: [cfg.scaletta, qid, cfg.phase, answers.length, themes.length, ballots.length,
@@ -179,7 +181,7 @@ function participantView_() {
   const q = cfg.question;
   return {
     phase: cfg.phase, qid: q.id, type: q.type, text: q.text,
-    poll: q.options ? { options: q.options, multiple: q.multiple, exclusive: q.exclusive } : null,
+    poll: q.options ? { options: q.options, multiple: q.multiple, pick: q.pick, exclusive: q.exclusive } : null,
     answerFields: cfg.answer_fields, topN: cfg.top_n,
     themeIds: null
   };
@@ -282,9 +284,11 @@ function actionBallot_(body) {
   if (v.poll) return { ok: false, error: 'questa domanda non ha una votazione' };
 
   const qid = v.qid;
+  const ids = v.themeIds || readThemes_(qid).map(function (t) { return t.id; });
   const valid = {};
-  (v.themeIds || readThemes_(qid).map(function (t) { return t.id; }))
-    .forEach(function (id) { valid[id] = true; });
+  ids.forEach(function (id) { valid[id] = true; });
+  // A classifica puts every item in order.
+  const places = v.type === 'classifica' ? ids.length : v.topN;
 
   const seen = {};
   const ranking = (body.ranking || [])
@@ -294,9 +298,12 @@ function actionBallot_(body) {
       seen[id] = true;
       return true;
     })
-    .slice(0, v.topN);
+    .slice(0, places);
 
   if (!ranking.length) return { ok: false, error: 'nessun tema selezionato' };
+  if (v.type === 'classifica' && ranking.length < places) {
+    return { ok: false, error: 'metti in ordine tutte le ' + places + ' voci' };
+  }
   const voterId = cleanId_(body.voterId);
   const sendId = sendIdOf_(body);
 
@@ -323,6 +330,9 @@ function actionPhase_(body) {
   }
   if (q.type === 'sintesi' && to !== 'collecting' && to !== 'results') {
     return { ok: false, error: 'una domanda con sintesi ha solo raccolta e sintesi' };
+  }
+  if (q.type === 'classifica' && to !== 'voting' && to !== 'results') {
+    return { ok: false, error: 'una classifica ha solo votazione e risultati' };
   }
   setConfig('phase', to);
   log_('phase', to, 'ok');
@@ -416,6 +426,7 @@ function runAnalyze_() {
   const cfg = getConfig();
   const qid = cfg.question.id;
   if (cfg.question.options) return { ok: false, error: 'un sondaggio non si analizza: chiudi e mostra i risultati' };
+  if (cfg.question.type === 'classifica') return { ok: false, error: 'una classifica non si analizza: le voci vengono dal sondaggio precedente' };
   const answers = readAnswers_(qid);
   if (!answers.length) return { ok: false, error: 'nessuna risposta da analizzare' };
   if (cfg.question.type === 'sintesi') return runSummary_(cfg, answers);

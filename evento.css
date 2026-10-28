@@ -61,6 +61,18 @@ button.act:disabled { background: #b9c9bf; cursor: not-allowed; }
 .theme .desc { font-size: .85rem; color: var(--text-muted); line-height: 1.5; margin-top: 3px; }
 .theme.opt { align-items: center; }
 
+/* A poll with a fixed number of choices out of a long list: tighter rows, and
+   the count and Invia always in view at the bottom. */
+.picklist .theme { padding: 9px 12px; margin-bottom: 6px; gap: 10px; }
+.picklist .theme .badge { width: 24px; height: 24px; }
+.picklist .theme .label { font-size: .95rem; }
+.pickbar {
+  position: sticky; bottom: 0; margin: 10px -20px -22px; padding: 4px 20px 14px;
+  background: var(--white); border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+.pickbar .status { margin-top: 6px; min-height: 0; }
+
 .hint { font-size: .85rem; color: var(--text-muted); margin-bottom: 14px; }
 .status { font-size: .85rem; margin-top: 12px; min-height: 1.3em; }
 .status.err {
@@ -135,7 +147,13 @@ body.screen .theme { gap: .875rem; border-radius: .625rem; }
 body.screen .theme .badge { width: 1.875rem; height: 1.875rem; }
 body.screen .theme .label { color: var(--white); font-size: 1.85rem; line-height: 1.2; }
 body.screen .theme .desc { color: rgba(255,255,255,.92); font-size: 1.45rem; line-height: 1.35; margin-top: .3rem; }
+/* The ten items of a classifica, in two columns so they fit the screen. */
+body.screen .cols { display: grid; grid-template-columns: 1fr 1fr; column-gap: 1.25rem; }
 body.screen .res .label { color: var(--white); font-size: 1.6rem; }
+/* More than six bars (the ten of a classifica, the top ten of a long poll): tighter, to fit with the line under them. */
+body.screen .many .res { margin-bottom: .35rem; }
+body.screen .many .res .label { font-size: 1.4rem; }
+body.screen .many .bar { height: .7rem; margin-top: .3rem; }
 body.screen .res .pts { color: rgba(255,255,255,.65); font-size: 1.1rem; }
 body.screen .res { margin-bottom: .875rem; }
 body.screen .res .top { gap: .75rem; }

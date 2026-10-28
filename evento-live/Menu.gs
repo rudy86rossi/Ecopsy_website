@@ -122,6 +122,10 @@ function menuAnalizza() {
     ui.alert('La domanda sullo schermo è un sondaggio: non si analizza. Usa “Chiudi e mostra i risultati”.');
     return;
   }
+  if (getConfig().question.type === 'classifica') {
+    ui.alert('La domanda sullo schermo è una classifica: le voci vengono dal sondaggio precedente. Usa “Chiudi e mostra i risultati”.');
+    return;
+  }
   const res = runAnalyze_();
   if (res.summary) {
     ui.alert('Sintesi scritta: “' + res.summary.title + '”.\n\nÈ già sullo schermo. Il testo è nel foglio Sintesi.');
@@ -177,7 +181,8 @@ function menuRisultati() {
       : 'Nessuna sintesi nel foglio Sintesi per questa domanda: lo schermo resta vuoto finché non ne scrivi una.');
     return;
   }
-  const rows = scoreBallots_(readBallots_(qid), readThemes_(qid), cfg);
+  const themes = readThemes_(qid);
+  const rows = scoreBallots_(readBallots_(qid), themes, placesOf_(cfg.question, themes, cfg));
   toast_('Votazione chiusa');
   SpreadsheetApp.getUi().alert(
     'Risultati\n\n' + rows.map(function (r, i) {
@@ -194,8 +199,10 @@ function menuDomandaSuccessiva() {
     ui.alert('Questa è l’ultima domanda del foglio Domande. Aggiungi una riga, o usa “+ Nuova domanda” nella pagina del facilitatore.');
     return;
   }
-  goToQuestion_(nxt.id);
-  toast_('Domanda ' + (cfg.questionIndex + 2) + ' di ' + cfg.questions.length + ': raccolta aperta');
+  const out = goToQuestion_(nxt.id);
+  if (!out.ok) { ui.alert(out.error); return; }
+  toast_('Domanda ' + (cfg.questionIndex + 2) + ' di ' + cfg.questions.length +
+         (nxt.type === 'classifica' ? ': classifica aperta' : ': raccolta aperta'));
 }
 
 /** With several scalette in Domande, asks which one the new session runs. */
@@ -234,6 +241,7 @@ function provaRiempi() {
   const qid = q.id;
   if (q.options) return provaRiempiSondaggio_(q);
   if (q.type === 'testo' || q.type === 'sintesi') return provaRiempiTesto_(q);
+  if (q.type === 'classifica') return provaRiempiClassifica_(q);
   const people = [
     ['Ansia da prestazione', 'Giudizio dei coetanei', 'Voti'],
     ['Pressione scolastica', 'I social media', 'voti'],
@@ -285,7 +293,10 @@ function provaRiempiSondaggio_(q) {
   const rows = [];
   for (let i = 0; i < 12; i++) {
     let items = [q.options[i % q.options.length]];
-    if (q.multiple && i % 3 === 0 && free.length > 1 && q.exclusive.indexOf(items[0]) === -1) {
+    if (q.pick) {
+      // Exactly `pick` each, overlapping, so some options lead.
+      items = free.slice(i % 4, i % 4 + q.pick);
+    } else if (q.multiple && i % 3 === 0 && free.length > 1 && q.exclusive.indexOf(items[0]) === -1) {
       items.push(free.filter(function (o) { return o !== items[0]; })[0]);
     }
     items.forEach(function (t) { rows.push([now, 'prova-' + i, t, q.id, session]); });
@@ -294,6 +305,23 @@ function provaRiempiSondaggio_(q) {
   sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
   dropStateCache_();
   Logger.log('inserite ' + rows.length + ' scelte di 12 partecipanti di prova (' + q.id + ')');
+}
+
+/** Eight fake ballots for a classifica, each one a full ranking of its items. */
+function provaRiempiClassifica_(q) {
+  const ids = readThemes_(q.id).map(function (t) { return t.id; });
+  if (!ids.length) { Logger.log('nessuna voce in Temi per ' + q.id + ': apri prima la classifica'); return; }
+  const now = new Date();
+  const session = sessionId_();
+  const rows = [];
+  for (let i = 0; i < 8; i++) {
+    const turn = i % 3;
+    rows.push([now, 'prova-' + i, JSON.stringify(ids.slice(turn).concat(ids.slice(0, turn))), q.id, session]);
+  }
+  const sh = sheet_('VOTI');
+  sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+  dropStateCache_();
+  Logger.log('inserite ' + rows.length + ' classifiche di prova (' + q.id + ')');
 }
 
 /** Exercises the whole read path without deploying anything. */
