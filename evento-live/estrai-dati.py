@@ -23,7 +23,7 @@ with --sessione), with the session's name from the Sessioni tab:
 
 Usage:
   evento-live/estrai-dati.py "event data" 2026-10-15 [--persona rodolfo] [--out DIR]
-  evento-live/estrai-dati.py "event data" --sessione "2026-10-15 FSL-1" [--persona rodolfo] [--out DIR]
+  evento-live/estrai-dati.py "event data" --sessione "2026-10-15 FSL-1 rodolfo" [--persona rodolfo] [--out DIR]
 """
 
 import argparse

@@ -352,20 +352,15 @@
     return card;
   }
 
-  function today() {
-    var d = new Date();
-    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
-  }
-
-  /* The name field of the next session. Its example is the name the old
-     sessions got: the date and the scaletta. */
+  /* The name field of the next session. Its example is the school and the
+     scaletta: the facilitator knows which school the session is for. */
   function nameField(scaletta) {
     var wrap = el('label', 'sessfield');
     wrap.appendChild(el('span', null, 'Nome della nuova sessione'));
     var input = el('input');
     input.type = 'text';
     input.maxLength = MAX_SESSION_NAME;
-    input.placeholder = 'es. ' + today() + (scaletta ? ' ' + scaletta : '');
+    input.placeholder = 'es. [Nome Scuola]' + (scaletta ? ' ' + scaletta : '');
     input.value = nameDraft;
     input.setAttribute('autocomplete', 'off');
     input.addEventListener('input', function () {
@@ -665,7 +660,7 @@
       pick.value = resetPick;
       pick.addEventListener('change', function () {
         resetPick = pick.value;
-        field.querySelector('input').placeholder = 'es. ' + today() + ' ' + resetPick;
+        field.querySelector('input').placeholder = 'es. [Nome Scuola] ' + resetPick;
       });
       danger.appendChild(pick);
     }

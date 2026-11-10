@@ -59,7 +59,7 @@ On the computer, with the CSVs and the PNGs too:
 evento-live/scarica-risultati.py 2026-10-15              # everyone in evento-config.js
 evento-live/scarica-risultati.py 2026-10-15 rodolfo      # one person
 evento-live/scarica-risultati.py --elenco                # every person's sessions, by name
-evento-live/scarica-risultati.py --sessione "2026-10-15 FSL-1"   # one session, in every sheet that has it
+evento-live/scarica-risultati.py --sessione "Liceo Galilei FSL-1"   # one session, in every sheet that has it
 ```
 
 For each person it asks their web app for an export (the `export` action, facilitator
@@ -219,8 +219,8 @@ a `classifica` of the group's 10 (q8), then a free session as in FSL-2 (q9).
   session. The menu's *Nuova sessione (azzera)* asks for the set's name.
 - **Every new session needs a name**, typed on the facilitator page above
   the scalette or the *Nuova sessione* button (which stay off until it is
-  written), or asked by the menu. The suggestion is the date and the set
-  (`2026-10-15 FSL-1`). A name another session of the sheet has is refused.
+  written), or asked by the menu. The suggestion is the school and the set
+  (`[Nome Scuola] FSL-1`). A name another session of the sheet has is refused.
   The name is what the *Sessioni e risultati* list and the PDF show.
 - Within a set the rounds run in sheet order; `round`, the *Domande* list and
   *Domanda successiva* see only that set. With no names in the column the tab
@@ -317,7 +317,7 @@ the date and time the session started. Each reset starts a new one.
 | `Risultati` | theme in the ranking, each time a vote is closed. For a poll: option, with `punti` = how many chose it and `schede` = how many answered |
 | `Sintesi` | summary written for a `sintesi` question, with its question text; a new analysis adds a row and the latest one is shown |
 | `Cronologia` | change of phase, from the page or the menu, with the session's `scaletta` |
-| `Sessioni` | session: its id, `nome` and `scaletta`. Edit `nome` to rename it. A session with no row here (from before names existed) gets one when the list is loaded or *Inizializza fogli* runs, named `2026-10-15 FSL-1`, with the start time added when two would share a name (`2026-10-15 11:40 FSL-1`) |
+| `Sessioni` | session: its id, `nome` and `scaletta`. Edit `nome` to rename it. A session with no row here (from before names existed) gets one when the list is loaded or *Inizializza fogli* runs, named after its date, scaletta and person (`2026-10-15 FSL-1 rodolfo`), with the start time added when two would share a name (`2026-10-15 11:40 FSL-1 rodolfo`, then with seconds). *Inizializza fogli* also brings every name of that shape up to date; a name typed differently is kept |
 
 For analysis, read each tab together with its archive: *File → Scarica →
 Microsoft Excel* exports every tab at once. Ballots name themes by id (`t1`,

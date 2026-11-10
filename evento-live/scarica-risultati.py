@@ -23,7 +23,7 @@ Usage:
   evento-live/scarica-risultati.py 2026-10-15
   evento-live/scarica-risultati.py 2026-10-15 rodolfo roberta
   evento-live/scarica-risultati.py --elenco [rodolfo]
-  evento-live/scarica-risultati.py --sessione "2026-10-15 FSL-1" [rodolfo]
+  evento-live/scarica-risultati.py --sessione "Liceo Galilei FSL-1" [rodolfo]
 """
 
 import argparse

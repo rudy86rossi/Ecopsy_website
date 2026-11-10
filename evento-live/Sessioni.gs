@@ -7,10 +7,12 @@
  *
  * A new session needs a name (resetSession_ refuses one without). Sessions
  * from before names existed, and the very first session of a sheet (which
- * starts without a reset), get a name made of their date and scaletta,
- * `2026-10-15 FSL-1`, with the start time added when that name is taken:
- * `2026-10-15 11:40 FSL-1`. listSessions_ writes those rows when it finds a
- * session that has none, so the tab fills itself.
+ * starts without a reset), get a name made of their date, scaletta and the
+ * sheet's person, `2026-10-15 FSL-1 rodolfo`, with the start time added when
+ * that name is taken: `2026-10-15 11:40 FSL-1 rodolfo`, then with seconds.
+ * listSessions_ writes those rows when it finds a session that has none, so
+ * the tab fills itself; setup() brings every name of that shape up to date
+ * (renameDefaultSessions_).
  */
 
 const MAX_SESSION_NAME = 60;
@@ -55,13 +57,94 @@ function checkSessionName_(raw, id, sessions) {
   return { name: name };
 }
 
-/** `2026-10-15 FSL-1`, or `2026-10-15 11:40 FSL-1` when the first is in `taken` (keys of sessionNameKey_). */
-function defaultSessionName_(id, scaletta, taken) {
+/** The person of this sheet (PERSONA, set by Mostra chiave e link); '' before it is set. */
+function sheetPersona_() {
+  return String(PropertiesService.getScriptProperties().getProperty('PERSONA') || '').trim();
+}
+
+/** The day, the day and HH:MM, the day and HH:MM:SS of a session id (`2026-10-15 11:40:07`). */
+function sessionStamps_(id) {
   const day = id.slice(0, 10);
-  const tail = scaletta ? ' ' + scaletta : '';
-  const name = day + tail;
-  if (!taken[sessionNameKey_(name)]) return name;
-  return day + ' ' + id.slice(11, 16) + tail;
+  return [day, day + ' ' + id.slice(11, 16), day + ' ' + id.slice(11, 19)];
+}
+
+/**
+ * `2026-10-15 FSL-1 rodolfo`; when that is in `taken` (keys of sessionNameKey_),
+ * `2026-10-15 11:40 FSL-1 rodolfo`, then `2026-10-15 11:40:07 FSL-1 rodolfo`,
+ * then the last with ` (2)`, ` (3)`…
+ */
+function defaultSessionName_(id, scaletta, taken, persona) {
+  const tail = (scaletta ? ' ' + scaletta : '') + (persona ? ' ' + persona : '');
+  const stamps = sessionStamps_(id);
+  for (let i = 0; i < stamps.length; i++) {
+    if (!taken[sessionNameKey_(stamps[i] + tail)]) return stamps[i] + tail;
+  }
+  let n = 2;
+  while (taken[sessionNameKey_(stamps[2] + tail + ' (' + n + ')')]) n++;
+  return stamps[2] + tail + ' (' + n + ')';
+}
+
+/**
+ * Whether `name` has the shape of a default name of session `id`: its date
+ * (with or without the time), then optionally the scaletta, then optionally
+ * the person. Such a name was given automatically, or typed as the example.
+ */
+function isDefaultSessionName_(name, id, scaletta, persona) {
+  const key = sessionNameKey_(name);
+  const n = key.match(/^(.*?) \((\d+)\)$/);
+  const bare = n ? n[1] : key;
+  return sessionStamps_(id).some(function (stamp) {
+    return ['', ' ' + scaletta].some(function (set) {
+      if (set === ' ') return false;
+      return ['', ' ' + persona].some(function (who) {
+        if (who === ' ') return false;
+        return bare === sessionNameKey_(stamp + set + who);
+      });
+    });
+  });
+}
+
+/**
+ * New default names for the sessions in `sessions` ([{id, name, scaletta}])
+ * whose name has the default shape: {id: name} for the ones that change.
+ * Other names are kept and count as taken. Oldest first, so the oldest of
+ * a day keeps the short name.
+ */
+function renamedDefaults_(sessions, persona) {
+  const taken = {};
+  const auto = [];
+  sessions.forEach(function (s) {
+    if (isDefaultSessionName_(s.name, s.id, s.scaletta, persona)) auto.push(s);
+    else taken[sessionNameKey_(s.name)] = true;
+  });
+  auto.sort(function (a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; });
+  const out = {};
+  auto.forEach(function (s) {
+    const name = defaultSessionName_(s.id, s.scaletta, taken, persona);
+    taken[sessionNameKey_(name)] = true;
+    if (name !== s.name) out[s.id] = name;
+  });
+  return out;
+}
+
+/** Run by setup(): gives every session with a default-shaped name the current default name. */
+function renameDefaultSessions_() {
+  const persona = sheetPersona_();
+  let changed = 0;
+  withLock_(function () {
+    const sessions = readSessions_();
+    const names = renamedDefaults_(sessions, persona);
+    const sh = sheet_('SESSIONI');
+    sessions.forEach(function (s) {
+      if (!names[s.id]) return;
+      sh.getRange(s.row, 2).setNumberFormat('@').setValue(safeCell_(names[s.id]));
+      changed++;
+    });
+  });
+  if (changed) {
+    dropStateCache_();
+    log_('session-name', changed + ' nomi automatici aggiornati', 'ok');
+  }
 }
 
 /** Writes one row of Sessioni. Call inside withLock_. */
@@ -135,10 +218,11 @@ function listSessions_() {
       sessions.forEach(function (s) { named[s.id] = true; taken[sessionNameKey_(s.name)] = true; });
       // Sessions from before scalette existed ran the first one, as the server would today.
       const first = readDomande_('').scalette.map(function (s) { return s.name; })[0] || '';
+      const persona = sheetPersona_();
       missing.forEach(function (id) {
         if (named[id]) return;
         const set = sets[id] || first;
-        const name = defaultSessionName_(id, set, taken);
+        const name = defaultSessionName_(id, set, taken, persona);
         taken[sessionNameKey_(name)] = true;
         appendSession_(id, name, set);
       });
@@ -157,9 +241,10 @@ function listSessions_() {
     .sort(function (a, b) { return a.id < b.id ? 1 : a.id > b.id ? -1 : 0; });
 }
 
-/** Run by setup(): names every session already in the sheet. */
+/** Run by setup(): names every session already in the sheet, and updates the default names. */
 function fillSessions_() {
   listSessions_();
+  renameDefaultSessions_();
 }
 
 /* ── facilitator actions ───────────────────────────────────────────────── */

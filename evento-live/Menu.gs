@@ -224,10 +224,9 @@ function menuReset() {
     return;
   }
   const set = findScaletta_(cfg.scalette.map(function (s) { return s.name; }), name) || cfg.scaletta;
-  const day = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
   const named = ui.prompt('Nome della sessione',
     'Il nome con cui la sessione compare nell’elenco delle sessioni da scaricare, ad esempio ' +
-    day + (set ? ' ' + set : '') + '.',
+    '[Nome Scuola]' + (set ? ' ' + set : '') + '.',
     ui.ButtonSet.OK_CANCEL);
   if (named.getSelectedButton() !== ui.Button.OK) return;
   const title = named.getResponseText().trim();
