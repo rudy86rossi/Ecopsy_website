@@ -155,10 +155,12 @@ function readConfigRows_(sh) {
  * empty cell puts the row in every one. `name` is matched without regard to
  * case; an empty or unknown name means the first scaletta in the tab. A tab
  * with no names at all is one list, as before scalette existed.
- * Returns {questions, scaletta, scalette:[{name, count}], clash}: `scaletta`
- * is the name in use ('' with no names), `clash` an id of this list that two
- * rows of the tab share ('' if none). Ids must be unique across the tab, since
- * answers, themes and the export find a question by id alone.
+ * Returns {questions, scaletta, scalette:[{name, count}], clash, tooMany}:
+ * `scaletta` is the name in use ('' with no names), `clash` an id of this list
+ * that two rows of the tab share ('' if none). Ids must be unique across the
+ * tab, since answers, themes and the export find a question by id alone.
+ * `tooMany` is the id of a poll whose `multipla` number is as large as its
+ * list of options ('' if none).
  *
  * A row with `opzioni` (choices separated by |) is a poll: participants pick
  * from the choices, and the round goes from collecting straight to results.
@@ -200,6 +202,7 @@ function readDomande_(name) {
 
   const kept = [];
   const counts = {};
+  let tooMany = '';
   rows.forEach(function (r, i) {
     const tipo = String(r[5]).trim();
     const own = sessionText_(r[6]);
@@ -218,6 +221,8 @@ function readDomande_(name) {
     if (options.length) {
       const many = String(r[3]).trim();
       const pick = /^\d+$/.test(many) ? Math.min(Number(many), options.length) : 0;
+      // Picking every option asks nothing: most likely the count of the options was typed.
+      if (/^\d+$/.test(many) && Number(many) > 1 && Number(many) >= options.length && !tooMany) tooMany = q.id;
       q.type = 'sondaggio';
       q.options = options;
       q.pick = pick > 1 ? pick : 0;
@@ -243,7 +248,8 @@ function readDomande_(name) {
     questions: kept,
     scaletta: use,
     scalette: names.map(function (n) { return { name: n, count: counts[n] || 0 }; }),
-    clash: clash ? clash.id : ''
+    clash: clash ? clash.id : '',
+    tooMany: tooMany
   };
 }
 

@@ -480,8 +480,9 @@ function actionReset_(body) {
 /**
  * Moves every round into the archive tabs, starts a new session on the
  * scaletta `name` (the current one when empty) and goes to its first question.
- * Domande is kept. A list with an id two rows share is refused before anything
- * moves: its answers could not be told apart.
+ * Domande is kept. Refused before anything moves: a list with an id two rows
+ * share (its answers could not be told apart), a poll whose `multipla` number
+ * asks for every option.
  */
 function resetSession_(from, name) {
   const cfg = getConfig();
@@ -490,8 +491,9 @@ function resetSession_(from, name) {
     use = findScaletta_(cfg.scalette.map(function (s) { return s.name; }), name);
     if (!use) return { ok: false, error: 'scaletta sconosciuta: ' + String(name).slice(0, 40) };
   }
-  const clash = readDomande_(use).clash;
-  if (clash) return { ok: false, error: 'l’id ' + clash + ' è usato da due righe nel foglio Domande: correggilo prima di iniziare' };
+  const list = readDomande_(use);
+  if (list.clash) return { ok: false, error: 'l’id ' + list.clash + ' è usato da due righe nel foglio Domande: correggilo prima di iniziare' };
+  if (list.tooMany) return { ok: false, error: 'nel foglio Domande, ' + list.tooMany + ' chiede di scegliere tutte le opzioni: in multipla va quante ne sceglie ognuno (es. 10)' };
 
   withLock_(function () {
     ['RISPOSTE', 'TEMI', 'VOTI'].forEach(function (k) {
