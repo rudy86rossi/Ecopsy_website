@@ -47,6 +47,7 @@ function doPost(e) {
       case 'export':  return json_(actionExport_(body));
       case 'sessions': return json_(actionSessions_(body));
       case 'session-name': return json_(withState_(actionSessionName_(body)));
+      case 'setup':   return json_(actionSetup_(body));
       default:        return json_({ ok: false, error: 'azione sconosciuta' });
     }
   } catch (err) {

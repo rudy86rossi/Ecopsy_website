@@ -77,6 +77,15 @@ function ss_() {
   return SS_ || (SS_ = SpreadsheetApp.getActive());
 }
 
+/** What *Inizializza fogli* does, from the web: pubblica-script.sh calls it after each publish. */
+function actionSetup_(body) {
+  requireKey_(body.key);
+  setup();
+  dropStateCache_();
+  log_('setup', 'web', 'ok');
+  return { ok: true };
+}
+
 /**
  * Creates any missing tab, fills Config with its defaults and names the
  * sessions that have no row in Sessioni. Safe to re-run.

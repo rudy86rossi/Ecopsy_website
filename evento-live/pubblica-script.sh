@@ -13,8 +13,9 @@
 # script prints the URL to paste there.
 #
 # Script Properties (API key, facilitator key, name) and the sheet's data are
-# never touched. When an update adds tabs or columns, run EcoPsy → Inizializza
-# fogli once in each sheet afterwards.
+# never touched. After a new version, it runs what EcoPsy → Inizializza fogli
+# does (the `setup` action) with the person's key from chiavi.local; without a
+# key there, run the menu item by hand.
 #
 # One-time setup: turn on "Google Apps Script API" at
 # https://script.google.com/home/usersettings, then `npx @google/clasp login`.
@@ -24,6 +25,38 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 CONFIG="$HERE/../evento-config.js"
 CLASP=(npx -y @google/clasp@3.4.1)
+KEYS="$HERE/chiavi.local"
+
+# The key of person $1 in chiavi.local, as scarica-risultati.py reads it.
+key_of() {
+  [ -f "$KEYS" ] || return 0
+  python3 -I - "$KEYS" "$1" <<'PY'
+import sys
+for line in open(sys.argv[1], encoding='utf-8'):
+    line = line.split('#', 1)[0].strip()
+    if '=' in line:
+        nome, key = line.split('=', 1)
+        if nome.strip() == sys.argv[2]:
+            print(key.strip().strip('"\''))
+PY
+}
+
+# Runs Inizializza fogli on person $1's web app at $2. A failure is reported, not fatal.
+run_setup() {
+  local key out
+  key="$(key_of "$1")"
+  if [ -z "$key" ]; then
+    echo "Nessuna chiave per $1 in chiavi.local: esegui EcoPsy → Inizializza fogli a mano."
+    return 0
+  fi
+  # -L follows Apps Script's 302 with a GET, as it expects; text/plain avoids a CORS preflight.
+  out="$(curl -sL --max-time 300 -H 'Content-Type: text/plain;charset=utf-8' \
+         --data "{\"action\":\"setup\",\"key\":\"$key\"}" "$2" || true)"
+  case "$out" in
+    *'"ok":true'*) echo "Inizializza fogli: fatto" ;;
+    *) echo "Inizializza fogli NON riuscito per $1 (eseguilo dal menu): ${out:0:200}" ;;
+  esac
+}
 
 DRY=0
 PEOPLE=()
@@ -80,6 +113,7 @@ for nome in "${PEOPLE[@]}"; do
   "${CLASP[@]}" -P "$project" push --force
   if [ -n "$deployment" ]; then
     "${CLASP[@]}" -P "$project" update-deployment "$deployment" -d "$DESC"
+    run_setup "$nome" "$url"
   else
     "${CLASP[@]}" -P "$project" create-deployment -d "$DESC"
     echo

@@ -33,8 +33,9 @@ everything else here), then publishes a new version on their existing web app, s
 commit: *Gestisci distribuzioni* in the editor shows which code each sheet runs.
 Script Properties and the sheet's data are never touched.
 
-When an update adds tabs or columns, run *EcoPsy → Inizializza fogli* once in each
-sheet afterwards.
+After each new version the script runs *Inizializza fogli* on that sheet (the
+`setup` action, with the person's key from `chiavi.local`). A person with no key
+there, or a failed run, is reported: run *EcoPsy → Inizializza fogli* from the menu.
 
 One-time setup on the computer that publishes:
 
@@ -157,6 +158,7 @@ something changed, so the projector can skip a redraw.
 | `sessions` | `{key}` — every session, newest first: `{sessions:[{id, name, scaletta, participants, current}]}` | facilitator key |
 | `session-name` | `{key, sessione, nome}` — renames a session (by id); an empty or taken name is refused | facilitator key |
 | `export` | `{key}` — every tab the analysis needs, for the PDF and `scarica-risultati.py` | facilitator key |
+| `setup` | `{key}` — what *Inizializza fogli* does; `pubblica-script.sh` calls it after each publish | facilitator key |
 
 Every reply is HTTP 200 with `{ok: true|false}`; `ok:false` carries `error`.
 `sendId` is optional: a send repeated with the same id within 10 minutes is
