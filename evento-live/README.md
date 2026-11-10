@@ -9,7 +9,7 @@ for Apps Script.
 
 ## One sheet per person
 
-Each facilitator (`rodolfo`, `roberta`, `amelia`, `eleonora`) has their own spreadsheet,
+Each facilitator (`rodolfo`, `roberta`, `amelia`, `eleonora`, `sara`) has their own spreadsheet,
 script, `/exec` URL and facilitator key, so several sessions can run at the same time
 without seeing each other's answers, themes or votes.
 
