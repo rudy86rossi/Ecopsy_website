@@ -151,23 +151,59 @@ ol.themes li.out { opacity: .55; }
   background: var(--green-mid); color: var(--white); cursor: pointer;
 }
 
-/* — the results of a day as a PDF (evento-risultati.js) — */
-.pdfrow { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
-.pdfrow input {
-  flex: 1 1 160px; font-family: var(--font-body); font-size: 1rem;
-  padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--white);
+/* — the sessions of the sheet and their PDF (evento-risultati.js) — */
+details.sesscard summary {
+  cursor: pointer; font-family: var(--font-head); font-weight: 700; font-size: .9rem;
+  color: var(--green-dark); list-style-position: inside;
 }
-.pdfrow button {
-  font-family: var(--font-head); font-weight: 700; font-size: .95rem;
-  padding: 11px 20px; border: none; border-radius: 10px;
-  background: var(--green-mid); color: var(--white); cursor: pointer;
+details.sesscard[open] summary { margin-bottom: 10px; }
+.sesslist { margin-top: 6px; }
+.sessrow {
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  padding: 12px 0; border-top: 1px solid var(--border);
 }
-.pdfrow button:disabled { background: #b9c9bf; cursor: progress; }
-.pdfrow button.working::before {
+.sessrow.cur .sessname { color: var(--green-mid); }
+.sessinfo { flex: 1 1 240px; min-width: 0; }
+.sessinfo input {
+  width: 100%; font-family: var(--font-body); font-size: 1rem;
+  padding: 9px 12px; border: 2px solid var(--green-mid); border-radius: 8px;
+}
+.sessname { font-family: var(--font-head); font-weight: 700; color: var(--green-dark); overflow-wrap: anywhere; }
+.sessname .badge {
+  margin-left: 8px; font-size: .7rem; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+  background: var(--green-pale); color: var(--green-mid); padding: 2px 7px; border-radius: 5px; vertical-align: 2px;
+}
+.sessinfo .sub { font-size: .82rem; color: var(--text-muted); margin-top: 2px; }
+.sessbtns { display: flex; gap: 8px; }
+.sesstools { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.sessall { font-size: .85rem; color: var(--text-muted); cursor: pointer; }
+button.sessbtn {
+  font-family: var(--font-head); font-weight: 700; font-size: .85rem;
+  padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--white); color: var(--green-mid); cursor: pointer;
+}
+button.sessbtn.main { background: var(--green-mid); border-color: var(--green-mid); color: var(--white); }
+button.sessbtn:disabled { opacity: .55; cursor: progress; }
+button.sessbtn.working::before {
   content: ''; display: inline-block; width: .8em; height: .8em; margin-right: .45em;
   border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
   vertical-align: -1px; animation: spin .8s linear infinite;
 }
+
+/* — the name of the session: on screen, and asked when a new one starts — */
+.sesshead {
+  font-size: .72rem; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+  color: var(--green-mid); margin-bottom: 4px; overflow-wrap: anywhere;
+}
+label.sessfield { display: block; margin-bottom: 12px; }
+label.sessfield span { display: block; font-size: .82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+label.sessfield input {
+  width: 100%; font-family: var(--font-body); font-size: 1rem;
+  padding: 10px 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--white);
+}
+label.sessfield input:focus { outline: none; border-color: var(--green-mid); }
+button.reset:disabled { opacity: .45; cursor: not-allowed; }
+button.reset:disabled:hover { background: none; }
 
 /* — a summary round: the question typed in the room, the summary to read along — */
 .curq .unwritten { color: var(--text-muted); font-style: italic; }

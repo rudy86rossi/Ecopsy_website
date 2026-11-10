@@ -205,6 +205,12 @@
   /* The scaletta picked in "Nuova sessione", kept across the redraw. */
   var resetPick = null;
 
+  /* The name of the next session, required to start it. Kept across the
+     redraw; the fields drawn for it, and the buttons that wait on it, are
+     collected on each render so typing updates them without one. */
+  var nameDraft = '', nameFields = [], nameButtons = [];
+  var MAX_SESSION_NAME = 60;
+
   /* The question being typed for a summary round, and the new question at the
      end of the session. Created once and re-attached on each render, so the
      redraw every few seconds keeps what is being typed. `editing` is the id of
@@ -222,9 +228,12 @@
     if (editing && (editing !== s.questionId || s.responses || s.phase !== 'collecting')) { editing = null; qbox = null; }
     titleEl.textContent = s.title || 'Sessione live';
     app.textContent = '';
+    nameFields = [];
+    nameButtons = [];
 
     /* — what is happening now — */
     var head = el('div', 'card nowcard');
+    if (s.sessionName) head.appendChild(el('div', 'sesshead', 'Sessione · ' + s.sessionName));
     var curq = el('div', 'curq');
     if (s.round) curq.appendChild(el('span', 'round', 'Domanda ' + s.round.n + ' di ' + s.round.of));
     if (s.question) curq.appendChild(document.createTextNode(s.question));
@@ -310,10 +319,13 @@
       s.phase === 'collecting' && !s.responses;
   }
 
-  /* The scalette of the Domande tab: picking one starts the session on it. */
+  /* The scalette of the Domande tab: picking one starts a new session on it,
+     so it needs the new session's name first. */
   function setsCard(s) {
     var card = el('div', 'card');
     card.appendChild(el('h2', null, 'Scaletta della sessione'));
+    var other = s.scalette.filter(function (sc) { return sc.name !== s.scaletta; })[0];
+    card.appendChild(nameField(other ? other.name : s.scaletta));
     var list = el('div', 'steps');
     s.scalette.forEach(function (sc) {
       var cur = sc.name === s.scaletta;
@@ -326,13 +338,53 @@
         (cur ? ' · in uso' : ' · tocca per usarla')));
       b.appendChild(body);
       if (cur) b.setAttribute('aria-current', 'true');
-      else b.addEventListener('click', function () { run({ act: 'reset', scaletta: sc.name }, b); });
+      else {
+        needsName(b);
+        b.addEventListener('click', function () {
+          var name = sessionName();
+          if (name) run({ act: 'reset', scaletta: sc.name, nome: name }, b);
+        });
+      }
       list.appendChild(b);
     });
     card.appendChild(list);
     card.appendChild(el('p', 'links', 'Si può cambiare finché non arriva la prima risposta.'));
     return card;
   }
+
+  function today() {
+    var d = new Date();
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
+
+  /* The name field of the next session. Its example is the name the old
+     sessions got: the date and the scaletta. */
+  function nameField(scaletta) {
+    var wrap = el('label', 'sessfield');
+    wrap.appendChild(el('span', null, 'Nome della nuova sessione'));
+    var input = el('input');
+    input.type = 'text';
+    input.maxLength = MAX_SESSION_NAME;
+    input.placeholder = 'es. ' + today() + (scaletta ? ' ' + scaletta : '');
+    input.value = nameDraft;
+    input.setAttribute('autocomplete', 'off');
+    input.addEventListener('input', function () {
+      nameDraft = input.value;
+      nameFields.forEach(function (f) { if (f !== input) f.value = nameDraft; });
+      nameButtons.forEach(function (b) { if (!busy) b.disabled = !sessionName(); });
+    });
+    nameFields.push(input);
+    wrap.appendChild(input);
+    return wrap;
+  }
+
+  /* A button that starts a session: off until the name is written. */
+  function needsName(b) {
+    b.disabled = !sessionName();
+    nameButtons.push(b);
+  }
+
+  function sessionName() { return nameDraft.replace(/\s+/g, ' ').trim(); }
 
   /* Avanti on "Mostra la domanda" sends what is in the question box. */
   function withText(st) {
@@ -599,8 +651,10 @@
     var danger = el('div', 'danger');
     var many = s.scalette && s.scalette.length > 1;
     var pick = null;
+    if (many && (!resetPick || !s.scalette.some(function (sc) { return sc.name === resetPick; }))) resetPick = s.scaletta;
+    var field = nameField(many ? resetPick : s.scaletta);
+    danger.appendChild(field);
     if (many) {
-      if (!resetPick || !s.scalette.some(function (sc) { return sc.name === resetPick; })) resetPick = s.scaletta;
       pick = el('select', 'resetpick');
       pick.setAttribute('aria-label', 'Scaletta della nuova sessione');
       s.scalette.forEach(function (sc) {
@@ -609,16 +663,22 @@
         pick.appendChild(o);
       });
       pick.value = resetPick;
-      pick.addEventListener('change', function () { resetPick = pick.value; });
+      pick.addEventListener('change', function () {
+        resetPick = pick.value;
+        field.querySelector('input').placeholder = 'es. ' + today() + ' ' + resetPick;
+      });
       danger.appendChild(pick);
     }
     var rb = el('button', 'reset', 'Nuova sessione');
     rb.type = 'button';
+    needsName(rb);
     rb.addEventListener('click', function () {
       var name = pick ? pick.value : '';
-      if (!confirm('Sposta risposte, temi e voti di tutte le domande nei fogli Archivio, apre una nuova sessione' +
+      var title = sessionName();
+      if (!title) return;
+      if (!confirm('Sposta risposte, temi e voti di tutte le domande nei fogli Archivio, apre la sessione “' + title + '”' +
         (name ? ' con la scaletta ' + name : '') + ' e torna alla prima domanda. Procedere?')) return;
-      run({ act: 'reset', scaletta: name || undefined }, rb);
+      run({ act: 'reset', scaletta: name || undefined, nome: title }, rb);
     });
     danger.appendChild(rb);
     more.appendChild(danger);
@@ -648,7 +708,7 @@
     var call = st.act === 'analyze'  ? post({ action: 'analyze' })
              : st.act === 'next'     ? post({ action: 'question', to: 'next' })
              : st.act === 'question' ? post({ action: 'question', to: st.to })
-             : st.act === 'reset'    ? post({ action: 'reset', confirm: 'RESET', scaletta: st.scaletta })
+             : st.act === 'reset'    ? post({ action: 'reset', confirm: 'RESET', scaletta: st.scaletta, nome: st.nome })
              : st.act === 'text'     ? post({ action: 'question-text', id: state.questionId, text: st.text })
              : st.act === 'add'      ? post({ action: 'add-question', text: st.text })
              : st.act === 'page'     ? post({ action: 'page', to: st.to })
@@ -660,9 +720,9 @@
       if (res.ok) {
         if (st.act === 'text') { qbox = null; editing = null; }
         if (st.act === 'add') addBox = null;
-        if (st.act === 'reset') resetPick = null;
+        if (st.act === 'reset') { resetPick = null; nameDraft = ''; }
         say(status, st.act === 'analyze' ? (res.summary ? 'Sintesi sullo schermo.' : res.themes.length + ' temi estratti. Controllali qui sopra.')
-                  : st.act === 'reset'   ? (res.scaletta ? 'Nuova sessione: ' + res.scaletta + '.' : 'Nuova sessione.')
+                  : st.act === 'reset'   ? 'Nuova sessione: ' + res.name + (res.scaletta ? ' · ' + res.scaletta : '') + '.'
                   : st.act === 'text'    ? 'Domanda sullo schermo.'
                   : st.act === 'add'     ? 'Nuova domanda sullo schermo: la raccolta è aperta.' : 'Fatto.', true);
       } else {
@@ -709,7 +769,7 @@
   }
   function typing() {
     var a = document.activeElement;
-    return !!a && (a.tagName === 'TEXTAREA' || a.tagName === 'SELECT') && app.contains(a);
+    return !!a && (a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.tagName === 'INPUT') && app.contains(a);
   }
 
   /* Keeps the phone awake between steps: a locked screen in a pocket would

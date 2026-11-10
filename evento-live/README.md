@@ -46,9 +46,20 @@ One-time setup on the computer that publishes:
 
 ## Downloading the results
 
+On the facilitator page, *Sessioni e risultati* (folded at the bottom) lists the
+sheet's sessions, newest first, with date, scaletta and participants. The list
+loads only when the block is opened. Each session has *PDF* (the projector's
+screens, one per page, built in the browser) and *Rinomina*. Sessions with no
+participants, the rehearsal ones (`prova-…`) aside, are hidden behind *Mostra
+anche le sessioni vuote*.
+
+On the computer, with the CSVs and the PNGs too:
+
 ```
 evento-live/scarica-risultati.py 2026-10-15              # everyone in evento-config.js
 evento-live/scarica-risultati.py 2026-10-15 rodolfo      # one person
+evento-live/scarica-risultati.py --elenco                # every person's sessions, by name
+evento-live/scarica-risultati.py --sessione "2026-10-15 FSL-1"   # one session, in every sheet that has it
 ```
 
 For each person it asks their web app for an export (the `export` action, facilitator
@@ -56,7 +67,9 @@ key only), saves every tab as CSV in `event data/<nome>/dati/` and runs
 `estrai-dati.py` on the given day: answers, themes, ballots, summaries
 (`sintesi.csv`), the projector's theme, ranking and summary screens as PNG, and
 `Risultati-sessione-<nome>.pdf`. All the PDFs are
-also copied together into `event data/Risultati-<day>/`.
+also copied together into `event data/Risultati-<day>/`. With `--sessione`, the
+folders are named after the session instead of the day. The CSVs carry the
+session's name in `nome sessione`, next to its id.
 
 The keys go in `evento-live/chiavi.local`, one line per person: `rodolfo = <chiave>`
 (*EcoPsy → Mostra chiave e link*). The file and `event data/` are in `.gitignore`;
@@ -78,7 +91,7 @@ The PNGs and the PDF need a headless Chromium: the script finds `chromium`,
    `https://script.google.com/macros/s/<id>/exec` next to the name.
 4. In the editor, reload and run `setup()` once. It creates `Config`, `Domande`,
    `Risposte`, `Temi`, `Voti`, the three `Archivio` tabs, `Risultati`, `Cronologia`,
-   `Log`. The first run asks for authorisation: *Avanzate → Apri progetto (non
+   `Sessioni`, `Log`, and names the first session after its date. The first run asks for authorisation: *Avanzate → Apri progetto (non
    sicuro)*, then *Consenti*. The warning says the script never went through
    Google's review, which an unlisted internal script never does.
 5. **Proprietà script** → add `ANTHROPIC_API_KEY` (or `GEMINI_API_KEY`, and set
@@ -107,7 +120,7 @@ Account Google* forces a login).
 ```json
 { "ok": true, "phase": "collecting", "title": "…",
   "question": "…", "questionId": "q1", "type": "parole", "maxLength": 80,
-  "session": "2026-10-11 10:00:00", "round": { "n": 1, "of": 3 },
+  "session": "2026-10-11 10:00:00", "sessionName": "2026-10-11 FSL-1", "round": { "n": 1, "of": 3 },
   "questions": [{ "id": "q1", "text": "…" }], "answerFields": 3, "topN": 3,
   "scaletta": "FSL-1", "scalette": [{ "name": "FSL-1", "count": 5 }, { "name": "FSL-2", "count": 1 }],
   "responses": 14, "entries": 35, "ballots": 0,
@@ -140,7 +153,10 @@ something changed, so the projector can skip a redraw.
 | `question-text` | `{key, id, text}` — writes the text of the `sintesi` question on screen, until its first answer; 300 characters | facilitator key |
 | `add-question` | `{key, text}` — adds a `sintesi` question after the last one and puts it on screen | facilitator key, last question in `results` |
 | `page` | `{key, to}` — page of the summary on the projector, from 1 | facilitator key, `sintesi` in `results` |
-| `reset` | `{key, confirm:"RESET", scaletta}` — a new session; `scaletta` (optional) is its question set, otherwise the current one stays | facilitator key |
+| `reset` | `{key, confirm:"RESET", nome, scaletta}` — a new session called `nome` (required, up to 60 characters, unique in the sheet); `scaletta` (optional) is its question set, otherwise the current one stays | facilitator key |
+| `sessions` | `{key}` — every session, newest first: `{sessions:[{id, name, scaletta, participants, current}]}` | facilitator key |
+| `session-name` | `{key, sessione, nome}` — renames a session (by id); an empty or taken name is refused | facilitator key |
+| `export` | `{key}` — every tab the analysis needs, for the PDF and `scarica-risultati.py` | facilitator key |
 
 Every reply is HTTP 200 with `{ok: true|false}`; `ok:false` carries `error`.
 `sendId` is optional: a send repeated with the same id within 10 minutes is
@@ -200,7 +216,12 @@ a `classifica` of the group's 10 (q8), then a free session as in FSL-2 (q9).
 - The facilitator page lists the scalette at the start of a session (first
   question, no answers yet); tapping one starts the session on it. After the
   first answer, *Altri comandi → Nuova sessione* picks the set of the next
-  session. The menu's *Nuova sessione (azzera)* asks for the name.
+  session. The menu's *Nuova sessione (azzera)* asks for the set's name.
+- **Every new session needs a name**, typed on the facilitator page above
+  the scalette or the *Nuova sessione* button (which stay off until it is
+  written), or asked by the menu. The suggestion is the date and the set
+  (`2026-10-15 FSL-1`). A name another session of the sheet has is refused.
+  The name is what the *Sessioni e risultati* list and the PDF show.
 - Within a set the rounds run in sheet order; `round`, the *Domande* list and
   *Domanda successiva* see only that set. With no names in the column the tab
   is one list.
@@ -296,6 +317,7 @@ the date and time the session started. Each reset starts a new one.
 | `Risultati` | theme in the ranking, each time a vote is closed. For a poll: option, with `punti` = how many chose it and `schede` = how many answered |
 | `Sintesi` | summary written for a `sintesi` question, with its question text; a new analysis adds a row and the latest one is shown |
 | `Cronologia` | change of phase, from the page or the menu, with the session's `scaletta` |
+| `Sessioni` | session: its id, `nome` and `scaletta`. Edit `nome` to rename it. A session with no row here (from before names existed) gets one when the list is loaded or *Inizializza fogli* runs, named `2026-10-15 FSL-1`, with the start time added when two would share a name (`2026-10-15 11:40 FSL-1`) |
 
 For analysis, read each tab together with its archive: *File → Scarica →
 Microsoft Excel* exports every tab at once. Ballots name themes by id (`t1`,
@@ -312,6 +334,7 @@ Nel sito, fuori da questa cartella:
 | `evento-qrcode.min.js` | nessuno — genera il QR sul proiettore (qrcode-generator 1.4.4, MIT) |
 | `evento.js`, `evento.css` | nessuno — codice comune a proiettore e telefono |
 | `evento-regia.js`, `evento-regia.css` | nessuno — codice della regia |
+| `evento-risultati.js` | nessuno — l’elenco delle sessioni e il PDF di ciascuna, nella pagina di regia |
 | `voto_studente_<nome>.html` | i partecipanti dal telefono |
 | `proiettore_<nome>.html` | il proiettore |
 | `operatore_<nome>.html#k=<chiave>` | il facilitatore |

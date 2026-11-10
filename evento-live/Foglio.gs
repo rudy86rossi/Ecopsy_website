@@ -24,6 +24,7 @@ const SHEETS = {
   RISULTATI:  'Risultati',
   SINTESI:    'Sintesi',
   CRONOLOGIA: 'Cronologia',
+  SESSIONI:   'Sessioni',
   LOG:      'Log'
 };
 
@@ -60,6 +61,7 @@ const HEADERS = {
   RISULTATI:  ['timestamp', 'sessione', 'questionId', 'domanda', 'posizione', 'themeId', 'label', 'punti', 'primi posti', 'schede'],
   SINTESI:    ['timestamp', 'sessione', 'questionId', 'domanda', 'titolo', 'testo', 'partecipanti', 'modello'],
   CRONOLOGIA: ['timestamp', 'sessione', 'questionId', 'fase', 'scaletta'],
+  SESSIONI:   ['sessione', 'nome', 'scaletta'],
   LOG:      ['timestamp', 'action', 'detail', 'outcome']
 };
 ['RISPOSTE', 'TEMI', 'VOTI'].forEach(function (k) {
@@ -75,8 +77,18 @@ function ss_() {
   return SS_ || (SS_ = SpreadsheetApp.getActive());
 }
 
-/** Creates any missing tab and fills Config with its defaults. Safe to re-run. */
+/**
+ * Creates any missing tab, fills Config with its defaults and names the
+ * sessions that have no row in Sessioni. Safe to re-run.
+ */
 function setup() {
+  setupTabs_();
+  fillSessions_();
+  return 'ok';
+}
+
+/** The tabs and Config only: sheet_() runs it when a tab is missing, possibly inside withLock_. */
+function setupTabs_() {
   const ss = ss_();
   let oldQuestion = '';
 
@@ -105,7 +117,7 @@ function setup() {
   }
 
   ['DOMANDE', 'RISPOSTE', 'TEMI', 'VOTI', 'ARCHIVIO_RISPOSTE', 'ARCHIVIO_TEMI', 'ARCHIVIO_VOTI',
-   'RISULTATI', 'SINTESI', 'CRONOLOGIA', 'LOG'].forEach(function (k) {
+   'RISULTATI', 'SINTESI', 'CRONOLOGIA', 'SESSIONI', 'LOG'].forEach(function (k) {
     const name = SHEETS[k];
     let sh = ss.getSheetByName(name);
     if (!sh) {
@@ -116,6 +128,10 @@ function setup() {
         // The single question of the first version moves here as round one.
         sh.getRange(2, 1, 1, 2).setValues([['q1', oldQuestion || DEFAULT_QUESTION]]);
         sh.setColumnWidth(1, 80).setColumnWidth(2, 640);
+      }
+      if (k === 'SESSIONI') {
+        sh.getRange(2, 1, sh.getMaxRows() - 1, 2).setNumberFormat('@');
+        sh.setColumnWidth(1, 170).setColumnWidth(2, 320);
       }
     } else if (sh.getLastColumn() < HEADERS[k].length) {
       // A tab from an earlier version: add the new columns. An empty questionId
@@ -131,7 +147,7 @@ function setup() {
 function sheet_(key) {
   if (TABS_[key]) return TABS_[key];
   let sh = ss_().getSheetByName(SHEETS[key]);
-  if (!sh) { setup(); sh = ss_().getSheetByName(SHEETS[key]); }
+  if (!sh) { setupTabs_(); sh = ss_().getSheetByName(SHEETS[key]); }
   return (TABS_[key] = sh);
 }
 

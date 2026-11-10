@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Extracts one day of the live event from a sheet's CSV export.
+Extracts one day, or one session, of the live event from a sheet's CSV export.
 
 Reads the tabs exported as CSV (File -> Download -> .csv, one per tab) from a
 folder: Archivio risposte / temi / voti, and Risposte / Temi / Voti / Risultati /
-Domande / Sintesi / Cronologia when present.
-Writes, for every session started on the given day:
+Domande / Sintesi / Cronologia / Sessioni when present.
+Writes, for every session started on the given day (or for the session named
+with --sessione), with the session's name from the Sessioni tab:
 
   risposte.csv  every answer; for a poll, each device's latest choice
   temi.csv      the themes of each question with their score as shown to the room
@@ -22,6 +23,7 @@ Writes, for every session started on the given day:
 
 Usage:
   evento-live/estrai-dati.py "event data" 2026-10-15 [--persona rodolfo] [--out DIR]
+  evento-live/estrai-dati.py "event data" --sessione "2026-10-15 FSL-1" [--persona rodolfo] [--out DIR]
 """
 
 import argparse
@@ -260,7 +262,9 @@ def write_screens(folder, screens, title, pdf):
                 when += ' · dalle ' + time[:5]
             if sc.get('scaletta'):
                 when += ' · ' + sc['scaletta']
-            pages += page % ('<div class="waiting"><div class="bignum">Sessione %d</div>%s</div>' % (last, esc(when)))
+            big = sc.get('session_name') or 'Sessione %d' % last
+            pages += page % ('<div class="waiting"><div class="bignum"%s>%s</div>%s</div>' % (
+                ' style="font-size:3.5rem"' if len(big) > 24 else '', esc(big), esc(when)))
         pages += page % screen_body(sc)
     full = SCREEN_PAGE.split('</head>')[0] % (css[0], css[1]) + '<style>%s</style></head><body class="screen">%s%s</body></html>' % (ALL_SCREENS_CSS, pages, FIT_SCRIPT)
     tmp = folder / '_tutte.html'
@@ -274,11 +278,30 @@ def write_screens(folder, screens, title, pdf):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('folder', type=Path)
-    ap.add_argument('day', help='YYYY-MM-DD')
+    ap.add_argument('day', nargs='?', help='YYYY-MM-DD')
+    ap.add_argument('--sessione', help='one session instead of a day: its name (Sessioni tab) or its id')
     ap.add_argument('--persona', default='', help='label for the output (whose sheet it is)')
     ap.add_argument('--out', type=Path)
     ap.add_argument('--titolo', help='the title at the top of the screens (default: Config title, else Sessione EcoPsy)')
     a = ap.parse_args()
+    if bool(a.day) == bool(a.sessione):
+        ap.error('give a day or --sessione, not both')
+
+    # Session names, from the Sessioni tab. A session with no row there has none.
+    name_of = {r['sessione'].strip(): (r.get('nome') or '').strip()
+               for r in read_tab(a.folder, 'Sessioni') if (r.get('sessione') or '').strip()}
+    chosen = None
+    if a.sessione:
+        want = ' '.join(a.sessione.split()).lower()
+        chosen = [i for i, n in name_of.items() if ' '.join(n.split()).lower() == want or i == a.sessione.strip()]
+        if not chosen:
+            sys.exit('no session called %r (names: %s)' % (a.sessione, ', '.join(sorted(name_of.values())) or 'no Sessioni tab'))
+
+    def keep(r):
+        """The rows asked for: those of the session, or those of the day."""
+        return r['sessione'].strip() in chosen if chosen else on_day(r, a.day)
+
+    label = name_of.get(chosen[0], chosen[0]) if chosen else a.day
 
     if not a.titolo:
         cfg = {r.get('chiave'): r.get('valore') for r in read_tab(a.folder, 'Config')}
@@ -328,14 +351,14 @@ def main():
     # in each session.
     summary_rows = {}
     for r in read_tab(a.folder, 'Sintesi'):
-        if on_day(r, a.day) and (r.get('testo') or '').strip():
+        if keep(r) and (r.get('testo') or '').strip():
             summary_rows[(r['sessione'], r['questionId'])] = r
             summaries.add(r['questionId'])
 
     # The ranking saved when each vote closed: the last one per session and question.
     results = {}
     for r in read_tab(a.folder, 'Risultati'):
-        if not on_day(r, a.day):
+        if not keep(r):
             continue
         key = (r['sessione'], r['questionId'])
         if r['posizione'] == '1':
@@ -345,26 +368,29 @@ def main():
         if not have_domande and not r['themeId'].strip():
             polls.add(r['questionId'])
 
-    # Only the rows written that day: a sheet never reset carries a session id from an earlier day.
-    answers = [r for r in read_tab(a.folder, 'Archivio risposte') + read_tab(a.folder, 'Risposte') if on_day(r, a.day)]
-    themes = [r for r in read_tab(a.folder, 'Archivio temi') + read_tab(a.folder, 'Temi') if on_day(r, a.day)]
-    votes = [r for r in read_tab(a.folder, 'Archivio voti') + read_tab(a.folder, 'Voti') if on_day(r, a.day)]
+    # By day, only the rows written that day: a sheet never reset carries a session id from an earlier day.
+    answers = [r for r in read_tab(a.folder, 'Archivio risposte') + read_tab(a.folder, 'Risposte') if keep(r)]
+    themes = [r for r in read_tab(a.folder, 'Archivio temi') + read_tab(a.folder, 'Temi') if keep(r)]
+    votes = [r for r in read_tab(a.folder, 'Archivio voti') + read_tab(a.folder, 'Voti') if keep(r)]
 
     sessions = sorted({r['sessione'] for r in answers})
     if not sessions:
-        sys.exit('no session on ' + a.day)
+        sys.exit('no session on ' + a.day if a.day else 'no answers in session %r' % label)
 
-    out = a.out or a.folder / ('estratto-' + a.day + ('-' + a.persona if a.persona else ''))
+    folder_label = re.sub(r'[\\/:*?"<>|]+', '-', label)
+    out = a.out or a.folder / ('estratto-' + folder_label + ('-' + a.persona if a.persona else ''))
     out.mkdir(parents=True, exist_ok=True)
 
     r_rows, t_rows, v_rows, s_rows, screens = [], [], [], [], []
-    md = ['# Evento live — ' + a.day + (' — ' + a.persona if a.persona else ''), '']
+    md = ['# Evento live — ' + label + (' — ' + a.persona if a.persona else ''), '']
 
     for n, sess in enumerate(sessions, 1):
         first = first_time([r for r in answers if r['sessione'] == sess])
-        started = a.day + ' ' + (first or (sess.split()[1] if sess.startswith(a.day) else ''))
-        md += ['## Sessione %d (%s %s)%s' % (n, a.day, ('prima risposta alle ' + first) if first else 'avviata ' + sess,
-                                           ' — ' + scaletta_of(sess) if scaletta_of(sess) else ''), '']
+        day = a.day or iso(sess)[:10]
+        started = day + ' ' + (first or (sess.split()[1] if sess.startswith(day) else ''))
+        md += ['## %s (%s %s)%s' % (name_of.get(sess) or 'Sessione %d' % n, day,
+                                    ('prima risposta alle ' + first) if first else 'avviata ' + sess,
+                                    ' — ' + scaletta_of(sess) if scaletta_of(sess) else ''), '']
         # A classifica has ballots and no answers.
         qids = sorted({r['questionId'] for r in answers + votes if r['sessione'] == sess},
                       key=lambda q: int(q[1:]) if q[1:].isdigit() else 99)
@@ -377,7 +403,8 @@ def main():
                 place, of = order.index(qid) + 1, len(order)
             else:
                 place, of = (int(qid[1:]) if qid[1:].isdigit() else qn), max(len(questions), len(qids))
-            sc = {'n': place, 'of': of, 'question': text, 'session': n, 'started': started, 'scaletta': scaletta_of(sess)}
+            sc = {'n': place, 'of': of, 'question': text, 'session': n, 'started': started, 'scaletta': scaletta_of(sess),
+                  'session_name': name_of.get(sess, '')}
             prefix = 's%d-%s' % (n, qid)
             q_answers = [r for r in answers if r['sessione'] == sess and r['questionId'] == qid]
             q_themes = [r for r in themes if r['sessione'] == sess and r['questionId'] == qid]
@@ -502,14 +529,19 @@ def main():
             md += ['- ' + r['text'].strip().replace('\n', ' ') for r in q_answers]
             md += ['', '</details>', '']
 
-    write_csv(out / 'risposte.csv', ['persona', 'sessione', 'questionId', 'domanda', 'voterId', 'risposta'], r_rows)
-    write_csv(out / 'temi.csv', ['persona', 'sessione', 'questionId', 'domanda', 'posizione', 'themeId', 'tema',
+    # The session's name goes right after its id.
+    for rows in (r_rows, t_rows, v_rows, s_rows):
+        for r in rows:
+            r.insert(2, name_of.get(r[1], ''))
+    write_csv(out / 'risposte.csv', ['persona', 'sessione', 'nome sessione', 'questionId', 'domanda', 'voterId', 'risposta'], r_rows)
+    write_csv(out / 'temi.csv', ['persona', 'sessione', 'nome sessione', 'questionId', 'domanda', 'posizione', 'themeId', 'tema',
                                  'descrizione', 'punti', 'primi posti', 'schede'], t_rows)
     # As many choice columns as the longest ballot: 3 for a theme vote, every item for a classifica.
-    width = max([TOP_N] + [len(r) - 4 for r in v_rows])
-    write_csv(out / 'voti.csv', ['persona', 'sessione', 'questionId', 'voterId'] + ['scelta %d' % i for i in range(1, width + 1)],
-              [r + [''] * (width + 4 - len(r)) for r in v_rows])
-    write_csv(out / 'sintesi.csv', ['persona', 'sessione', 'questionId', 'domanda', 'titolo', 'testo',
+    width = max([TOP_N] + [len(r) - 5 for r in v_rows])
+    write_csv(out / 'voti.csv', ['persona', 'sessione', 'nome sessione', 'questionId', 'voterId'] +
+              ['scelta %d' % i for i in range(1, width + 1)],
+              [r + [''] * (width + 5 - len(r)) for r in v_rows])
+    write_csv(out / 'sintesi.csv', ['persona', 'sessione', 'nome sessione', 'questionId', 'domanda', 'titolo', 'testo',
                                     'partecipanti', 'modello'], s_rows)
     (out / 'riepilogo.md').write_text('\n'.join(md), encoding='utf-8')
     write_screens(out / 'schermate', screens, a.titolo,

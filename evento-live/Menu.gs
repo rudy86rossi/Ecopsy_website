@@ -6,7 +6,7 @@
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('EcoPsy')
-    .addItem('Inizializza fogli', 'setup')
+    .addItem('Inizializza fogli', 'menuSetup')
     .addItem('Mostra chiave e link', 'mostraChiave')
     .addSeparator()
     .addItem('1 · Apri raccolta', 'menuApriRaccolta')
@@ -205,7 +205,7 @@ function menuDomandaSuccessiva() {
          (nxt.type === 'classifica' ? ': classifica aperta' : ': raccolta aperta'));
 }
 
-/** With several scalette in Domande, asks which one the new session runs. */
+/** Asks the name of the new session and, with several scalette in Domande, which one it runs. */
 function menuReset() {
   const ui = SpreadsheetApp.getUi();
   const cfg = getConfig();
@@ -223,9 +223,24 @@ function menuReset() {
   } else if (ui.alert('Nuova sessione?', what, ui.ButtonSet.YES_NO) !== ui.Button.YES) {
     return;
   }
-  const out = resetSession_('menu', name);
+  const set = findScaletta_(cfg.scalette.map(function (s) { return s.name; }), name) || cfg.scaletta;
+  const day = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  const named = ui.prompt('Nome della sessione',
+    'Il nome con cui la sessione compare nell’elenco delle sessioni da scaricare, ad esempio ' +
+    day + (set ? ' ' + set : '') + '.',
+    ui.ButtonSet.OK_CANCEL);
+  if (named.getSelectedButton() !== ui.Button.OK) return;
+  const title = named.getResponseText().trim();
+  if (!title) { ui.alert('Serve un nome: la sessione non è stata avviata.'); return; }
+  const out = resetSession_('menu', name, title);
   if (!out.ok) { ui.alert(out.error); return; }
-  toast_(out.scaletta ? 'Nuova sessione: ' + out.scaletta : 'Nuova sessione');
+  toast_('Nuova sessione: ' + out.name + (out.scaletta ? ' · ' + out.scaletta : ''));
+}
+
+/** setup() returns 'ok' to the editor; from the menu, a toast says it ran. */
+function menuSetup() {
+  setup();
+  toast_('Fogli pronti');
 }
 
 function toast_(msg) {

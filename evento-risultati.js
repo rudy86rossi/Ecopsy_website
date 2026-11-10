@@ -1,12 +1,13 @@
 (function () {
   'use strict';
 
-  /* The results of one day as a PDF, built in the facilitator's browser: the
+  /* The sessions of the sheet, listed on request on the facilitator page, and
+     the results of each as a PDF built in the facilitator's browser: the
      projector's screens for each question (the poll result, the themes put to
-     the vote, the final ranking, each page of a summary), one per page, each session opening with a
-     divider page. The data comes from the sheet's `export` action, which needs
-     the facilitator key. The same screens come out of
-     evento-live/estrai-dati.py; a change to one belongs in the other. */
+     the vote, the final ranking, each page of a summary), one per page, after
+     a page with the session's name. The list comes from the `sessions` action,
+     the data from `export`; both need the facilitator key. The same screens
+     come out of evento-live/estrai-dati.py; a change to one belongs in the other. */
 
   /* Loaded on the first click only: together they weigh over half a megabyte. */
   var LIBS = [
@@ -51,15 +52,10 @@
     });
   }
 
-  /* A row belongs to the day it was written; a row with no time, to the day
-     its session started. A sheet never reset keeps a session id from an earlier day. */
-  function onDay(r, day) {
-    var t = (r.timestamp || '').trim();
-    return t ? t.indexOf(day) === 0 : (r.sessione || '').indexOf(day) === 0;
-  }
-
-  /* The screens of one day, in order: [{divider}|{screen}], as evento.js draws them. */
-  function buildPages(tabs, day) {
+  /* The screens of one session (its id, the start time), in order:
+     [{divider}|{screen}], as evento.js draws them. */
+  function buildPages(tabs, session) {
+    function inSession(r) { return (r.sessione || '').trim() === session; }
     var cfg = {};
     rows(tabs, 'Config').forEach(function (r) { cfg[r.chiave] = r.valore; });
     var topN = Math.max(1, Number(cfg.top_n) || 3);
@@ -107,7 +103,7 @@
        with the question as it was asked (a `sintesi` row is rewritten in each session). */
     var summaryOf = {};
     rows(tabs, 'Sintesi').forEach(function (r) {
-      if (!onDay(r, day) || !(r.testo || '').trim()) return;
+      if (!inSession(r) || !(r.testo || '').trim()) return;
       summaryOf[r.sessione + '|' + r.questionId] = r;
       summaries[r.questionId] = true;
     });
@@ -115,7 +111,7 @@
     /* The ranking saved each time a vote closed: the last one per session and question. */
     var saved = {};
     rows(tabs, 'Risultati').forEach(function (r) {
-      if (!onDay(r, day)) return;
+      if (!inSession(r)) return;
       var k = r.sessione + '|' + r.questionId;
       if (r.posizione === '1' || !saved[k]) saved[k] = [];
       saved[k].push(r);
@@ -124,7 +120,7 @@
 
     function pick(names) {
       return names.reduce(function (all, n) { return all.concat(rows(tabs, n)); }, [])
-        .filter(function (r) { return onDay(r, day); });
+        .filter(function (r) { return inSession(r); });
     }
     var answers = pick(['Archivio risposte', 'Risposte']);
     var themes = pick(['Archivio temi', 'Temi']);
@@ -133,12 +129,15 @@
     var sessions = [];
     answers.forEach(function (r) { if (sessions.indexOf(r.sessione) === -1) sessions.push(r.sessione); });
     sessions.sort();
+    var nameOf = {};
+    rows(tabs, 'Sessioni').forEach(function (r) { nameOf[(r.sessione || '').trim()] = (r.nome || '').trim(); });
 
     var pages = [];
     sessions.forEach(function (sess, si) {
       var sAnswers = answers.filter(function (r) { return r.sessione === sess; });
       var first = sAnswers.map(function (r) { return r.timestamp.slice(11, 16); }).filter(Boolean).sort()[0];
-      pages.push({ divider: true, n: si + 1, day: day, from: first || '', scaletta: setNames.length ? setOf[sess] || setNames[0] : '' });
+      pages.push({ divider: true, n: si + 1, name: nameOf[sess] || '', day: sess.slice(0, 10), from: first || '',
+                   scaletta: setNames.length ? setOf[sess] || setNames[0] : '' });
 
       /* A classifica has ballots and no answers. */
       var qids = [];
@@ -296,7 +295,9 @@
     if (p.divider) {
       var when = Number(p.day.slice(8, 10)) + ' ' + MONTHS[Number(p.day.slice(5, 7)) - 1] + ' ' + p.day.slice(0, 4) +
                  (p.from ? ' · dalle ' + p.from : '') + (p.scaletta ? ' · ' + p.scaletta : '');
-      b = '<div class="waiting"><div class="bignum">Sessione ' + p.n + '</div>' + esc(when) + '</div>';
+      var big = p.name || 'Sessione ' + p.n;
+      b = '<div class="waiting"><div class="bignum"' + (big.length > 24 ? ' style="font-size:3.5rem"' : '') + '>' +
+          esc(big) + '</div>' + esc(when) + '</div>';
     } else {
       if (p.of > 1) b += '<div class="round">Domanda ' + p.n + ' di ' + p.of + '</div>';
       b += '<div class="qline">' + esc(p.question) + '</div>';
@@ -394,51 +395,185 @@
     });
   }
 
-  function today() {
-    var d = new Date();
-    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
   }
 
-  /* The card on the facilitator page. `post` sends a command with the key. */
+  /* "15 ottobre 2026 · 10:32" from a session id. */
+  function when(id) {
+    var d = String(id);
+    if (!/^\d{4}-\d\d-\d\d/.test(d)) return d;
+    return Number(d.slice(8, 10)) + ' ' + MONTHS[Number(d.slice(5, 7)) - 1] + ' ' + d.slice(0, 4) +
+      (d.length >= 16 ? ' · ' + d.slice(11, 16) : '');
+  }
+
+  /* A name as a file name: the signs Windows refuses in one become -. */
+  function fileName(t) {
+    return String(t).replace(/[\\\/:*?"<>|\x00-\x1f]+/g, '-').replace(/\s+/g, ' ').replace(/^[. ]+|[. ]+$/g, '') || 'sessione';
+  }
+
+  var MAX_SESSION_NAME = 60;
+
+  /* The card on the facilitator page, folded: the list loads the first time
+     it is opened, never with the page. `post` sends a command with the key. */
   function card(post, persona) {
-    var box = document.createElement('div');
-    box.className = 'card pdfcard';
-    box.innerHTML = '<h2>Risultati in PDF</h2>' +
-      '<p class="links">Le schermate di temi, classifiche e sintesi di un giorno, una pagina per schermata.</p>' +
-      '<div class="pdfrow"><input type="date" aria-label="Giorno"><button type="button">Scarica PDF</button></div>' +
-      '<p class="status"></p>';
-    var input = box.querySelector('input');
-    var btn = box.querySelector('button');
-    var status = box.querySelector('.status');
-    input.value = today();
+    var box = el('details', 'card sesscard');
+    box.appendChild(el('summary', null, 'Sessioni e risultati'));
+    box.appendChild(el('p', 'links', 'Ogni sessione del foglio, dalla più recente. PDF: le schermate di sondaggi, temi, classifiche e sintesi, una per pagina.'));
+    var list = el('div', 'sesslist');
+    box.appendChild(list);
+    var tools = el('div', 'sesstools');
+    var again = el('button', 'sessbtn', 'Aggiorna l’elenco');
+    again.type = 'button';
+    var showAll = el('input');
+    showAll.type = 'checkbox';
+    var allLabel = el('label', 'sessall');
+    allLabel.appendChild(showAll);
+    allLabel.appendChild(document.createTextNode(' Mostra anche le sessioni vuote'));
+    tools.appendChild(again);
+    tools.appendChild(allLabel);
+    box.appendChild(tools);
+    var status = el('p', 'status');
+    status.setAttribute('role', 'status');
+    box.appendChild(status);
+
+    var sessions = null, loading = false, working = false, renaming = null;
+
     function say(msg, ok) {
       status.className = 'status' + (ok === true ? ' ok' : ok === false ? ' err' : '');
       status.textContent = msg;
     }
 
-    btn.addEventListener('click', function () {
-      var day = input.value;
-      if (!day) return;
+    function load() {
+      if (loading) return;
+      loading = true;
+      again.disabled = true;
+      if (!sessions) list.textContent = '';
+      say('Carico l’elenco delle sessioni…');
+      post({ action: 'sessions' }).then(function (res) {
+        if (!res.ok) throw new Error(res.error || 'elenco non disponibile');
+        sessions = res.sessions;
+        say('');
+        draw();
+      }).catch(function (err) {
+        say(String(err && err.message || err).replace(/^Error: /, ''), false);
+      }).then(function () {
+        loading = false;
+        again.disabled = false;
+      });
+    }
+
+    function draw() {
+      list.textContent = '';
+      if (!sessions) return;
+      var shown = sessions.filter(function (x) { return showAll.checked || x.current || x.participants > 0; });
+      var hidden = sessions.length - shown.length;
+      if (!shown.length) list.appendChild(el('p', 'links', 'Nessuna sessione con risposte.'));
+      shown.forEach(function (x) { list.appendChild(row(x)); });
+      if (hidden && !showAll.checked) {
+        list.appendChild(el('p', 'links', hidden === 1 ? '1 sessione vuota nascosta.' : hidden + ' sessioni vuote nascoste.'));
+      }
+    }
+
+    function row(x) {
+      var r = el('div', 'sessrow' + (x.current ? ' cur' : ''));
+      var info = el('div', 'sessinfo');
+      if (renaming === x.id) {
+        var input = el('input');
+        input.type = 'text';
+        input.maxLength = MAX_SESSION_NAME;
+        input.value = x.name;
+        input.setAttribute('aria-label', 'Nuovo nome della sessione');
+        info.appendChild(input);
+        var actions = el('div', 'sessbtns');
+        var save = el('button', 'sessbtn main', 'Salva');
+        save.type = 'button';
+        var cancel = el('button', 'sessbtn', 'Annulla');
+        cancel.type = 'button';
+        var send = function () { rename(x, input.value, save); };
+        save.addEventListener('click', send);
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') send();
+          if (e.key === 'Escape') { renaming = null; draw(); }
+        });
+        cancel.addEventListener('click', function () { renaming = null; draw(); });
+        actions.appendChild(save);
+        actions.appendChild(cancel);
+        r.appendChild(info);
+        r.appendChild(actions);
+        setTimeout(function () { input.focus(); input.select(); }, 0);
+        return r;
+      }
+      var name = el('div', 'sessname');
+      name.appendChild(document.createTextNode(x.name));
+      if (x.current) name.appendChild(el('span', 'badge', 'in corso'));
+      info.appendChild(name);
+      info.appendChild(el('div', 'sub', [when(x.id), x.scaletta,
+        x.participants === 1 ? '1 partecipante' : x.participants + ' partecipanti'].filter(Boolean).join(' · ')));
+      r.appendChild(info);
+      var btns = el('div', 'sessbtns');
+      var pdf = el('button', 'sessbtn main', 'PDF');
+      pdf.type = 'button';
+      pdf.disabled = working;
+      pdf.addEventListener('click', function () { download(x, pdf); });
+      var pen = el('button', 'sessbtn', 'Rinomina');
+      pen.type = 'button';
+      pen.disabled = working;
+      pen.addEventListener('click', function () { renaming = x.id; draw(); });
+      btns.appendChild(pdf);
+      btns.appendChild(pen);
+      r.appendChild(btns);
+      return r;
+    }
+
+    function rename(x, value, btn) {
+      var name = String(value || '').replace(/\s+/g, ' ').trim();
+      if (!name) { say('Scrivi il nome della sessione.', false); return; }
+      if (name === x.name) { renaming = null; draw(); return; }
       btn.disabled = true;
+      btn.classList.add('working');
+      post({ action: 'session-name', sessione: x.id, nome: name }).then(function (res) {
+        if (!res.ok) throw new Error(res.error || 'nome non salvato');
+        x.name = res.name;
+        renaming = null;
+        say('Nome salvato.', true);
+        draw();
+      }).catch(function (err) {
+        btn.disabled = false;
+        btn.classList.remove('working');
+        say(String(err && err.message || err).replace(/^Error: /, ''), false);
+      });
+    }
+
+    function download(x, btn) {
+      working = true;
+      Array.prototype.forEach.call(list.querySelectorAll('button'), function (b) { b.disabled = true; });
       btn.classList.add('working');
       say('Scarico i dati dal foglio…');
       var libs = window.jspdf && window.html2canvas ? Promise.resolve() : loadLibs();
       Promise.all([post({ action: 'export' }), libs]).then(function (out) {
         var res = out[0];
         if (!res.ok) throw new Error(res.error || 'esportazione non riuscita');
-        var built = buildPages(res.tabs, day);
-        if (!built.pages.length) throw new Error('nessuna sessione il ' + day.split('-').reverse().join('/'));
+        var built = buildPages(res.tabs, x.id);
+        if (!built.pages.length) throw new Error('nessuna schermata da mettere nel PDF: la sessione “' + x.name + '” non ha risposte');
         return makePdf(built, function (i, n) { say('Preparo la pagina ' + i + ' di ' + n + '…'); });
       }).then(function (pdf) {
-        pdf.save('Risultati-sessione-' + persona + '-' + day + '.pdf');
-        say('PDF scaricato.', true);
+        pdf.save('Risultati-' + persona + ' - ' + fileName(x.name) + '.pdf');
+        say('PDF di “' + x.name + '” scaricato.', true);
       }).catch(function (err) {
         say(String(err && err.message || err).replace(/^Error: /, ''), false);
       }).then(function () {
-        btn.disabled = false;
-        btn.classList.remove('working');
+        working = false;
+        draw();
       });
-    });
+    }
+
+    box.addEventListener('toggle', function () { if (box.open && !sessions) load(); });
+    again.addEventListener('click', load);
+    showAll.addEventListener('change', draw);
     return box;
   }
 

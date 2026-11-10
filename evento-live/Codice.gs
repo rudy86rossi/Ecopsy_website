@@ -45,6 +45,8 @@ function doPost(e) {
       case 'analyze': return json_(withState_(actionAnalyze_(body)));
       case 'reset':   return json_(withState_(actionReset_(body)));
       case 'export':  return json_(actionExport_(body));
+      case 'sessions': return json_(actionSessions_(body));
+      case 'session-name': return json_(withState_(actionSessionName_(body)));
       default:        return json_({ ok: false, error: 'azione sconosciuta' });
     }
   } catch (err) {
@@ -104,6 +106,7 @@ function state_() {
     questionId: qid,
     type: q.type,
     session: sessionId_(),
+    sessionName: sessionNameOf_(sessionId_()),
     maxLength: isText ? MAX_TEXT_LEN : MAX_ITEM_LEN,
     round: { n: cfg.questionIndex + 1, of: cfg.questions.length },
     questions: cfg.questions,
@@ -470,27 +473,33 @@ function runSummary_(cfg, answers) {
   }
 }
 
-/** `scaletta`, optional, is the question set of the new session; without it the current one stays. */
+/**
+ * `nome` is the name of the new session, required. `scaletta`, optional, is
+ * its question set; without it the current one stays.
+ */
 function actionReset_(body) {
   requireKey_(body.key);
   if (body.confirm !== 'RESET') return { ok: false, error: 'conferma mancante' };
-  return resetSession_('web', body.scaletta);
+  return resetSession_('web', body.scaletta, body.nome);
 }
 
 /**
- * Moves every round into the archive tabs, starts a new session on the
- * scaletta `name` (the current one when empty) and goes to its first question.
- * Domande is kept. Refused before anything moves: a list with an id two rows
- * share (its answers could not be told apart), a poll whose `multipla` number
- * asks for every option.
+ * Moves every round into the archive tabs, starts a new session called
+ * `title` on the scaletta `name` (the current one when empty) and goes to its
+ * first question. Domande is kept. Refused before anything moves: an empty
+ * name or one another session has (see checkSessionName_), a list with an id
+ * two rows share (its answers could not be told apart), a poll whose
+ * `multipla` number asks for every option.
  */
-function resetSession_(from, name) {
+function resetSession_(from, name, title) {
   const cfg = getConfig();
   let use = cfg.scaletta;
   if (name) {
     use = findScaletta_(cfg.scalette.map(function (s) { return s.name; }), name);
     if (!use) return { ok: false, error: 'scaletta sconosciuta: ' + String(name).slice(0, 40) };
   }
+  const named = checkSessionName_(title, '');
+  if (named.error) return { ok: false, error: named.error };
   const list = readDomande_(use);
   if (list.clash) return { ok: false, error: 'l’id ' + list.clash + ' è usato da due righe nel foglio Domande: correggilo prima di iniziare' };
   if (list.tooMany) return { ok: false, error: 'nel foglio Domande, ' + list.tooMany + ' chiede di scegliere tutte le opzioni: in multipla va quante ne sceglie ognuno (es. 10)' };
@@ -504,15 +513,15 @@ function resetSession_(from, name) {
       sh.deleteRows(2, last - 1);
     });
     stampSummarySession_();
-    startSession_();
+    appendSession_(startSession_(), named.name, use);
   });
   // The new session changes which rows Domande shows (see readDomande_).
   const first = readDomande_(use).questions[0];
   const values = { scaletta: use, phase: 'collecting' };
   if (first) values.current_question = first.id;
   setConfigs_(values);
-  log_('reset', from + (use ? ' · ' + use : ''), 'ok');
-  return { ok: true, scaletta: use };
+  log_('reset', from + ' · ' + named.name + (use ? ' · ' + use : ''), 'ok');
+  return { ok: true, scaletta: use, name: named.name };
 }
 
 /* ── helpers ───────────────────────────────────────────────────────────── */
